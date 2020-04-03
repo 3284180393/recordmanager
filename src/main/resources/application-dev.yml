@@ -1,9 +1,19 @@
 spring:
   datasource:
-    username : root
-    password : qnsoft
-    url: jdbc:mysql://10.130.76.80:3306/cmdb_new
-    driver-class-name : com.mysql.jdbc.Driver
+    gls:
+      username: ccod
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      driver-class-name: oracle.jdbc.OracleDriver
+
+    ucds:
+      username: ucds
+      password: ucds
+      jdbc-url: jdbc:mysql://10.130.41.12:3306/ucds?useUnicode=true&amp;characterEncoding=utf8
+      driver-class-name: com.mysql.jdbc.Driver
+
+ccod:
+  platformType: normal
 
 record:
   mix:

@@ -5,23 +5,30 @@ import com.channelsoft.ccod.recordmanager.backup.vo.StoredRecordFileVo;
 import com.channelsoft.ccod.recordmanager.config.DateFormatCfg;
 import com.channelsoft.ccod.recordmanager.config.DiskScanRole;
 import com.channelsoft.ccod.recordmanager.config.MixRecordCfg;
+import com.channelsoft.ccod.recordmanager.constant.BackupMethod;
 import com.channelsoft.ccod.recordmanager.exception.ParamException;
+import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformCallService;
 import com.channelsoft.ccod.recordmanager.utils.GrokParser;
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName: RecordBackupServiceImpl
@@ -33,10 +40,17 @@ import java.util.regex.Pattern;
 @Service
 public class RecordBackupServiceImpl implements IRecordBackupService {
 
+    private boolean isWin = true;
+
     @Autowired
     MixRecordCfg mixRecordCfg;
 
+    @Autowired
+    IPlatformCallService callService;
+
     private DateFormatCfg dateFormatCfg = new DateFormatCfg();
+
+    private int threadPoolSize = 2;
 
     private final static Logger logger = LoggerFactory.getLogger(RecordBackupServiceImpl.class);
 
@@ -48,29 +62,33 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
         System.out.println("hello world");
     }
 
-    public List<StoredRecordFileVo> scanMntDir(DiskScanRole scanRole, Date chosenDate) throws IOException
+    @Override
+    public List<StoredRecordFileVo> scanMntDir(DiskScanRole scanRole, Date chosenDate, List<String> excludeEntIds) throws IOException
     {
-        Map<String, Object> resultMap = GrokParser.match(scanRole.getGrokPattern(), scanRole.getExample());
+        String example = scanRole.getExample();
+        String grokPattern = scanRole.getGrokPattern();
+        String mntDir = scanRole.getMntDir();
+        Map<String, Object> resultMap = GrokParser.match(grokPattern, scanRole.getExample());
         List<String> saveDirs = new ArrayList<>();
         if(resultMap.containsKey("date"))
         {
             String dateStr = resultMap.get("date").toString();
             SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getDate());
-            searchForChosenTimeDir(scanRole.getMntDir(), scanRole.getExample(), dateStr, sf.format(chosenDate), saveDirs);
+            searchForChosenTimeDir(mntDir, example, dateStr, sf.format(chosenDate), saveDirs);
         }
         else if(resultMap.containsKey("yearAndMonth"))
         {
             List<String> yearAndMonthDirList = new ArrayList<>();
             String yearAndMonth = resultMap.get("yearAndMonth").toString();
             SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getYearAndMonth());
-            searchForChosenTimeDir(scanRole.getMntDir(), scanRole.getExample(), yearAndMonth, sf.format(chosenDate), yearAndMonthDirList);
+            searchForChosenTimeDir(mntDir, example, yearAndMonth, sf.format(chosenDate), yearAndMonthDirList);
             if(resultMap.containsKey("monthAndDay"))
             {
                 String monthAndDay = resultMap.get("monthAndDay").toString();
                 sf = new SimpleDateFormat(dateFormatCfg.getMonthAndDay());
                 for(String searchDir : yearAndMonthDirList)
                 {
-                    searchForChosenTimeDir(searchDir, scanRole.getExample(), monthAndDay, sf.format(chosenDate), saveDirs);
+                    searchForChosenTimeDir(searchDir, example, monthAndDay, sf.format(chosenDate), saveDirs);
                 }
             }
             else
@@ -79,7 +97,7 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
                 sf = new SimpleDateFormat(dateFormatCfg.getDay());
                 for(String searchDir : yearAndMonthDirList)
                 {
-                    searchForChosenTimeDir(searchDir, scanRole.getExample(), dayStr, sf.format(chosenDate), saveDirs);
+                    searchForChosenTimeDir(searchDir, example, dayStr, sf.format(chosenDate), saveDirs);
                 }
             }
         }
@@ -88,14 +106,14 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
             List<String> yearList = new ArrayList<>();
             String year = resultMap.get("year").toString();
             SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getYear());
-            searchForChosenTimeDir(scanRole.getMntDir(), scanRole.getExample(), year, sf.format(chosenDate), yearList);
+            searchForChosenTimeDir(mntDir, example, year, sf.format(chosenDate), yearList);
             if(resultMap.containsKey("monthAndDay"))
             {
                 String monthAndDay = resultMap.get("monthAndDay").toString();
                 sf = new SimpleDateFormat(dateFormatCfg.getMonthAndDay());
                 for(String searchDir : yearList)
                 {
-                    searchForChosenTimeDir(searchDir, scanRole.getExample(), monthAndDay, sf.format(chosenDate), saveDirs);
+                    searchForChosenTimeDir(searchDir, example, monthAndDay, sf.format(chosenDate), saveDirs);
                 }
             }
             else
@@ -105,32 +123,39 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
                 List<String> monthDirList = new ArrayList<>();
                 for(String searchDir : yearList)
                 {
-                    searchForChosenTimeDir(searchDir, scanRole.getExample(), month, sf.format(chosenDate), monthDirList);
+                    searchForChosenTimeDir(searchDir, example, month, sf.format(chosenDate), monthDirList);
                 }
                 String dayStr = resultMap.get("dayStr").toString();
                 sf = new SimpleDateFormat(dateFormatCfg.getDay());
                 for(String searchDir : monthDirList)
                 {
-                    searchForChosenTimeDir(searchDir, scanRole.getExample(), dayStr, sf.format(chosenDate), saveDirs);
+                    searchForChosenTimeDir(searchDir, example, dayStr, sf.format(chosenDate), saveDirs);
                 }
             }
         }
-        int dept = scanRole.getExample().replaceAll("\\\\", "/").split("/").length;
+        int dept = example.split("/").length;
         List<String> allFileList = new ArrayList<>();
         for(String saveDir : saveDirs)
         {
             scan(saveDir, dept, false, ".*", allFileList);
         }
-        int indexLen = scanRole.getRecordIndex().replaceAll("\\\\", "/").split("/").length;
-        boolean escape = scanRole.getRecordIndex().matches("^/") ? true : false;
+        int indexLen = scanRole.getRecordIndex().split("/").length;
+        boolean escape = example.matches("^/") ? true : false;
         List<StoredRecordFileVo> retList = new ArrayList<>();
+        Set<String> entIdSet = new HashSet(excludeEntIds);
         for(String filePath : allFileList)
         {
-            Map<String, Object> parseResultMap = GrokParser.match(scanRole.getGrokPattern(), filePath);
+            Map<String, Object> parseResultMap = GrokParser.match(grokPattern, filePath);
             if(parseResultMap != null)
             {
                 String enterpriseId = parseResultMap.get("entId").toString();
-                String[] arr = filePath.replaceAll("\\\\", "/").split("/");
+                if(entIdSet.contains(enterpriseId))
+                {
+                    continue;
+                }
+                if(this.isWin)
+                    filePath = filePath.replaceAll("\\\\", "/");
+                String[] arr = filePath.split("/");
                 String index = "";
                 for(int i = indexLen; i >=1; i--)
                 {
@@ -140,7 +165,7 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
                 {
                     index = index.replaceAll("^/", "");
                 }
-                StoredRecordFileVo fileVo = new StoredRecordFileVo(enterpriseId, chosenDate, filePath, index);
+                StoredRecordFileVo fileVo = new StoredRecordFileVo(enterpriseId, chosenDate, filePath, index, grokPattern);
                 retList.add(fileVo);
             }
         }
@@ -195,7 +220,7 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
         }
         else if(!dirFile.isDirectory() && !dirFile.isFile())
             return;
-        String[] arr = pathName.replaceAll("\\\\", "/").split("/");
+        String[] arr = pathName.split("/");
         int currentDept = arr.length;
         if(currentDept > dept)
             return;
@@ -215,61 +240,135 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
             String[] fileList = dirFile.list();
             for(int i = 0; i < fileList.length; i++)
             {
-                System.out.println(pathName + "/" + fileList[i]);
                 scan(pathName + "/" + fileList[i], dept, isDir, regex, resultList);
             }
         }
     }
 
-    private void find(String pathName, int depth) throws IOException {
-        int filecount=0;
-        //获取pathName的File对象
-        File dirFile = new File(pathName);
-        //判断该文件或目录是否存在，不存在时在控制台输出提醒
-        if (!dirFile.exists()) {
-            System.out.println("do not exit");
-            return ;
-        }
-        //判断如果不是一个目录，就判断是不是一个文件，时文件则输出文件路径
-        if (!dirFile.isDirectory()) {
-            if (dirFile.isFile()) {
-                System.out.println(dirFile.getCanonicalFile());
-            }
-            return ;
-        }
+    public void backupByCopyDirectory(List<StoredRecordFileVo> storedRecordFileList, String backupRootDirectory, boolean isVerify) throws IOException, Exception
+    {
 
-        for (int j = 0; j < depth; j++) {
-            System.out.print("  ");
-        }
-        System.out.print("|--");
-        System.out.println(dirFile.getName());
-        //获取此目录下的所有文件名与目录名
-        String[] fileList = dirFile.list();
-        int currentDepth=depth+1;
-        for (int i = 0; i < fileList.length; i++) {
-            //遍历文件目录
-            String string = fileList[i];
-            //File("documentName","fileName")是File的另一个构造器
-            File file = new File(dirFile.getPath(),string);
-            String name = file.getName();
-            //如果是一个目录，搜索深度depth++，输出目录名后，进行递归
-            if (file.isDirectory()) {
-                //递归
-                find(file.getCanonicalPath(),currentDepth);
-            }else{
-                //如果是文件，则直接输出文件名
-                for (int j = 0; j < currentDepth; j++) {
-                    System.out.print("   ");
+        Map<String, List<StoredRecordFileVo>> dirFileMap = storedRecordFileList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getStoreDir));
+        final ExecutorService executor = Executors.newFixedThreadPool(threadPoolSize);
+        List<FutureTask<List<StoredRecordFileVo>>> taskList = new ArrayList<>();
+        for(String storeDir : dirFileMap.keySet())
+        {
+            FutureTask<List<StoredRecordFileVo>> task = new FutureTask<>(new Callable<List<StoredRecordFileVo>>() {
+                @Override
+                public List<StoredRecordFileVo> call() throws Exception {
+                    List<StoredRecordFileVo> list = backupDirByCopy(storeDir, dirFileMap.get(storeDir), backupRootDirectory, isVerify);
+                    return list;
                 }
-                System.out.print("|--");
-                System.out.println(name);
-            }
+            });
+            taskList.add(task);
+            executor.execute(task);
+        }
+        executor.shutdown();
+        for(FutureTask<List<StoredRecordFileVo>> task : taskList)
+        {
+            task.get();
         }
     }
 
-    private Map<String, Object> findFirstRecordFile()
+//    public void backupByCopyDirectory(List<StoredRecordFileVo> storedRecordFileList, String backupRootDirectory, boolean isVerify) throws IOException
+//    {
+//        Map<String, List<StoredRecordFileVo>> dirFileMap = storedRecordFileList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getStoreDir));
+//        for(String storeDir : dirFileMap.keySet())
+//        {
+//            String backupDir = String.format("%s%s", backupRootDirectory, storeDir);
+//            if(this.isWin)
+//                backupDir = String.format("%s%s", backupRootDirectory, storeDir.replaceAll("^[A-Z]:", ""));
+//            logger.debug(String.format("begin to copy all file from %s to %s", storeDir, backupDir));
+//            File srcDir = new File(storeDir);
+//            File dstDir = new File(backupDir);
+//            if(!dstDir.exists())
+//                dstDir.mkdirs();
+//            FileUtils.copyDirectory(srcDir, dstDir);
+//            for(StoredRecordFileVo fileVo : dirFileMap.get(storeDir))
+//            {
+//                fileVo.setBackupMethod(BackupMethod.COPY);
+//                fileVo.setBackupSavePath(String.format("%s/%s", backupDir, fileVo.getFileName()));
+//            }
+//            if(isVerify)
+//            {
+//                for(StoredRecordFileVo fileVo : dirFileMap.get(storeDir))
+//                {
+//                    File dstFile = new File(fileVo.getBackupSavePath());
+//                    if(!dstFile.exists())
+//                    {
+//                        logger.error(String.format("backup file verify fail : %s not exist", fileVo.getBackupSavePath()));
+//                        fileVo.setVerifyResult(false);
+//                        fileVo.setVerifyComment(String.format("%s not exist", fileVo.getBackupSavePath()));
+//                    }
+//                    else
+//                    {
+//                        String dstMd5 = DigestUtils.md5DigestAsHex(new FileInputStream(fileVo.getBackupSavePath()));
+//                        String srcMd5 = DigestUtils.md5DigestAsHex(new FileInputStream(fileVo.getFileSavePath()));
+//                        if(!dstMd5.equals(srcMd5))
+//                        {
+//                            logger.error(String.format("backup file verify fail : %s md5=%s but %s md5=%s ", fileVo.getFileSavePath(), srcMd5, fileVo.getBackupSavePath(), dstMd5));
+//                            fileVo.setVerifyResult(false);
+//                            fileVo.setVerifyComment(String.format("%s md5=%s but %s md5=%s ", fileVo.getFileSavePath(), srcMd5, fileVo.getBackupSavePath(), dstMd5));
+//                        }
+//                        else
+//                        {
+//                            logger.debug(String.format("backup file %s verify success", fileVo.getBackupSavePath()));
+//                            fileVo.setVerifyResult(true);
+//                            fileVo.setVerifyComment(String.format("backup file %s verify success", fileVo.getFileSavePath()));
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+    private List<StoredRecordFileVo> backupDirByCopy(String storeDir, List<StoredRecordFileVo> recordFileList, String backupRootDirectory, boolean isVerify) throws IOException
     {
-        return null;
+        String backupDir = String.format("%s%s", backupRootDirectory, storeDir);
+        if(this.isWin)
+            backupDir = String.format("%s%s", backupRootDirectory, storeDir.replaceAll("^[A-Z]:", ""));
+        logger.debug(String.format("begin to copy all file from %s to %s", storeDir, backupDir));
+        File srcDir = new File(storeDir);
+        File dstDir = new File(backupDir);
+        if(!dstDir.exists())
+            dstDir.mkdirs();
+        FileUtils.copyDirectory(srcDir, dstDir);
+        for(StoredRecordFileVo fileVo : recordFileList)
+        {
+            fileVo.setBackupMethod(BackupMethod.COPY);
+            fileVo.setBackupSavePath(String.format("%s/%s", backupDir, fileVo.getFileName()));
+        }
+        if(isVerify)
+        {
+            for(StoredRecordFileVo fileVo : recordFileList)
+            {
+                File dstFile = new File(fileVo.getBackupSavePath());
+                if(!dstFile.exists())
+                {
+                    logger.error(String.format("backup file verify fail : %s not exist", fileVo.getBackupSavePath()));
+                    fileVo.setVerifyResult(false);
+                    fileVo.setVerifyComment(String.format("%s not exist", fileVo.getBackupSavePath()));
+                }
+                else
+                {
+                    String dstMd5 = DigestUtils.md5DigestAsHex(new FileInputStream(fileVo.getBackupSavePath()));
+                    String srcMd5 = DigestUtils.md5DigestAsHex(new FileInputStream(fileVo.getFileSavePath()));
+                    if(!dstMd5.equals(srcMd5))
+                    {
+                        logger.error(String.format("backup file verify fail : %s md5=%s but %s md5=%s ", fileVo.getFileSavePath(), srcMd5, fileVo.getBackupSavePath(), dstMd5));
+                        fileVo.setVerifyResult(false);
+                        fileVo.setVerifyComment(String.format("%s md5=%s but %s md5=%s ", fileVo.getFileSavePath(), srcMd5, fileVo.getBackupSavePath(), dstMd5));
+                    }
+                    else
+                    {
+                        logger.debug(String.format("backup file %s verify success", fileVo.getBackupSavePath()));
+                        fileVo.setVerifyResult(true);
+                        fileVo.setVerifyComment(String.format("backup file %s verify success", fileVo.getFileSavePath()));
+                    }
+                }
+            }
+        }
+        return recordFileList;
     }
 
 //    @Test
@@ -315,11 +414,17 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
         scanRole.setMntDir("D:/mnt");
 
         String chosenData = "20200303";
+        String backupRootDir = "D:/mnt/backup";
         try
         {
             SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-            List<StoredRecordFileVo> list = scanMntDir(scanRole, sf.parse(chosenData));
+            List<StoredRecordFileVo> list = scanMntDir(scanRole, sf.parse(chosenData), new ArrayList<>());
             System.out.println(list.size());
+            backupByCopyDirectory(list, backupRootDir, true);
+            for(StoredRecordFileVo fileVo : list)
+            {
+                System.out.println(String.format("%s verify result %b, comment=%s", fileVo.getFileSavePath(), fileVo.isVerifyResult(), fileVo.getVerifyComment()));
+            }
         }
         catch (Exception ex)
         {

@@ -1,5 +1,7 @@
 package com.channelsoft.ccod.recordmanager.backup.vo;
 
+import com.channelsoft.ccod.recordmanager.constant.BackupMethod;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -24,7 +26,17 @@ public class StoredRecordFileVo {
 
     private String recordIndex; //录音索引
 
-    public StoredRecordFileVo(String enterpriseId, Date callDate, String fileSavePath, String recordIndex)
+    private String grokPattern; //用来匹配的gork pattern
+
+    private BackupMethod backupMethod;  //备份方式
+
+    private String backupSavePath; //存储路径
+
+    private boolean verifyResult; //验证结果
+
+    private String verifyComment; //验证结果说明
+
+    public StoredRecordFileVo(String enterpriseId, Date callDate, String fileSavePath, String recordIndex, String grokPattern)
     {
         this.enterpriseId = enterpriseId;
         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
@@ -34,6 +46,7 @@ public class StoredRecordFileVo {
         this.fileName = arr[arr.length - 1];
         this.storeDir = fileSavePath.replaceAll(String.format("/%s$", this.fileName), "");
         this.recordIndex = recordIndex;
+        this.grokPattern = grokPattern;
     }
 
     public String getEnterpriseId() {
@@ -82,5 +95,45 @@ public class StoredRecordFileVo {
 
     public void setFileSavePath(String fileSavePath) {
         this.fileSavePath = fileSavePath;
+    }
+
+    public String getGrokPattern() {
+        return grokPattern;
+    }
+
+    public void setGrokPattern(String grokPattern) {
+        this.grokPattern = grokPattern;
+    }
+
+    public BackupMethod getBackupMethod() {
+        return backupMethod;
+    }
+
+    public void setBackupMethod(BackupMethod backupMethod) {
+        this.backupMethod = backupMethod;
+    }
+
+    public String getBackupSavePath() {
+        return backupSavePath;
+    }
+
+    public void setBackupSavePath(String backupSavePath) {
+        this.backupSavePath = backupSavePath;
+    }
+
+    public boolean isVerifyResult() {
+        return verifyResult;
+    }
+
+    public void setVerifyResult(boolean verifyResult) {
+        this.verifyResult = verifyResult;
+    }
+
+    public String getVerifyComment() {
+        return verifyComment;
+    }
+
+    public void setVerifyComment(String verifyComment) {
+        this.verifyComment = verifyComment;
     }
 }

@@ -1,4 +1,4 @@
-package com.channelsoft.ccod.recordmanager.vo;
+package com.channelsoft.ccod.recordmanager.monitor.vo;
 
 public class RecordIndexVo
 {
