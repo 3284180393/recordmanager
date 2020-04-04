@@ -41,7 +41,7 @@ public class EntRecordCheckResultVo
 	{
 		
 	}	
-	public EntRecordCheckResultVo(EntRecordVo recordVo, GlsEntPo entPo)
+	public EntRecordCheckResultVo(EntRecordVo recordVo, EnterpriseVo entPo)
 	{
 		this.enterpriseId = entPo.getEnterpriseId();
 		this.enterpriseName = entPo.getEnterpriseName();

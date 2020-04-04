@@ -10,7 +10,5 @@ import org.springframework.context.annotation.Configuration;
  * @Date: 2020/4/1 21:19
  * @Version: 1.0
  */
-@Configuration
-@ConfigurationProperties(prefix = "record.combination")
 public class CombinationRecordCfg {
 }

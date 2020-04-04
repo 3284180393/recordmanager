@@ -2,12 +2,12 @@ package com.channelsoft.ccod.recordmanager.backup.service.impl;
 
 import com.channelsoft.ccod.recordmanager.backup.service.IRecordBackupService;
 import com.channelsoft.ccod.recordmanager.backup.vo.StoredRecordFileVo;
-import com.channelsoft.ccod.recordmanager.config.DateFormatCfg;
-import com.channelsoft.ccod.recordmanager.config.DiskScanRole;
-import com.channelsoft.ccod.recordmanager.config.MixRecordCfg;
+import com.channelsoft.ccod.recordmanager.config.*;
 import com.channelsoft.ccod.recordmanager.constant.BackupMethod;
 import com.channelsoft.ccod.recordmanager.exception.ParamException;
+import com.channelsoft.ccod.recordmanager.monitor.dao.IEnterpriseDao;
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformCallService;
+import com.channelsoft.ccod.recordmanager.monitor.vo.EnterpriseVo;
 import com.channelsoft.ccod.recordmanager.utils.GrokParser;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
@@ -46,7 +46,13 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
     MixRecordCfg mixRecordCfg;
 
     @Autowired
+    RecordStoreCfg recordStoreCfg;
+
+    @Autowired
     IPlatformCallService callService;
+
+    @Autowired
+    IEnterpriseDao enterpriseDao;
 
     private DateFormatCfg dateFormatCfg = new DateFormatCfg();
 
@@ -60,15 +66,17 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
     public void init() throws Exception
     {
         System.out.println("hello world");
+        List<EnterpriseVo> entList = this.enterpriseDao.select();
+        System.out.println(String.format("platform has %d enterprises", entList.size()));
     }
 
     @Override
-    public List<StoredRecordFileVo> scanMntDir(DiskScanRole scanRole, Date chosenDate, List<String> excludeEntIds) throws IOException
+    public List<StoredRecordFileVo> scanMntDir(RecordStoreRole storeRole, Date chosenDate, List<String> excludeEntIds) throws IOException
     {
-        String example = scanRole.getExample();
-        String grokPattern = scanRole.getGrokPattern();
-        String mntDir = scanRole.getMntDir();
-        Map<String, Object> resultMap = GrokParser.match(grokPattern, scanRole.getExample());
+        String example = storeRole.getExample();
+        String grokPattern = storeRole.getGrokPattern();
+        String mntDir = storeRole.getMntDir();
+        Map<String, Object> resultMap = GrokParser.match(grokPattern, storeRole.getExample());
         List<String> saveDirs = new ArrayList<>();
         if(resultMap.containsKey("date"))
         {
@@ -139,7 +147,7 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
         {
             scan(saveDir, dept, false, ".*", allFileList);
         }
-        int indexLen = scanRole.getRecordIndex().split("/").length;
+        int indexLen = storeRole.getRecordIndex().split("/").length;
         boolean escape = example.matches("^/") ? true : false;
         List<StoredRecordFileVo> retList = new ArrayList<>();
         Set<String> entIdSet = new HashSet(excludeEntIds);
@@ -404,21 +412,28 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
 //        {
 //            ex.printStackTrace();
 //        }
-        DiskScanRole scanRole = new DiskScanRole();
+        RecordStoreRole storeRole = new RecordStoreRole();
 //        scanRole.setExample("D:/mnt/Data/record/0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav");
 //        scanRole.setGrokPattern("^D:/mnt/Data/record/(?<entId>\\d+)/Agent/(?<date>20\\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\\d+)_(?<agentId>\\d+)_(?<remoteUrl>\\d+).wav$");
 //        scanRole.setRecordIndex("0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav");
-        scanRole.setExample("D:/mnt/Date1/0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav");
-        scanRole.setGrokPattern("^D:/mnt/Date1/(?<entId>\\d+)/(?<yearAndMonth>20\\d{2}(0[1-9]|1[0-2]))/(?<AgentDn1>\\d+)/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<localUrl>\\d+)_(?<agentId>\\d+)_(?<remoteUrl>\\d+).wav$");
-        scanRole.setRecordIndex("0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav");
-        scanRole.setMntDir("D:/mnt");
-
+        storeRole.setExample("D:/mnt/Date1/0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav");
+        storeRole.setGrokPattern("^D:/mnt/Date1/(?<entId>\\d+)/(?<yearAndMonth>20\\d{2}(0[1-9]|1[0-2]))/(?<AgentDn1>\\d+)/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<localUrl>\\d+)_(?<agentId>\\d+)_(?<remoteUrl>\\d+).wav$");
+        storeRole.setRecordIndex("0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav");
+        storeRole.setMntDir("D:/mnt");
+        DateFormat dateFormat = new DateFormat();
+        dateFormat.setDate("yyyyMMdd");
+        dateFormat.setDay("dd");
+        dateFormat.setMonth("MM");
+        dateFormat.setMonthAndDay("MMdd");
+        dateFormat.setYear("yyyy");
+        dateFormat.setYearAndMonth("yyyyMM");
+        storeRole.setDateFormat(dateFormat);
         String chosenData = "20200303";
         String backupRootDir = "D:/mnt/backup";
         try
         {
             SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-            List<StoredRecordFileVo> list = scanMntDir(scanRole, sf.parse(chosenData), new ArrayList<>());
+            List<StoredRecordFileVo> list = scanMntDir(storeRole, sf.parse(chosenData), new ArrayList<>());
             System.out.println(list.size());
             backupByCopyDirectory(list, backupRootDir, true);
             for(StoredRecordFileVo fileVo : list)

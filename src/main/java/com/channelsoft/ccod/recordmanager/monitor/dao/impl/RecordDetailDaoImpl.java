@@ -1,5 +1,6 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
+import com.channelsoft.ccod.recordmanager.config.CallCheckRule;
 import com.channelsoft.ccod.recordmanager.config.DBConstructCfg;
 import com.channelsoft.ccod.recordmanager.config.NormalPlatformCondition;
 import com.channelsoft.ccod.recordmanager.constant.RecordType;
@@ -10,7 +11,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -20,7 +21,6 @@ import javax.annotation.PostConstruct;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -40,49 +40,58 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
     @Autowired
     JdbcTemplate glsJdbcTemplate;
 
+    @Value("${ccod.recordType}")
     private RecordType recordType;
 
-    private DBConstructCfg dbConstructCfg;
+    @Value("${db.table.detail}")
+    private String detailTable;
 
-    private int[] callTypes;
+    @Value("${db.table.mix}")
+    private String mixTable;
 
-    private int[] endTypes;
+    @Value("${db.table.combination}")
+    private String combinationTable;
 
-    private int minTalkDuration;
+    @Value("${db.table.bak}")
+    private String bakTable;
 
+    @Value("${ccod.hasBak}")
     private boolean hasBak;
+
+    @Autowired
+    CallCheckRule callCheckRule;
 
     @PostConstruct
     public void init()
     {
-        initTestParams();
-        try
-        {
-            String enterpriseId = "0000099999";
-            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
-            Date beginTime = sf.parse("20190814092600");
-            Date endTime = sf.parse("20190814092800");
-            List<RecordDetailVo> list = this.select(enterpriseId, beginTime, endTime);
-            System.out.println(list.size());
-            for(RecordDetailVo detailVo : list)
-            {
-                if(StringUtils.isNotBlank(detailVo.getRecordIndex()))
-                {
-                    System.out.print(detailVo.getSessionId());
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            ex.printStackTrace();
-        }
-
+//        initTestParams();
+//        try
+//        {
+//            String enterpriseId = "0000099999";
+//            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
+//            Date beginTime = sf.parse("20190814092600");
+//            Date endTime = sf.parse("20190814092800");
+//            List<RecordDetailVo> list = this.select(enterpriseId, beginTime, endTime);
+//            System.out.println(list.size());
+//            for(RecordDetailVo detailVo : list)
+//            {
+//                if(StringUtils.isNotBlank(detailVo.getRecordIndex()))
+//                {
+//                    System.out.print(detailVo.getSessionId());
+//                }
+//            }
+//        }
+//        catch (Exception ex)
+//        {
+//            ex.printStackTrace();
+//        }
+        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$");
     }
 
     @Override
     public List<RecordDetailVo> select(String enterpriseId, Date beginTime, Date endTime) {
         String sql = generateSql(enterpriseId, beginTime, endTime);
-        logger.debug(String.format("begin to query %s record detail with type=%s from %s to %s : %s",
+        logger.debug(String.format("begin to query %s record detail with type=%s from %s to %s, sql=%s",
                 enterpriseId, this.recordType, beginTime, endTime, sql));
         List<RecordDetailVo> retList = this.glsJdbcTemplate.query(sql, new MapRow(enterpriseId));
         logger.debug(String.format("%s has %d record from %s to %s with type=%s",
@@ -118,59 +127,59 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
         {
             sql.append(",BRT.RECORD_NAME AS RECORD_INDEX_BAK");
         }
-        sql.append(" FROM \"").append(enterpriseId).append("\".").append(this.dbConstructCfg.getDetailTable())
+        sql.append(" FROM \"").append(enterpriseId).append("\".").append(this.detailTable)
                 .append(" RD");
         switch (this.recordType)
         {
             case MIX:
                 sql.append(" LEFT JOIN \"").append(enterpriseId).append("\".")
-                        .append(this.dbConstructCfg.getMixRecordTable()).append(" ERT");
+                        .append(this.mixTable).append(" ERT");
                 sql.append(" ON RD.SESSION_ID = ERT.SESSION_ID AND RD.AGENT_ID = ERT.AGENT_ID");
                 break;
             case COMBINATION:
                 sql.append(" LEFT JOIN \"").append(enterpriseId).append("\".")
-                        .append(this.dbConstructCfg.getCombinationRecordTable()).append(" ERBT");
+                        .append(this.combinationTable).append(" ERBT");
                 sql.append(" ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID");
                 break;
             case MIX_AND_COMBINATION:
                 sql.append(" LEFT JOIN \"").append(enterpriseId).append("\".")
-                        .append(this.dbConstructCfg.getMixRecordTable()).append(" ERT");
+                        .append(this.mixTable).append(" ERT");
                 sql.append(" ON RD.SESSION_ID = ERT.SESSION_ID AND RD.AGENT_ID = ERT.AGENT_ID");
                 sql.append(" LEFT JOIN \"").append(enterpriseId).append("\".")
-                        .append(this.dbConstructCfg.getCombinationRecordTable()).append(" ERBT");
+                        .append(this.combinationTable).append(" ERBT");
                 sql.append(" ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID");
                 break;
         }
         if (this.hasBak)
         {
             sql.append(" LEFT JOIN \"").append(enterpriseId).append("\".")
-                    .append(this.dbConstructCfg.getBakRecordTable()).append(" BRT");
+                    .append(this.bakTable).append(" BRT");
             sql.append(" ON RD.SESSION_ID = BRT.SESSION_ID AND RD.AGENT_ID = BRT.AGENT_ID");
         }
         SimpleDateFormat sFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 //		 sql.append(" WHERE 1=1 ");
         sql.append(" WHERE 1=1 AND RD.TALK_DURATION > ")
-                .append(this.minTalkDuration)
+                .append(this.callCheckRule.getMinTalkDuration())
                 .append(" AND RD.END_TIME >= to_date('")
                 .append(sFormat.format(beginTime))
                 .append("','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('")
                 .append(sFormat.format(endTime))
                 .append("','yyyy-MM-dd HH24:mi:ss')");
-        if (this.callTypes != null && this.callTypes.length > 0)
+        if (this.callCheckRule.getCallTypes() != null && this.callCheckRule.getCallTypes().size() > 0)
         {
-            sql.append(" AND (RD.CALLTYPE=").append(this.callTypes[0]);
-            for (int i = 1; i < this.callTypes.length; i++)
+            sql.append(" AND (RD.CALLTYPE=").append(this.callCheckRule.getCallTypes().get(0));
+            for (int i = 1; i < this.callCheckRule.getCallTypes().size(); i++)
             {
-                sql.append(" OR RD.CALLTYPE=").append(this.callTypes[i]);
+                sql.append(" OR RD.CALLTYPE=").append(this.callCheckRule.getCallTypes().get(i));
             }
             sql.append(")");
         }
-        if (this.endTypes != null && this.endTypes.length > 0)
+        if (this.callCheckRule.getEndTypes() != null && this.callCheckRule.getEndTypes().size() > 0)
         {
-            sql.append(" AND (RD.END_TYPE=").append(this.endTypes[0]);
-            for (int i = 1; i < this.callTypes.length; i++)
+            sql.append(" AND (RD.END_TYPE=").append(this.callCheckRule.getEndTypes().get(0));
+            for (int i = 1; i < this.callCheckRule.getEndTypes().size(); i++)
             {
-                sql.append(" OR RD.END_TYPE=").append(this.endTypes[i]);
+                sql.append(" OR RD.END_TYPE=").append(this.callCheckRule.getEndTypes().get(i));
             }
             sql.append(")");
         }
@@ -236,16 +245,15 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
 
     private void initTestParams()
     {
-        this.callTypes = new int[]{0, 1};
-        this.endTypes = new int[]{254, 255};
-        this.dbConstructCfg = new DBConstructCfg();
-        this.dbConstructCfg.setBakRecordTable("ENT_RECORD_BX_TABLE_H_201806");
-        this.dbConstructCfg.setCombinationRecordTable("ENT_RECORD_BX_TABLE_H_201806");
-        this.dbConstructCfg.setDetailTable("R_DETAIL");
-        this.dbConstructCfg.setMixRecordTable("ENT_RECORD_BX_TABLE_H_201806");
-        this.minTalkDuration = 1;
-        this.recordType = RecordType.MIX_AND_COMBINATION;
-        this.hasBak = true;
+//        this.callTypes = new int[]{0, 1};
+//        this.endTypes = new int[]{254, 255};
+//        this.detailTable = "R_DETAIL";
+//        this.mixTable = "ENT_RECORD_BX_TABLE_H_201806";
+//        this.combinationTable = "ENT_RECORD_BX_TABLE_H_201806";
+//        this.bakTable = "ENT_RECORD_BX_TABLE_H_201806";
+//        this.minTalkDuration = 1;
+//        this.recordType = RecordType.MIX_AND_COMBINATION;
+//        this.hasBak = true;
     }
 
     @Test
