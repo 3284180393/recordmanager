@@ -11,7 +11,9 @@ public enum RecordType {
 
     MIX(1, "MIX", "混音"),
 
-    COMBINATION(2, "COMBINATION", "并线"),;
+    COMBINATION(2, "COMBINATION", "并线"),
+
+    MIX_AND_COMBINATION(2, "MIX_AND_COMBINATION", "既有混音也有并线"),;
 
     public int id;
 
