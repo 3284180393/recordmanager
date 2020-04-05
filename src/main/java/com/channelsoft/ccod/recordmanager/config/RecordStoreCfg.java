@@ -16,7 +16,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "record")
 public class RecordStoreCfg {
 
-    List<RecordStoreRole> storeRoles;
+    private List<RecordStoreRole> storeRoles;
 
     public List<RecordStoreRole> getStoreRoles() {
         return storeRoles;

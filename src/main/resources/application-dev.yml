@@ -13,6 +13,8 @@ spring:
       driver-class-name: com.mysql.jdbc.Driver
 
 ccod:
+  platformId: shltPA
+  platformName: 上海联通平安
   platformType: normal
   recordType: MIX
   hasBak: true
