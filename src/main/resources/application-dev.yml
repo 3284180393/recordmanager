@@ -15,7 +15,7 @@ spring:
 ccod:
   platformId: shltPA
   platformName: 上海联通平安
-  platformType: normal
+  platformType: NORMAL
   recordType: MIX
   hasBak: true
 
@@ -64,6 +64,32 @@ record:
       year: yyyy
       month: MM
       day: dd
+
+notify:
+  record-check:
+    indexLostCount: 5
+    indexLostRate: 3
+    fileLostCount: 5
+    fileLostRate: 3
+    bakIndexLostCount: 5
+    bakIndexLostRate: 3
+    bakFileLostCount: 5
+    bakFileLostRate: 3
+    dingding:
+      group[0]:
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        tag: "[录音报警]"
+        atAll: true
+        atList:
+          - 18515100747
+  record-backup:
+    dingding:
+      group[0]:
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        tag: "[录音备份]"
+        atAll: true
+        atList:
+          - 18515100747
 
 
 

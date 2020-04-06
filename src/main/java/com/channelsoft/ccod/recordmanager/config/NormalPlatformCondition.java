@@ -1,5 +1,6 @@
 package com.channelsoft.ccod.recordmanager.config;
 
+import com.channelsoft.ccod.recordmanager.constant.CCODPlatformType;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.env.Environment;
@@ -19,7 +20,7 @@ public class NormalPlatformCondition implements Condition {
         Environment environment = conditionContext.getEnvironment();
         if(!environment.containsProperty("ccod.platformType"))
             return false;
-        else if("normal".equals(environment.getProperty("ccod.platformType")))
+        else if(CCODPlatformType.NORMAL.name.equals(environment.getProperty("ccod.platformType")))
             return true;
         return false;
     }

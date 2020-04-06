@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
  * @Date: 2020/4/5 13:52
  * @Version: 1.0
  */
+@Service
 public class RecordManagerServiceImpl implements IRecordManagerService {
 
     private final static Logger logger = LoggerFactory.getLogger(RecordManagerServiceImpl.class);
@@ -49,7 +51,7 @@ public class RecordManagerServiceImpl implements IRecordManagerService {
     @Value("${ccod.platformName}")
     private String platformName;
 
-    @Value("${ccod.platformName}")
+    @Value("${ccod.hasBak}")
     private boolean hasBak;
 
     @Override
