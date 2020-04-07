@@ -1,0 +1,99 @@
+spring:
+  datasource:
+    gls:
+      username: ccod
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      driver-class-name: oracle.jdbc.OracleDriver
+
+    business:
+      username: ccod
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      driver-class-name: oracle.jdbc.OracleDriver
+
+ccod:
+  platformId: shltPA
+  platformName: 上海联通平安
+  platformType: BIG_ENT
+  recordType: MIX
+  hasBak: true
+  enterprise:
+    choseMethod: ANY
+    list:
+
+
+call:
+  callTypes:
+    - 0
+    - 1
+  endTypes:
+    - 254
+    - 255
+  minTalkDuration: 1
+  notCheckeEnts:
+  notCheckBakEnts:
+
+db:
+  table:
+    detail: R_DETAIL
+    enterprise: GLS_ENTERPRISE_INFO
+    mix: ENT_RECORD_TABLE
+    combination: ENT_RECORD_BX_TABLE
+    bak: ENT_RECORD_BX_TABLE_BAK
+    agentRelate: GLS_DB_AGENT_RELATE
+
+record:
+  storeRoles[0]:
+    mntDir: "/mnt"
+    grokPattern: ^/mnt/Data/record/(?<entId>\d+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+    example: /mnt/Data/record/0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
+    recordIndex: 0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
+    dateFormat:
+      date: yyyyMMdd
+      yearAndMonth: yyyyMM
+      monthAndDay: MMdd
+      year: yyyy
+      month: MM
+      day: dd
+  storeRoles[1]:
+    mntDir: "/mnt"
+    grokPattern: ^D:/mnt/Date1/(?<entId>\d+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/(?<AgentDn1>\d+)/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<localUrl>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+    example: /mnt/Date1/0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
+    recordIndex: 0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
+    dateFormat:
+      date: yyyyMMdd
+      yearAndMonth: yyyyMM
+      monthAndDay: MMdd
+      year: yyyy
+      month: MM
+      day: dd
+
+notify:
+  record-check:
+    indexLostCount: 5
+    indexLostRate: 3
+    fileLostCount: 5
+    fileLostRate: 3
+    bakIndexLostCount: 5
+    bakIndexLostRate: 3
+    bakFileLostCount: 5
+    bakFileLostRate: 3
+    dingding:
+      group[0]:
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        tag: "[录音报警]"
+        atAll: true
+        atList:
+          - 18515100747
+  record-backup:
+    dingding:
+      group[0]:
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        tag: "[录音备份]"
+        atAll: true
+        atList:
+          - 18515100747
+
+
+

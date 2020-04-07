@@ -1,5 +1,7 @@
 package com.channelsoft.ccod.recordmanager.config;
 
+
+import com.channelsoft.ccod.recordmanager.constant.CCODPlatformType;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.env.Environment;
@@ -19,7 +21,7 @@ public class BigEntPlatformCondition implements Condition {
         Environment environment = conditionContext.getEnvironment();
         if(!environment.containsProperty("ccod.platformType"))
             return false;
-        else if("bigEnt".equals(environment.getProperty("ccod.platformType")))
+        else if(CCODPlatformType.BIG_ENT.name.equals(environment.getProperty("ccod.platformType")))
             return true;
         return false;
     }
