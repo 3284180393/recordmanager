@@ -35,13 +35,18 @@ call:
   notCheckBakEnts:
 
 db:
+  gls:
+    name: CCOD
+  business:
+    name: db1
   table:
     detail: R_DETAIL
     enterprise: GLS_ENTERPRISE_INFO
     mix: ENT_RECORD_TABLE
     combination: ENT_RECORD_BX_TABLE
     bak: ENT_RECORD_BX_TABLE_BAK
-    agentRelate: GLS_DB_AGENT_RELATE
+    dbAgentRelate: GLS_DB_AGENT_RELATE
+    dbEntRelate: GLS_DB_ENT_RELATE
 
 record:
   storeRoles[0]:

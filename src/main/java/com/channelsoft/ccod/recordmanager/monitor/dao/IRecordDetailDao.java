@@ -15,11 +15,11 @@ import java.util.List;
 public interface IRecordDetailDao {
 
     /**
-     * 查询指定时间的录音详情
-     * @param enterpriseId 企业id
-     * @param beginTime 开始时间
-     * @param endTime 结束时间
+     * 从业务库指定的schema查询的录音详情
+     * @param schemaName schema名
+     * @param beginTime 录音对应的呼叫结束时间不早于此时间
+     * @param endTime 录音对应的结束时间不晚于此时间
      * @return 查询结果
      */
-    List<RecordDetailVo> select(String enterpriseId, Date beginTime, Date endTime);
+    List<RecordDetailVo> select(String schemaName, Date beginTime, Date endTime);
 }

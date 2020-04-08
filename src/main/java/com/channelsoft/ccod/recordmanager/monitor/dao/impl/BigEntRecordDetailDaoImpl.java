@@ -1,47 +1,54 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
 import com.channelsoft.ccod.recordmanager.config.CallCheckRule;
-import com.channelsoft.ccod.recordmanager.config.DBConstructCfg;
-import com.channelsoft.ccod.recordmanager.config.NormalPlatformCondition;
 import com.channelsoft.ccod.recordmanager.constant.RecordType;
+import com.channelsoft.ccod.recordmanager.monitor.dao.IDBSchemaDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
+import com.channelsoft.ccod.recordmanager.monitor.vo.DBSchemaVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 /**
- * @ClassName: RecordDetailDaoImpl
+ * @ClassName: BigEntRecordDetailDaoImpl
  * @Author: lanhb
- * @Description: 普通平台的IRecordlDetailDao接口实现类，适用ucds库为mysql，业务库为单一oracle场景
- * @Date: 2020/4/4 13:15
+ * @Description: 用来实现单业务库的大域企业录音查询
+ * @Date: 2020/4/8 15:09
  * @Version: 1.0
  */
-@Conditional(NormalPlatformCondition.class)
-@Component(value = "recordDetailDao")
-public class RecordDetailDaoImpl implements IRecordDetailDao {
+public class BigEntRecordDetailDaoImpl implements IRecordDetailDao {
 
     private final static Logger logger = LoggerFactory.getLogger(RecordDetailDaoImpl.class);
 
     @Autowired
     JdbcTemplate glsJdbcTemplate;
 
+    @Autowired
+    JdbcTemplate buzJdbcTemplate;
+
+    @Autowired
+    IDBSchemaDao dbSchemaDao;
+
     @Value("${ccod.recordType}")
     private RecordType recordType;
+
+    @Value("${db.gls.name}")
+    private String glsDBName;
+
+    @Value("${db.business.name}")
+    private String buzDBName;
 
     @Value("${db.table.detail}")
     private String detailTable;
@@ -55,54 +62,34 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
     @Value("${db.table.bak}")
     private String bakTable;
 
+    @Value("${db.table.dbAgentRelate}")
+    private String dbAgentRelateTable;
+
     @Value("${ccod.hasBak}")
     private boolean hasBak;
 
     @Autowired
     CallCheckRule callCheckRule;
 
-    @PostConstruct
-    public void init()
-    {
-//        initTestParams();
-//        try
-//        {
-//            String enterpriseId = "0000099999";
-//            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
-//            Date beginTime = sf.parse("20190814092600");
-//            Date endTime = sf.parse("20190814092800");
-//            List<RecordDetailVo> list = this.select(enterpriseId, beginTime, endTime);
-//            System.out.println(list.size());
-//            for(RecordDetailVo detailVo : list)
-//            {
-//                if(StringUtils.isNotBlank(detailVo.getRecordIndex()))
-//                {
-//                    System.out.print(detailVo.getSessionId());
-//                }
-//            }
-//        }
-//        catch (Exception ex)
-//        {
-//            ex.printStackTrace();
-//        }
-        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$");
-    }
-
     @Override
-    public List<RecordDetailVo> select(String schemaName, Date beginTime, Date endTime) {
-        String sql = generateSql(schemaName, beginTime, endTime);
-        logger.debug(String.format("begin to query %s record detail with type=%s from %s to %s, sql=%s",
-                schemaName, this.recordType, beginTime, endTime, sql));
-        List<RecordDetailVo> retList = this.glsJdbcTemplate.query(sql, new MapRow());
-        logger.debug(String.format("%s has %d record from %s to %s with type=%s",
-                schemaName, retList.size(), beginTime, endTime, this.recordType.name));
+    public List<RecordDetailVo> select(String enterpriseId, Date beginTime, Date endTime) {
+        List<DBSchemaVo> schemaList = this.dbSchemaDao.select();
+        List<RecordDetailVo> retList = new ArrayList<>();
+        for(DBSchemaVo schemaVo : schemaList)
+        {
+            String sql = generateSql(schemaVo.getSchemaName(), beginTime, endTime);
+            List<RecordDetailVo> queryList = this.buzJdbcTemplate.query(sql, new MapRow());
+            logger.debug(String.format("find %d record at schema %s", queryList.size(), schemaVo.getSchemaName()));
+            retList.addAll(queryList);
+        }
         return retList;
     }
 
-    private String generateSql(String schemaName, Date beginTime, Date endTime)
+    private String generateSql(String schemaName,Date beginTime, Date endTime)
     {
         StringBuffer sql = new StringBuffer();
         sql.append("SELECT ");
+        sql.append("GDAR.ENT_ID AS ENT_ID,");
         sql.append("RD.SESSION_ID AS SESSION_ID,");
         sql.append("RD.START_TIME AS START_TIME,");
         sql.append("RD.END_TIME AS END_TIME,");
@@ -129,6 +116,8 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
         }
         sql.append(" FROM \"").append(schemaName).append("\".").append(this.detailTable)
                 .append(" RD");
+        sql.append(String.format(" INNER JOIN \"%s\".%s GDAR ON RD.AGENT_ID=GDAR.AGENT_ID AND GDAR.DB_NAME='%s' AND GDAR.SCHEME_NAME='%s'",
+                this.glsDBName, this.dbAgentRelateTable, this.buzDBName, schemaName));
         switch (this.recordType)
         {
             case MIX:
@@ -188,11 +177,11 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
 
     private class MapRow implements RowMapper<RecordDetailVo>
     {
-
         @Override
         public RecordDetailVo mapRow(ResultSet rs, int i) throws SQLException
         {
             RecordDetailVo detailVo = new RecordDetailVo();
+            detailVo.setEnterpriseId(rs.getString("ENT_ID"));
             detailVo.setRecordType(recordType);
             detailVo.setSessionId(rs.getString("SESSION_ID"));
             detailVo.setStartTime(rs.getTimestamp("START_TIME"));
@@ -235,37 +224,4 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
         }
     }
 
-    private void initTestParams()
-    {
-//        this.callTypes = new int[]{0, 1};
-//        this.endTypes = new int[]{254, 255};
-//        this.detailTable = "R_DETAIL";
-//        this.mixTable = "ENT_RECORD_BX_TABLE_H_201806";
-//        this.combinationTable = "ENT_RECORD_BX_TABLE_H_201806";
-//        this.bakTable = "ENT_RECORD_BX_TABLE_H_201806";
-//        this.minTalkDuration = 1;
-//        this.recordType = RecordType.MIX_AND_COMBINATION;
-//        this.hasBak = true;
-    }
-
-    @Test
-    public void sqlTest()
-    {
-        initTestParams();
-        try
-        {
-            String enterpriseId = "0000099999";
-            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-            Date beginTime = sf.parse("20190814");
-            Date endTime = sf.parse("20190815");
-            String sql = generateSql(enterpriseId, beginTime, endTime);
-            System.out.println(sql);
-            sql = generateSql(enterpriseId, beginTime, endTime);
-            System.out.println(sql);
-        }
-        catch (Exception ex)
-        {
-            ex.printStackTrace();
-        }
-    }
 }

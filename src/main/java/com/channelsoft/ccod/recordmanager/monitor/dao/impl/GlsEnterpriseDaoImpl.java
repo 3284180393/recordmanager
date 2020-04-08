@@ -43,48 +43,16 @@ public class GlsEnterpriseDaoImpl implements IEnterpriseDao {
     @Value("${db.table.enterprise}")
     private String enterpriseTable;
 
+    @Value("${db.table.entDBRelate}")
+    private String entDBRelateTable;
+
     @Override
     public List<EnterpriseVo> select() {
-        String sql = String.format("SELECT GEI.ENTERPRISEID AS ENT_ID, GEI.ENTERPRISENAME AS ENT_NAME FROM %s GEI WHERE GEI.ISOPEN=1", this.enterpriseTable);
+        String sql = String.format("SELECT GEI.ENTERPRISEID AS ENT_ID,GEI.ENTERPRISENAME AS ENT_NAME,GDER.DB_NAME AS DB_NAME FROM GLS_ENTERPRISE_INFO GEI INNER JOIN %s GDER ON GEI.ENTERPRISEID=GDER.ENT_ID WHERE GEI.ISOPEN=1",
+                this.enterpriseTable, this.entDBRelateTable);
         logger.debug(String.format("begin to query all enterprise, sql=%s", sql));
         List<EnterpriseVo> list = this.glsJdbcTemplate.query(sql, new MapRow());
         logger.debug(String.format("find %d enterprise in platform", list.size()));
-        logger.debug(String.format("method of choose enterprise is %s", enterpriseCfg.getChoseMethod().name));
-        List<EnterpriseVo> retList = new ArrayList<>();
-        Set<String> entSet = new HashSet<>(enterpriseCfg.getList());
-        for(EnterpriseVo enterpriseVo : list)
-        {
-            switch (enterpriseCfg.getChoseMethod())
-            {
-                case ALL:
-                    logger.debug(String.format("%s been chosen", enterpriseVo.getEnterpriseId()));
-                    retList.add(enterpriseVo);
-                    break;
-                case EXCLUdE:
-                    if(entSet.contains(enterpriseVo.getEnterpriseId()))
-                    {
-                        logger.debug("%s is in exclude enterprise list, so not chosen", enterpriseVo.getEnterpriseId());
-                    }
-                    else
-                    {
-                        logger.debug("%s is not in exclude enterprise list. so chosen", enterpriseVo.getEnterpriseId());
-                        retList.add(enterpriseVo)
-                    }
-                    break;
-                case INCLUDE:
-                    if(!entSet.contains(enterpriseVo.getEnterpriseId()))
-                    {
-                        logger.debug("%s is not in include enterprise list, so not chosen", enterpriseVo.getEnterpriseId());
-                    }
-                    else
-                    {
-                        logger.debug("%s is in include enterprise list. so chosen", enterpriseVo.getEnterpriseId());
-                        retList.add(enterpriseVo)
-                    }
-                    break;
-            }
-        }
-        logger.debug("find %d wanted enterprise", list.size());
         return list;
     }
 
@@ -96,6 +64,7 @@ public class GlsEnterpriseDaoImpl implements IEnterpriseDao {
             EnterpriseVo vo = new EnterpriseVo();
             vo.setEnterpriseName(rs.getString("ENT_NAME"));
             vo.setEnterpriseId(rs.getString("ENT_ID"));
+            vo.setDbName(rs.getString("DB_NAME"));
             return vo;
         }
     }

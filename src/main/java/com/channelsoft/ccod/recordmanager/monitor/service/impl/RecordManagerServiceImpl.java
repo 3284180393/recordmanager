@@ -1,7 +1,8 @@
-package com.channelsoft.ccod.recordmanager.backup.service.impl;
+package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
-import com.channelsoft.ccod.recordmanager.backup.service.IRecordManagerService;
+import com.channelsoft.ccod.recordmanager.monitor.service.IRecordManagerService;
 import com.channelsoft.ccod.recordmanager.config.CallCheckRule;
+import com.channelsoft.ccod.recordmanager.config.EnterpriseCfg;
 import com.channelsoft.ccod.recordmanager.config.RecordStoreCfg;
 import com.channelsoft.ccod.recordmanager.config.RecordStoreRole;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IEnterpriseDao;
@@ -45,6 +46,9 @@ public class RecordManagerServiceImpl implements IRecordManagerService {
     @Autowired
     CallCheckRule callCheckRule;
 
+    @Autowired
+    EnterpriseCfg enterpriseCfg;
+
     @Value("${ccod.platformId}")
     private String platformId;
 
@@ -82,73 +86,6 @@ public class RecordManagerServiceImpl implements IRecordManagerService {
         }
         PlatformRecordCheckResultVo resultVo = new PlatformRecordCheckResultVo(platformId, platformName, now, beginTime,
                 endTime, entRecordCheckResultList);
-        return resultVo;
-    }
-
-    private EntRecordCheckResultVo checkEntRecord(EnterpriseVo enterpriseVo, Date startTime, Date endTime)
-    {
-        Date checkTime = new Date();
-        List<RecordDetailVo> recordDetailList = recordDetailDao.select(enterpriseVo.getEnterpriseId(), startTime, endTime);
-        List<RecordDetailVo> successList = new ArrayList<>();
-        List<RecordDetailVo> notIndexList = new ArrayList<>();
-        List<RecordDetailVo> notFileList = new ArrayList<>();
-        List<RecordDetailVo> notBakIndexList = new ArrayList<>();
-        List<RecordDetailVo> notBakFileList = new ArrayList<>();
-        RecordStoreRole storeRole = null;
-        RecordStoreRole bkStoreRole = null;
-        EntRecordCheckResultVo resultVo = null;
-        for(RecordDetailVo detailVo : recordDetailList)
-        {
-            //检查录音索引
-            if(StringUtils.isBlank(detailVo.getRecordIndex()))
-            {
-                notIndexList.add(detailVo);
-                continue;
-            }
-            //检查录音文件
-            RecordIndexSearch indexSearch = new RecordIndexSearch();
-            indexSearch.storeRole = storeRole;
-            indexSearch.recordIndex = detailVo.getRecordIndex();
-            String fileSavePath = searchRecordIndexAbsolutePath(indexSearch);
-            if(StringUtils.isBlank(fileSavePath))
-            {
-                notFileList.add(detailVo);
-                continue;
-            }
-            storeRole = indexSearch.storeRole;
-            if(this.hasBak)
-            {
-                if(StringUtils.isBlank(detailVo.getBakRecordIndex()))
-                {
-                    notBakIndexList.add(detailVo);
-                    continue;
-                }
-                else
-                {
-                    RecordIndexSearch bakIndexSearch = new RecordIndexSearch();
-                    bakIndexSearch.recordIndex = detailVo.getBakRecordIndex();
-                    bakIndexSearch.storeRole = bkStoreRole;
-                    String bkFileSavePath = searchRecordIndexAbsolutePath(bakIndexSearch);
-                    if(StringUtils.isNotBlank(bkFileSavePath))
-                    {
-                        notBakFileList.add(detailVo);
-                        continue;
-                    }
-                    bkStoreRole = bakIndexSearch.storeRole;
-                }
-            }
-            successList.add(detailVo);
-        }
-        if(hasBak)
-        {
-            resultVo = new EntRecordCheckResultVo(enterpriseVo, checkTime, startTime, endTime, successList,
-                    notIndexList, notFileList, notBakIndexList, notBakFileList);
-        }
-        else
-        {
-            resultVo = new EntRecordCheckResultVo(enterpriseVo, checkTime, startTime, endTime, successList,
-                    notIndexList, notFileList);
-        }
         return resultVo;
     }
 
@@ -210,6 +147,87 @@ public class RecordManagerServiceImpl implements IRecordManagerService {
     @Override
     public RecordBackupResultVo backup(Date chosenDate) throws Exception {
         return null;
+    }
+
+
+    @Override
+    public EntRecordCheckResultVo checkEntRecord(EnterpriseVo enterpriseVo, Date checkTime, Date beginTime, Date endTime, List<RecordDetailVo> entRecordList) {
+        List<RecordDetailVo> recordDetailList = recordDetailDao.select(enterpriseVo.getEnterpriseId(), beginTime, endTime);
+        List<RecordDetailVo> successList = new ArrayList<>();
+        List<RecordDetailVo> notIndexList = new ArrayList<>();
+        List<RecordDetailVo> notFileList = new ArrayList<>();
+        List<RecordDetailVo> notBakIndexList = new ArrayList<>();
+        List<RecordDetailVo> notBakFileList = new ArrayList<>();
+        RecordStoreRole storeRole = null;
+        RecordStoreRole bkStoreRole = null;
+        EntRecordCheckResultVo resultVo = null;
+        for(RecordDetailVo detailVo : recordDetailList)
+        {
+            //检查录音索引
+            if(StringUtils.isBlank(detailVo.getRecordIndex()))
+            {
+                notIndexList.add(detailVo);
+                continue;
+            }
+            //检查录音文件
+            RecordIndexSearch indexSearch = new RecordIndexSearch();
+            indexSearch.storeRole = storeRole;
+            indexSearch.recordIndex = detailVo.getRecordIndex();
+            String fileSavePath = searchRecordIndexAbsolutePath(indexSearch);
+            if(StringUtils.isBlank(fileSavePath))
+            {
+                notFileList.add(detailVo);
+                continue;
+            }
+            storeRole = indexSearch.storeRole;
+            if(this.hasBak)
+            {
+                if(StringUtils.isBlank(detailVo.getBakRecordIndex()))
+                {
+                    notBakIndexList.add(detailVo);
+                    continue;
+                }
+                else
+                {
+                    RecordIndexSearch bakIndexSearch = new RecordIndexSearch();
+                    bakIndexSearch.recordIndex = detailVo.getBakRecordIndex();
+                    bakIndexSearch.storeRole = bkStoreRole;
+                    String bkFileSavePath = searchRecordIndexAbsolutePath(bakIndexSearch);
+                    if(StringUtils.isNotBlank(bkFileSavePath))
+                    {
+                        notBakFileList.add(detailVo);
+                        continue;
+                    }
+                    bkStoreRole = bakIndexSearch.storeRole;
+                }
+            }
+            successList.add(detailVo);
+        }
+        if(hasBak)
+        {
+            resultVo = new EntRecordCheckResultVo(enterpriseVo, checkTime, beginTime, endTime, successList,
+                    notIndexList, notFileList, notBakIndexList, notBakFileList);
+        }
+        else
+        {
+            resultVo = new EntRecordCheckResultVo(enterpriseVo, checkTime, endTime, endTime, successList,
+                    notIndexList, notFileList);
+        }
+        return resultVo;
+    }
+
+    @Override
+    public boolean isEnterpriseChosen(String enterpriseId) {
+        switch (enterpriseCfg.getChoseMethod())
+        {
+            case ALL:
+                return true;
+            case INCLUDE:
+                return new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId);
+            case EXCLUdE:
+                return !(new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId));
+        }
+        return false;
     }
 
     class RecordIndexSearch

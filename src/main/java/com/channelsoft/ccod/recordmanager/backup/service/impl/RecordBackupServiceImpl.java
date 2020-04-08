@@ -4,9 +4,7 @@ import com.channelsoft.ccod.recordmanager.backup.service.IRecordBackupService;
 import com.channelsoft.ccod.recordmanager.backup.vo.StoredRecordFileVo;
 import com.channelsoft.ccod.recordmanager.config.*;
 import com.channelsoft.ccod.recordmanager.constant.BackupMethod;
-import com.channelsoft.ccod.recordmanager.exception.ParamException;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IEnterpriseDao;
-import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformCallService;
 import com.channelsoft.ccod.recordmanager.monitor.vo.EnterpriseVo;
 import com.channelsoft.ccod.recordmanager.utils.GrokParser;
 import org.apache.commons.io.FileUtils;
@@ -47,9 +45,6 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
 
     @Autowired
     RecordStoreCfg recordStoreCfg;
-
-    @Autowired
-    IPlatformCallService callService;
 
     @Autowired
     IEnterpriseDao enterpriseDao;
