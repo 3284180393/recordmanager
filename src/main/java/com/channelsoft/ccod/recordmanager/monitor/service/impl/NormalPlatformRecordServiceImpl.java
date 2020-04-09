@@ -15,7 +15,7 @@ import java.util.Date;
  * @Date: 2020/4/8 21:06
  * @Version: 1.0
  */
-public class NormalPlatformRecordServiceImpl implements IPlatformRecordService {
+public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
 
     private final static Logger logger = LoggerFactory.getLogger(NormalPlatformRecordServiceImpl.class);
 
@@ -24,8 +24,4 @@ public class NormalPlatformRecordServiceImpl implements IPlatformRecordService {
         return null;
     }
 
-    @Override
-    public PlatformRecordBackupResultVo backup(Date backupDate) {
-        return null;
-    }
 }

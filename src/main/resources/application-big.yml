@@ -16,6 +16,7 @@ ccod:
   platformId: shltPA
   platformName: 上海联通平安
   platformType: BIG_ENT
+  buzDBCount: 1
   recordType: MIX
   hasBak: true
   enterprise:

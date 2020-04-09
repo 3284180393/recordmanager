@@ -1,18 +1,17 @@
 package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
-import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
+import com.channelsoft.ccod.recordmanager.config.BigEntPlatformCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IGlsAgentDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
-import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
-import com.channelsoft.ccod.recordmanager.monitor.vo.GlsAgentVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
-import com.channelsoft.ccod.recordmanager.utils.EnterpriseRecordTool;
+import com.channelsoft.ccod.recordmanager.monitor.vo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.stereotype.Service;
 
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -27,7 +26,9 @@ import java.util.stream.Collectors;
  * @Date: 2020/4/8 21:09
  * @Version: 1.0
  */
-public class BigEntPlatformRecordServiceImpl implements IPlatformRecordService {
+@Conditional(BigEntPlatformCondition.class)
+@Service
+public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
 
     private final static Logger logger = LoggerFactory.getLogger(BigEntPlatformRecordServiceImpl.class);
 
@@ -37,30 +38,89 @@ public class BigEntPlatformRecordServiceImpl implements IPlatformRecordService {
     @Autowired
     IRecordDetailDao recordDetailDao;
 
-    @Value("${ccod.platformId}")
-    private String platformId;
-
-    @Value("${ccod.platformName}")
-    private String platformName;
+    protected String dbName = "db1";
 
     @Override
     public PlatformRecordCheckResultVo check(Date beginTime, Date endTime) {
+        Date checkTime = new Date();
+        PlatformRecordCheckResultVo resultVo;
+        try
+        {
+            List<GlsAgentVo> glsAgentList = queryGLSAgent();
+            List<RecordDetailVo> recordList = searchPlatformRecord(beginTime, endTime, glsAgentList);
+            List<EntRecordCheckResultVo> entRecordCheckResultList = checkPlatformRecord(recordList, checkTime, beginTime, endTime, glsAgentList);
+            resultVo = new PlatformRecordCheckResultVo(this.platformId, this.platformName, checkTime, beginTime, endTime, entRecordCheckResultList);
+        }
+        catch (Exception e)
+        {
+            logger.error(String.format("check %s(%s) record exception", this.platformName, this.platformId), e);
+            resultVo = PlatformRecordCheckResultVo.fail(this.platformId, this.platformName, e.getMessage());
+        }
+        return resultVo;
+    }
+
+    protected List<GlsAgentVo> queryGLSAgent()
+    {
         List<GlsAgentVo> glsAgentList = this.glsAgentDao.select();
         Map<String, List<GlsAgentVo>> entAgentMap = glsAgentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
         for(String entId : entAgentMap.keySet())
         {
-            if(!EnterpriseRecordTool.isChosen(entId))
+            if(!isEnterpriseChosen(entId))
             {
-                logger.debug(String.format("%s not been chosen", entId));
+                logger.debug(String.format("%s not been chosen, %d agent given up", entId, entAgentMap.get(entId).size()));
                 entAgentMap.remove(entId);
             }
         }
         glsAgentList = entAgentMap.values().stream().flatMap(list -> list.stream()).collect(Collectors.toList());
-        Map<String, List<GlsAgentVo>> schemaAgentMap = glsAgentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getSchemaName));
+        return glsAgentList;
+    }
+
+    protected List<EntRecordCheckResultVo> checkPlatformRecord(List<RecordDetailVo> recordList, Date checkTime, Date beginTime, Date endTime, List<GlsAgentVo> agentList)
+    {
+        Map<String, List<RecordDetailVo>> entRecordMap = recordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getEnterpriseId));
+        Map<String, List<GlsAgentVo>> entAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
+        List<EntRecordCheckResultVo> entRecordCheckResultList = new ArrayList<>();
+        for(String enterpriseId : entAgentMap.keySet())
+        {
+            EnterpriseVo enterpriseVo = new EnterpriseVo();
+            enterpriseVo.setEnterpriseId(enterpriseId);
+            enterpriseVo.setEnterpriseName(entAgentMap.get(enterpriseId).get(0).getEntName());
+            List<RecordDetailVo> entRecordList = entRecordMap.containsKey(enterpriseId) ? entRecordMap.get(enterpriseId) : new ArrayList<>();
+            EntRecordCheckResultVo entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
+            entRecordCheckResultList.add(entRecordCheckResultVo);
+        }
+        return entRecordCheckResultList;
+    }
+
+    protected List<RecordDetailVo> searchPlatformRecord(Date beginTime, Date endTime, List<GlsAgentVo> agentList) throws Exception
+    {
+        Map<String, List<GlsAgentVo>> dbAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getDbName));
+        List<GlsAgentVo> dbAgentList = new ArrayList<>();
+        for(String name : dbAgentMap.keySet())
+        {
+            if(dbName.equals(name))
+            {
+                logger.debug(String.format("%d agent on db %s", dbAgentMap.get(name).size(), name));
+                dbAgentList.addAll(dbAgentMap.get(name));
+            }
+            else
+            {
+                logger.error(String.format("db %s is unknown, %d agent given up", name, dbAgentMap.get(name).size()));
+            }
+        }
+        List<RecordDetailVo> recordList = getRecordDetailFromDB(this.recordDetailDao, beginTime, endTime, dbAgentList);;
+        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+        logger.debug(String.format("%s(%s) find %s record from %s to %s", this.platformName, this.platformId, recordList.size(), sf.format(beginTime), sf.format(endTime)));
+        return recordList;
+    }
+
+    protected List<RecordDetailVo> getRecordDetailFromDB(IRecordDetailDao dao, Date beginTime, Date endTime, List<GlsAgentVo> agentList) throws Exception
+    {
+        Map<String, List<GlsAgentVo>> schemaAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getSchemaName));
         List<RecordDetailVo> recordList = new ArrayList<>();
         for(String schemaName : schemaAgentMap.keySet())
         {
-            List<RecordDetailVo> schemaRecordList = recordDetailDao.select(schemaName, beginTime, endTime);
+            List<RecordDetailVo> schemaRecordList = dao.select(schemaName, beginTime, endTime);
             Map<String, List<RecordDetailVo>> agentRecordMap = schemaRecordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getAgentId));
             Map<String, GlsAgentVo> acceptAgentMap = schemaAgentMap.get(schemaName).stream().collect(Collectors.toMap(GlsAgentVo::getAgentId, Function.identity()));
             for(String agentId : agentRecordMap.keySet())
@@ -72,15 +132,12 @@ public class BigEntPlatformRecordServiceImpl implements IPlatformRecordService {
                 }
                 else
                 {
+                    for(RecordDetailVo detailVo : agentRecordMap.get(agentId))
+                        detailVo.setEnterpriseId(acceptAgentMap.get(agentId).getEntId());
                     recordList.addAll(agentRecordMap.get(agentId));
                 }
             }
         }
-        return null;
-    }
-
-    @Override
-    public PlatformRecordBackupResultVo backup(Date backupDate) {
-        return null;
+        return recordList;
     }
 }

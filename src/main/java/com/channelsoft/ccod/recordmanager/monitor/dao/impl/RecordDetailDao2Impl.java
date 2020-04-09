@@ -1,8 +1,6 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
 import com.channelsoft.ccod.recordmanager.config.CallCheckRule;
-import com.channelsoft.ccod.recordmanager.config.DBConstructCfg;
-import com.channelsoft.ccod.recordmanager.config.NormalPlatformCondition;
 import com.channelsoft.ccod.recordmanager.constant.RecordType;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
@@ -12,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
@@ -25,20 +22,19 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @ClassName: RecordDetailDaoImpl
+ * @ClassName: RecordDetailDao2Impl
  * @Author: lanhb
- * @Description: 普通平台的IRecordlDetailDao接口实现类，适用ucds库为mysql，业务库为单一oracle场景
- * @Date: 2020/4/4 13:15
+ * @Description: 对于2个业务库的大域平台这是业务库2的IRecordDetailDao接口实现类
+ * @Date: 2020/4/9 10:53
  * @Version: 1.0
  */
-@Conditional(NormalPlatformCondition.class)
-@Component(value = "recordDetailDao")
-public class RecordDetailDaoImpl implements IRecordDetailDao {
+@Component(value = "recordDetail2Dao")
+public class RecordDetailDao2Impl implements IRecordDetailDao {
 
     private final static Logger logger = LoggerFactory.getLogger(RecordDetailDaoImpl.class);
 
     @Autowired
-    JdbcTemplate businessJdbcTemplate;
+    JdbcTemplate business2JdbcTemplate;
 
     @Value("${ccod.recordType}")
     private RecordType recordType;
@@ -64,28 +60,7 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
     @PostConstruct
     public void init()
     {
-//        initTestParams();
-//        try
-//        {
-//            String enterpriseId = "0000099999";
-//            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
-//            Date beginTime = sf.parse("20190814092600");
-//            Date endTime = sf.parse("20190814092800");
-//            List<RecordDetailVo> list = this.select(enterpriseId, beginTime, endTime);
-//            System.out.println(list.size());
-//            for(RecordDetailVo detailVo : list)
-//            {
-//                if(StringUtils.isNotBlank(detailVo.getRecordIndex()))
-//                {
-//                    System.out.print(detailVo.getSessionId());
-//                }
-//            }
-//        }
-//        catch (Exception ex)
-//        {
-//            ex.printStackTrace();
-//        }
-        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$");
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@");
     }
 
     @Override
@@ -93,7 +68,7 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
         String sql = generateSql(schemaName, beginTime, endTime);
         logger.debug(String.format("begin to query %s record detail with type=%s from %s to %s, sql=%s",
                 schemaName, this.recordType, beginTime, endTime, sql));
-        List<RecordDetailVo> retList = this.businessJdbcTemplate.query(sql, new MapRow());
+        List<RecordDetailVo> retList = this.business2JdbcTemplate.query(sql, new MapRow());
         logger.debug(String.format("%s has %d record from %s to %s with type=%s",
                 schemaName, retList.size(), beginTime, endTime, this.recordType.name));
         return retList;
