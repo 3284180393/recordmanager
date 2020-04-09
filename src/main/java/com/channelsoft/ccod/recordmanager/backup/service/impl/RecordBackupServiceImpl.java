@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
  * @Date: 2020/4/1 11:43
  * @Version: 1.0
  */
-@Service
 public class RecordBackupServiceImpl implements IRecordBackupService {
 
     private boolean isWin = true;

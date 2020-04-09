@@ -12,11 +12,17 @@ spring:
       jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
       driver-class-name: oracle.jdbc.OracleDriver
 
+    business2:
+      username: ccod
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      driver-class-name: oracle.jdbc.OracleDriver
+
 ccod:
   platformId: shltPA
   platformName: 上海联通平安
   platformType: BIG_ENT
-  buzDBCount: 1
+  buzDBCount: 2
   recordType: MIX
   hasBak: true
   enterprise:
@@ -100,6 +106,3 @@ notify:
         atAll: true
         atList:
           - 18515100747
-
-
-

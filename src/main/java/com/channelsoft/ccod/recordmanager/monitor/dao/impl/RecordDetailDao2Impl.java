@@ -1,5 +1,6 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
+import com.channelsoft.ccod.recordmanager.config.BigEnt2DBPlatformCondition;
 import com.channelsoft.ccod.recordmanager.config.CallCheckRule;
 import com.channelsoft.ccod.recordmanager.constant.RecordType;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,7 @@ import java.util.List;
  * @Date: 2020/4/9 10:53
  * @Version: 1.0
  */
+@Conditional(BigEnt2DBPlatformCondition.class)
 @Component(value = "recordDetail2Dao")
 public class RecordDetailDao2Impl implements IRecordDetailDao {
 

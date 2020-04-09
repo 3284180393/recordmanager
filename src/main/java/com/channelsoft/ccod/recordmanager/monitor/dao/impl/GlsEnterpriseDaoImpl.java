@@ -43,13 +43,13 @@ public class GlsEnterpriseDaoImpl implements IEnterpriseDao {
     @Value("${db.table.enterprise}")
     private String enterpriseTable;
 
-    @Value("${db.table.entDBRelate}")
-    private String entDBRelateTable;
+    @Value("${db.table.dbEntRelate}")
+    private String dbEntRelate;
 
     @Override
     public List<EnterpriseVo> select() {
         String sql = String.format("SELECT GEI.ENTERPRISEID AS ENT_ID,GEI.ENTERPRISENAME AS ENT_NAME,GDER.DB_NAME AS DB_NAME FROM GLS_ENTERPRISE_INFO GEI INNER JOIN %s GDER ON GEI.ENTERPRISEID=GDER.ENT_ID WHERE GEI.ISOPEN=1",
-                this.enterpriseTable, this.entDBRelateTable);
+                this.enterpriseTable, this.dbEntRelate);
         logger.debug(String.format("begin to query all enterprise, sql=%s", sql));
         List<EnterpriseVo> list = this.glsJdbcTemplate.query(sql, new MapRow());
         logger.debug(String.format("find %d enterprise in platform", list.size()));

@@ -31,7 +31,6 @@ import java.util.List;
  * @Date: 2020/4/4 13:15
  * @Version: 1.0
  */
-@Conditional(NormalPlatformCondition.class)
 @Component(value = "recordDetailDao")
 public class RecordDetailDaoImpl implements IRecordDetailDao {
 
