@@ -13,8 +13,6 @@ public class EnterpriseVo {
 
     private String enterpriseId; //企业id
 
-    private String dbName; //该企业呼叫明细存储数据库名
-
     public String getEnterpriseName() {
         return enterpriseName;
     }
@@ -31,11 +29,4 @@ public class EnterpriseVo {
         this.enterpriseId = enterpriseId;
     }
 
-    public String getDbName() {
-        return dbName;
-    }
-
-    public void setDbName(String dbName) {
-        this.dbName = dbName;
-    }
 }

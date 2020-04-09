@@ -4,6 +4,7 @@ import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo
 import com.channelsoft.ccod.recordmanager.config.DingDingGroup;
 import com.channelsoft.ccod.recordmanager.config.RecordBackupNotifyCfg;
 import com.channelsoft.ccod.recordmanager.config.RecordCheckNotifyCfg;
+import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultVo;
 import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import com.channelsoft.ccod.recordmanager.notify.vo.RobotClient;
@@ -37,19 +38,18 @@ public class NotifyServiceImpl implements INotifyService {
     public void init()
     {
         System.out.println("$$$$$$$$$$$$$$$$$$$$");
-        PlatformRecordCheckResultVo resultVo = PlatformRecordCheckResultVo.fail("shltPA", "上海联通平安", "无法连接数据库");
-        notify(resultVo);
+//        PlatformRecordCheckResultVo resultVo = PlatformRecordCheckResultVo.fail("shltPA", "上海联通平安", "无法连接数据库");
+//        notify(resultVo);
     }
 
     @Override
     public void notify(PlatformRecordCheckResultVo checkResultVo) {
         if(!checkResultVo.isResult())
         {
-            logger.debug(String.format("check %s(%s) record  fail[%s]",
-                    checkResultVo.getPlatformName(), checkResultVo.getPlatformId(), checkResultVo.getComment()));
             for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
             {
                 String msg = String.format("%s %s", group.getTag(), checkResultVo.getComment());
+                logger.debug(String.format("send message[%s] to %s", msg, group.getWebHookToken() ));
                 TextMessage message = new TextMessage(msg, group.isAtAll(), group.getAtList());
                 try
                 {
@@ -59,7 +59,29 @@ public class NotifyServiceImpl implements INotifyService {
                 {
                     ex.printStackTrace();
                 }
-
+            }
+        }
+        else
+        {
+            for(EntRecordCheckResultVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList())
+            {
+                if(!entRecordCheckResultVo.isResult())
+                {
+                    for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
+                    {
+                        String msg = String.format("%s %s", group.getTag(), entRecordCheckResultVo.getComment());
+                        logger.debug(String.format("send message[%s] to %s", msg, group.getWebHookToken() ));
+                        TextMessage message = new TextMessage(msg, group.isAtAll(), group.getAtList());
+                        try
+                        {
+                            RobotClient.send(group.getWebHookToken(), message);
+                        }
+                        catch (Exception ex)
+                        {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
             }
         }
     }

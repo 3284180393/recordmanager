@@ -187,7 +187,7 @@ public class PlatformRecordCheckResultVo {
         }
         if(failEntCount > 0)
         {
-            msg = String.format("%d个企业检查录音时发生异常");
+            msg = String.format("%d个企业检查录音时发生异常", failEntCount);
         }
         return msg.replaceAll(",$", "");
     }

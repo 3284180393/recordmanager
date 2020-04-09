@@ -31,7 +31,7 @@ public class Business2DataSourceCfg {
     }
 
     @Bean(name = "business2JdbcTemplate")
-    public JdbcTemplate ucdsJdbcTemplate(
+    public JdbcTemplate businessTemplate(
             @Qualifier("business2DataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }

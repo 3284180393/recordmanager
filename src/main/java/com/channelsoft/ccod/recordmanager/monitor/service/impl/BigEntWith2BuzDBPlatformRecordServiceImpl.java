@@ -3,6 +3,7 @@ package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 import com.channelsoft.ccod.recordmanager.config.BigEnt2DBPlatformCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.*;
+import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

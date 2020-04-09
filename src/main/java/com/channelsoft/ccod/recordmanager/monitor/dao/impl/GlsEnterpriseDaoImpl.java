@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * @Date: 2020/4/4 19:50
  * @Version: 1.0
  */
-@Conditional(BigEntPlatformCondition.class)
+@Conditional(NormalPlatformCondition.class)
 @Component(value = "enterpriseDao")
 public class GlsEnterpriseDaoImpl implements IEnterpriseDao {
 
@@ -48,8 +48,8 @@ public class GlsEnterpriseDaoImpl implements IEnterpriseDao {
 
     @Override
     public List<EnterpriseVo> select() {
-        String sql = String.format("SELECT GEI.ENTERPRISEID AS ENT_ID,GEI.ENTERPRISENAME AS ENT_NAME,GDER.DB_NAME AS DB_NAME FROM GLS_ENTERPRISE_INFO GEI INNER JOIN %s GDER ON GEI.ENTERPRISEID=GDER.ENT_ID WHERE GEI.ISOPEN=1",
-                this.enterpriseTable, this.dbEntRelate);
+        String sql = String.format("SELECT GEI.ENTERPRISEID AS ENT_ID,GEI.ENTERPRISENAME AS ENT_NAME FROM %s GEI WHERE GEI.ISOPEN=1",
+                this.enterpriseTable);
         logger.debug(String.format("begin to query all enterprise, sql=%s", sql));
         List<EnterpriseVo> list = this.glsJdbcTemplate.query(sql, new MapRow());
         logger.debug(String.format("find %d enterprise in platform", list.size()));
@@ -64,7 +64,6 @@ public class GlsEnterpriseDaoImpl implements IEnterpriseDao {
             EnterpriseVo vo = new EnterpriseVo();
             vo.setEnterpriseName(rs.getString("ENT_NAME"));
             vo.setEnterpriseId(rs.getString("ENT_ID"));
-            vo.setDbName(rs.getString("DB_NAME"));
             return vo;
         }
     }

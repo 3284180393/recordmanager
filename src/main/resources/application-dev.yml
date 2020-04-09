@@ -6,18 +6,22 @@ spring:
       jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
       driver-class-name: oracle.jdbc.OracleDriver
 
-    ucds:
-      username: ucds
-      password: ucds
-      jdbc-url: jdbc:mysql://10.130.41.12:3306/ucds?useUnicode=true&amp;characterEncoding=utf8
-      driver-class-name: com.mysql.jdbc.Driver
+    business:
+      username: ccod
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      driver-class-name: oracle.jdbc.OracleDriver
 
 ccod:
   platformId: shltPA
   platformName: 上海联通平安
   platformType: NORMAL
-  recordType: MIX
-  hasBak: true
+  buzDBCount: 1
+  recordType: COMBINATION
+  hasBak: false
+  enterprise:
+    choseMethod: ALL
+    list:
 
 call:
   callTypes:
@@ -70,6 +74,12 @@ record:
       year: yyyy
       month: MM
       day: dd
+
+jobs:
+  recordCheck:
+    interval: 10
+    cron: 0 0/2 * * * ?
+    delay: 2
 
 notify:
   record-check:

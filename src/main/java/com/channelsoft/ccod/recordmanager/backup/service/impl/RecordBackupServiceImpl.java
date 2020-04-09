@@ -45,8 +45,8 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
     @Autowired
     RecordStoreCfg recordStoreCfg;
 
-    @Autowired
-    IEnterpriseDao enterpriseDao;
+//    @Autowired
+//    IEnterpriseDao enterpriseDao;
 
     private DateFormatCfg dateFormatCfg = new DateFormatCfg();
 
@@ -60,8 +60,8 @@ public class RecordBackupServiceImpl implements IRecordBackupService {
     public void init() throws Exception
     {
         System.out.println("hello world");
-        List<EnterpriseVo> entList = this.enterpriseDao.select();
-        System.out.println(String.format("platform has %d enterprises", entList.size()));
+//        List<EnterpriseVo> entList = this.enterpriseDao.select();
+//        System.out.println(String.format("platform has %d enterprises", entList.size()));
     }
 
     @Override

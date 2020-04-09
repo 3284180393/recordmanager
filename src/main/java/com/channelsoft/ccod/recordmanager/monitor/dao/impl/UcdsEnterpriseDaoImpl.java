@@ -1,6 +1,6 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
-import com.channelsoft.ccod.recordmanager.config.NormalPlatformCondition;
+import com.channelsoft.ccod.recordmanager.config.CloudPlatformCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IEnterpriseDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.EnterpriseVo;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ import java.util.List;
  * @Date: 2020/4/4 20:32
  * @Version: 1.0
  */
-@Conditional(NormalPlatformCondition.class)
+@Conditional(CloudPlatformCondition.class)
 @Component(value = "enterpriseDao")
 public class UcdsEnterpriseDaoImpl implements IEnterpriseDao {
 
