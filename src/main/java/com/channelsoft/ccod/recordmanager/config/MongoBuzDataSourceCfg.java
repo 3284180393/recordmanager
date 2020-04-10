@@ -12,33 +12,21 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import javax.sql.DataSource;
 
 /**
- * @ClassName: DataSourceCfg
+ * @ClassName: MongoBuzDataSourceCfg
  * @Author: lanhb
- * @Description: 用来定义数据库加载的类
- * @Date: 2020/4/3 18:19
+ * @Description: 用来自动加载mongo业务库的jdbcTemplate
+ * @Date: 2020/4/10 10:50
  * @Version: 1.0
  */
+@Conditional(MongoBuzCondition.class)
 @Configuration
-public class DataSourceCfg {
-    @Bean(name = "glsDataSource")
-    @Qualifier("glsDataSource")
-    @ConfigurationProperties(prefix="spring.datasource.gls")
-    public DataSource glsDataSource() {
-        return DataSourceBuilder.create().build();
-    }
+public class MongoBuzDataSourceCfg {
 
     @Bean(name = "businessDataSource")
     @Qualifier("businessDataSource")
-    @Primary
     @ConfigurationProperties(prefix="spring.datasource.business")
     public DataSource businessDataSource() {
         return DataSourceBuilder.create().build();
-    }
-
-    @Bean(name = "glsJdbcTemplate")
-    public JdbcTemplate glsJdbcTemplate(
-            @Qualifier("glsDataSource") DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
     }
 
     @Bean(name = "businessJdbcTemplate")

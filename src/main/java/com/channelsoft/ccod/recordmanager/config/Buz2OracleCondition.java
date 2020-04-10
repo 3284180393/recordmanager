@@ -1,6 +1,5 @@
 package com.channelsoft.ccod.recordmanager.config;
 
-import com.channelsoft.ccod.recordmanager.constant.CCODPlatformType;
 import com.channelsoft.ccod.recordmanager.constant.DBType;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -9,20 +8,20 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
- * @ClassName: BigEnt2DBPlatformCondition
+ * @ClassName: Buz2OracleCondition
  * @Author: lanhb
- * @Description: 用来定义有两个业务库的大域平台环境
- * @Date: 2020/4/3 23:24
+ * @Description: 用来判断是否有两个oracle业务库
+ * @Date: 2020/4/10 11:51
  * @Version: 1.0
  */
-public class BigEnt2DBPlatformCondition implements Condition {
+public class Buz2OracleCondition implements Condition {
 
     @Override
     public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
         Environment environment = conditionContext.getEnvironment();
-        if(!environment.containsProperty("ccod.platformType") || !environment.containsProperty("db.business.count") || !environment.containsProperty("db.business.type"))
+        if(!environment.containsProperty("db.business.count") || !environment.containsProperty("db.business.type"))
             return false;
-        else if(CCODPlatformType.BIG_ENT.name.equals(environment.getProperty("ccod.platformType")) && "2".equals(environment.getProperty("db.business.count")) && DBType.ORACLE.name.equals(environment.getProperty("db.business.type")))
+        else if("2".equals(environment.getProperty("db.business.count")) && DBType.ORACLE.name.equals(environment.getProperty("db.business.type")))
             return true;
         return false;
     }

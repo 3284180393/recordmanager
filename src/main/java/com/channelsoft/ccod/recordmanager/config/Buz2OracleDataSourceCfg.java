@@ -6,35 +6,32 @@ import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 
 /**
- * @ClassName: Business2DataSourceCfg
+ * @ClassName: Buz2OracleDataSourceCfg
  * @Author: lanhb
- * @Description: 用来定义第二个业务库数据源
- * @Date: 2020/4/9 15:56
+ * @Description: 用来自动加载第2个oracle业务库的jdbcTemplate
+ * @Date: 2020/4/10 11:56
  * @Version: 1.0
  */
-@Conditional(BigEnt2DBPlatformCondition.class)
+@Conditional(Buz2OracleCondition.class)
 @Configuration
-public class Business2DataSourceCfg {
+public class Buz2OracleDataSourceCfg {
 
     @Bean(name = "business2DataSource")
     @Qualifier("business2DataSource")
-    @Primary
     @ConfigurationProperties(prefix="spring.datasource.business2")
-    public DataSource businessDataSource() {
+    public DataSource business2DataSource() {
         return DataSourceBuilder.create().build();
     }
 
     @Bean(name = "business2JdbcTemplate")
-    public JdbcTemplate businessTemplate(
+    @Qualifier("business2JdbcTemplate")
+    public JdbcTemplate business2JdbcTemplate(
             @Qualifier("business2DataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
-
-
 }

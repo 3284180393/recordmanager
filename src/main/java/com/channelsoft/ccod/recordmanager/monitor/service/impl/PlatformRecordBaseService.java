@@ -7,7 +7,7 @@ import com.channelsoft.ccod.recordmanager.config.RecordStoreRole;
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
 import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.EnterpriseVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.GlsAgentVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
 import com.channelsoft.ccod.recordmanager.utils.GrokParser;
 import org.apache.commons.lang3.StringUtils;
@@ -173,7 +173,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return null;
     }
 
-    public boolean isEnterpriseChosen(String enterpriseId) {
+    protected boolean isEnterpriseChosen(String enterpriseId) {
         switch (enterpriseCfg.getChoseMethod())
         {
             case ALL:
@@ -184,6 +184,23 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 return !(new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId));
         }
         return false;
+    }
+
+    protected List<EntRecordCheckResultVo> checkBigEntPlatformRecord(List<RecordDetailVo> recordList, Date checkTime, Date beginTime, Date endTime, List<GlsAgentVo> agentList)
+    {
+        Map<String, List<RecordDetailVo>> entRecordMap = recordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getEnterpriseId));
+        Map<String, List<GlsAgentVo>> entAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
+        List<com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultVo> entRecordCheckResultList = new ArrayList<>();
+        for(String enterpriseId : entAgentMap.keySet())
+        {
+            EnterpriseVo enterpriseVo = new EnterpriseVo();
+            enterpriseVo.setEnterpriseId(enterpriseId);
+            enterpriseVo.setEnterpriseName(entAgentMap.get(enterpriseId).get(0).getEntName());
+            List<RecordDetailVo> entRecordList = entRecordMap.containsKey(enterpriseId) ? entRecordMap.get(enterpriseId) : new ArrayList<>();
+            com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultVo entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
+            entRecordCheckResultList.add(entRecordCheckResultVo);
+        }
+        return entRecordCheckResultList;
     }
 
     protected class RecordIndexSearch

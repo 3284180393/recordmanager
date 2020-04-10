@@ -1,6 +1,7 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
 import com.channelsoft.ccod.recordmanager.config.CloudPlatformCondition;
+import com.channelsoft.ccod.recordmanager.config.UCDSCondtion;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IEnterpriseDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.EnterpriseVo;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ import java.util.List;
  * @Date: 2020/4/4 20:32
  * @Version: 1.0
  */
-@Conditional(CloudPlatformCondition.class)
+@Conditional(UCDSCondtion.class)
 @Component(value = "enterpriseDao")
 public class UcdsEnterpriseDaoImpl implements IEnterpriseDao {
 
@@ -35,9 +36,13 @@ public class UcdsEnterpriseDaoImpl implements IEnterpriseDao {
     @Value("${db.table.enterprise}")
     private String enterpriseTable;
 
+    @Value("${db.table.agent}")
+    private String enterpriseAgentTable;
+
     @Override
     public List<EnterpriseVo> select() {
-        String sql = String.format("SELECT GEI.ENTERPRISEID AS ENT_ID, GEI.ENTERPRISENAME AS ENT_NAME FROM %s GEI WHERE GEI.ISOPEN=1", this.enterpriseTable);
+        String sql = String.format("select ueai.enterprise_id as enterprise_id, uei.enterprise_name as enterprise_name from (select enterprise_id from %s GROUP BY enterprise_id) ueai INNER JOIN %s uei ON ueai.enterprise_id=uei.enterprise_id",
+                this.enterpriseAgentTable, this.enterpriseTable);
         logger.debug(String.format("begin to query all enterprise, sql=%s", sql));
         List<EnterpriseVo> list = this.ucdsJdbcTemplate.query(sql, new MapRow());
         logger.debug(String.format("find %d enterprise in platform", list.size()));

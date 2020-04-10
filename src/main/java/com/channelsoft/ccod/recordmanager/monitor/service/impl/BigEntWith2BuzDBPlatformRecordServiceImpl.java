@@ -8,8 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,6 +41,12 @@ public class BigEntWith2BuzDBPlatformRecordServiceImpl extends BigEntPlatformRec
 
     @Autowired
     protected IRecordDetailDao recordDetail2Dao;
+
+    @PostConstruct
+    public void init()
+    {
+        System.out.println("3333333333333333333333333333333333333333333333333333333333333333333333");
+    }
 
     protected List<RecordDetailVo> searchPlatformRecord(Date beginTime, Date endTime, List<GlsAgentVo> agentList) throws Exception
     {

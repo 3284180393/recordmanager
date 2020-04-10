@@ -36,9 +36,11 @@ call:
 
 db:
   gls:
-    name: CCOD
+    type: GLS
   business:
-    name: db1
+    type: ORACLE
+    count: 1
+    db1Name: db1
   table:
     detail: R_DETAIL
     enterprise: GLS_ENTERPRISE_INFO

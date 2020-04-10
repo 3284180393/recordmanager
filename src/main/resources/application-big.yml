@@ -37,9 +37,11 @@ call:
 
 db:
   gls:
-    name: CCOD
+    type: GLS
   business:
-    name: db1
+    type: ORACLE
+    count: 1
+    db1Name: db1
   table:
     detail: R_DETAIL
     enterprise: GLS_ENTERPRISE_INFO
@@ -74,6 +76,12 @@ record:
       year: yyyy
       month: MM
       day: dd
+
+jobs:
+  recordCheck:
+    interval: 10
+    cron: 0 0/2 * * * ?
+    delay: 2
 
 notify:
   record-check:

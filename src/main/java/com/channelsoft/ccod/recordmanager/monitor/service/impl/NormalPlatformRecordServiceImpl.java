@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -38,6 +39,12 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
 
     @Autowired
     IRecordDetailDao recordDetailDao;
+
+    @PostConstruct
+    public void init()
+    {
+        System.out.println("1111111111111111111111111111111111111111111111111111111111111111111111");
+    }
 
     @Override
     public PlatformRecordCheckResultVo check(Date beginTime, Date endTime) {

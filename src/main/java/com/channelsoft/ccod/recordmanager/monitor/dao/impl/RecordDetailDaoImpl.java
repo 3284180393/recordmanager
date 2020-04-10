@@ -1,8 +1,7 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
+import com.channelsoft.ccod.recordmanager.config.BuzOracleCondition;
 import com.channelsoft.ccod.recordmanager.config.CallCheckRule;
-import com.channelsoft.ccod.recordmanager.config.DBConstructCfg;
-import com.channelsoft.ccod.recordmanager.config.NormalPlatformCondition;
 import com.channelsoft.ccod.recordmanager.constant.RecordType;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
@@ -31,6 +30,7 @@ import java.util.List;
  * @Date: 2020/4/4 13:15
  * @Version: 1.0
  */
+@Conditional(BuzOracleCondition.class)
 @Component(value = "recordDetailDao")
 public class RecordDetailDaoImpl implements IRecordDetailDao {
 

@@ -2,6 +2,7 @@ package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
 import com.channelsoft.ccod.recordmanager.config.BigEntPlatformCondition;
 import com.channelsoft.ccod.recordmanager.config.EnterpriseCfg;
+import com.channelsoft.ccod.recordmanager.config.GLSCondition;
 import com.channelsoft.ccod.recordmanager.config.NormalPlatformCondition;
 import com.channelsoft.ccod.recordmanager.constant.EnterpriseChoseMethod;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IEnterpriseDao;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
  * @Date: 2020/4/4 19:50
  * @Version: 1.0
  */
-@Conditional(NormalPlatformCondition.class)
+@Conditional(GLSCondition.class)
 @Component(value = "enterpriseDao")
 public class GlsEnterpriseDaoImpl implements IEnterpriseDao {
 

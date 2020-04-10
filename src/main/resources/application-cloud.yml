@@ -15,14 +15,13 @@ spring:
 ccod:
   platformId: shltPA
   platformName: 上海联通平安
-  platformType: BIG_ENT
+  platformType: NORMAL
   buzDBCount: 1
-  recordType: MIX
-  hasBak: true
+  recordType: COMBINATION
+  hasBak: false
   enterprise:
     choseMethod: ALL
     list:
-
 
 call:
   callTypes:
@@ -37,19 +36,21 @@ call:
 
 db:
   gls:
-    type: GLS
+    type: UCDS
   business:
-    type: ORACLE
-    count: 2
+    type: MONGO
+    count: 1
     db1Name: db1
   table:
     detail: R_DETAIL
-    enterprise: GLS_ENTERPRISE_INFO
+    enterprise: UCD_ENTERPRISE_INFO
+    agent: UCD_ENTERPRISE_AGENT_INFO
     mix: ENT_RECORD_TABLE
     combination: ENT_RECORD_BX_TABLE
     bak: ENT_RECORD_BX_TABLE_BAK
     dbAgentRelate: GLS_DB_AGENT_RELATE
     dbEntRelate: GLS_DB_ENT_RELATE
+
 
 record:
   storeRoles[0]:

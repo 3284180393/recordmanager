@@ -4,14 +4,15 @@ import com.channelsoft.ccod.recordmanager.config.BigEntPlatformCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IGlsAgentDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.*;
-import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 
+import javax.annotation.PostConstruct;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,6 +42,12 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
 
     protected String dbName = "db1";
 
+    @PostConstruct
+    public void init()
+    {
+        System.out.println("222222222222222222222222222222222222222222222222222");
+    }
+
     @Override
     public PlatformRecordCheckResultVo check(Date beginTime, Date endTime) {
         Date checkTime = new Date();
@@ -49,7 +56,7 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         {
             List<GlsAgentVo> glsAgentList = queryGLSAgent();
             List<RecordDetailVo> recordList = searchPlatformRecord(beginTime, endTime, glsAgentList);
-            List<EntRecordCheckResultVo> entRecordCheckResultList = checkPlatformRecord(recordList, checkTime, beginTime, endTime, glsAgentList);
+            List<EntRecordCheckResultVo> entRecordCheckResultList = checkBigEntPlatformRecord(recordList, checkTime, beginTime, endTime, glsAgentList);
             resultVo = new PlatformRecordCheckResultVo(this.platformId, this.platformName, checkTime, beginTime, endTime, entRecordCheckResultList);
         }
         catch (Exception e)
@@ -74,23 +81,6 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         }
         glsAgentList = entAgentMap.values().stream().flatMap(list -> list.stream()).collect(Collectors.toList());
         return glsAgentList;
-    }
-
-    protected List<EntRecordCheckResultVo> checkPlatformRecord(List<RecordDetailVo> recordList, Date checkTime, Date beginTime, Date endTime, List<GlsAgentVo> agentList)
-    {
-        Map<String, List<RecordDetailVo>> entRecordMap = recordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getEnterpriseId));
-        Map<String, List<GlsAgentVo>> entAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
-        List<EntRecordCheckResultVo> entRecordCheckResultList = new ArrayList<>();
-        for(String enterpriseId : entAgentMap.keySet())
-        {
-            EnterpriseVo enterpriseVo = new EnterpriseVo();
-            enterpriseVo.setEnterpriseId(enterpriseId);
-            enterpriseVo.setEnterpriseName(entAgentMap.get(enterpriseId).get(0).getEntName());
-            List<RecordDetailVo> entRecordList = entRecordMap.containsKey(enterpriseId) ? entRecordMap.get(enterpriseId) : new ArrayList<>();
-            EntRecordCheckResultVo entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
-            entRecordCheckResultList.add(entRecordCheckResultVo);
-        }
-        return entRecordCheckResultList;
     }
 
     protected List<RecordDetailVo> searchPlatformRecord(Date beginTime, Date endTime, List<GlsAgentVo> agentList) throws Exception
