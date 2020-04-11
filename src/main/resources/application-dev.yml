@@ -12,6 +12,10 @@ spring:
       jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
       driver-class-name: oracle.jdbc.OracleDriver
 
+    sqlite:
+      jdbc-url: jdbc:sqlite:D:\temp\recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      driver-class-name: org.sqlite.JDBC
+
 ccod:
   platformId: shltPA
   platformName: 上海联通平安

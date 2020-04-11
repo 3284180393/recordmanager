@@ -4,8 +4,8 @@ import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo
 import com.channelsoft.ccod.recordmanager.config.DingDingGroup;
 import com.channelsoft.ccod.recordmanager.config.RecordBackupNotifyCfg;
 import com.channelsoft.ccod.recordmanager.config.RecordCheckNotifyCfg;
-import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultSumVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import com.channelsoft.ccod.recordmanager.notify.vo.RobotClient;
 import com.channelsoft.ccod.recordmanager.notify.vo.TextMessage;
@@ -43,7 +43,7 @@ public class NotifyServiceImpl implements INotifyService {
     }
 
     @Override
-    public void notify(PlatformRecordCheckResultVo checkResultVo) {
+    public void notify(PlatformRecordCheckResultSumVo checkResultVo) {
         if(!checkResultVo.isResult())
         {
             for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
@@ -63,7 +63,7 @@ public class NotifyServiceImpl implements INotifyService {
         }
         else
         {
-            for(EntRecordCheckResultVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList())
+            for(EntRecordCheckResultSumVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList())
             {
                 if(!entRecordCheckResultVo.isResult())
                 {

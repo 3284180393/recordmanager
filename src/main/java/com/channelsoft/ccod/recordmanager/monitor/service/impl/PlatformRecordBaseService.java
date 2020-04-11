@@ -100,7 +100,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         }
         else
         {
-            PlatformRecordCheckResultVo checkResultVo;
+            PlatformRecordCheckResultSumVo checkResultVo;
             Calendar ca = Calendar.getInstance();
             ca.setTime(backupDate);
             ca.set(Calendar.MILLISECOND, 0);
@@ -116,12 +116,12 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             }
             catch (Exception ex)
             {
-                checkResultVo = PlatformRecordCheckResultVo.fail(this.platformId, this.platformName, ex.getMessage());
+                checkResultVo = PlatformRecordCheckResultSumVo.fail(this.platformId, this.platformName, ex.getMessage());
                 notifyService.notify(checkResultVo);
             }
             List<RecordDetailVo> notBackList = new ArrayList<>();
             Map<String, List<StoredRecordFileVo>> entRecordFileMap = backupList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getEnterpriseId));
-            for(EntRecordCheckResultVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList())
+            for(EntRecordCheckResultSumVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList())
             {
                 if(!entRecordFileMap.containsKey(entRecordCheckResultVo.getEnterpriseId()))
                 {
@@ -148,7 +148,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     }
 
 
-    protected EntRecordCheckResultVo checkEntRecord(EnterpriseVo enterpriseVo, Date checkTime, Date beginTime, Date endTime, List<RecordDetailVo> entRecordList) {
+    protected EntRecordCheckResultSumVo checkEntRecord(EnterpriseVo enterpriseVo, Date checkTime, Date beginTime, Date endTime, List<RecordDetailVo> entRecordList) {
 
         List<RecordDetailVo> successList = new ArrayList<>();
         List<RecordDetailVo> notIndexList = new ArrayList<>();
@@ -157,7 +157,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         List<RecordDetailVo> notBakFileList = new ArrayList<>();
         RecordStoreRole storeRole = null;
         RecordStoreRole bkStoreRole = null;
-        EntRecordCheckResultVo resultVo = null;
+        EntRecordCheckResultSumVo resultVo = null;
         for(RecordDetailVo detailVo : entRecordList)
         {
             //检查录音索引
@@ -202,12 +202,12 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         }
         if(hasBak)
         {
-            resultVo = new EntRecordCheckResultVo(enterpriseVo, checkTime, beginTime, endTime, successList,
+            resultVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, beginTime, endTime, successList,
                     notIndexList, notFileList, notBakIndexList, notBakFileList);
         }
         else
         {
-            resultVo = new EntRecordCheckResultVo(enterpriseVo, checkTime, endTime, endTime, successList,
+            resultVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, endTime, endTime, successList,
                     notIndexList, notFileList);
         }
         return resultVo;
@@ -281,18 +281,18 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return false;
     }
 
-    protected List<EntRecordCheckResultVo> checkBigEntPlatformRecord(List<RecordDetailVo> recordList, Date checkTime, Date beginTime, Date endTime, List<GlsAgentVo> agentList)
+    protected List<EntRecordCheckResultSumVo> checkBigEntPlatformRecord(List<RecordDetailVo> recordList, Date checkTime, Date beginTime, Date endTime, List<GlsAgentVo> agentList)
     {
         Map<String, List<RecordDetailVo>> entRecordMap = recordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getEnterpriseId));
         Map<String, List<GlsAgentVo>> entAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
-        List<com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultVo> entRecordCheckResultList = new ArrayList<>();
+        List<EntRecordCheckResultSumVo> entRecordCheckResultList = new ArrayList<>();
         for(String enterpriseId : entAgentMap.keySet())
         {
             EnterpriseVo enterpriseVo = new EnterpriseVo();
             enterpriseVo.setEnterpriseId(enterpriseId);
             enterpriseVo.setEnterpriseName(entAgentMap.get(enterpriseId).get(0).getEntName());
             List<RecordDetailVo> entRecordList = entRecordMap.containsKey(enterpriseId) ? entRecordMap.get(enterpriseId) : new ArrayList<>();
-            com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultVo entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
+            EntRecordCheckResultSumVo entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
             entRecordCheckResultList.add(entRecordCheckResultVo);
         }
         return entRecordCheckResultList;

@@ -49,20 +49,20 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
     }
 
     @Override
-    public PlatformRecordCheckResultVo check(Date beginTime, Date endTime) {
+    public PlatformRecordCheckResultSumVo check(Date beginTime, Date endTime) {
         Date checkTime = new Date();
-        PlatformRecordCheckResultVo resultVo;
+        PlatformRecordCheckResultSumVo resultVo;
         try
         {
             List<GlsAgentVo> glsAgentList = queryGLSAgent();
             List<RecordDetailVo> recordList = searchPlatformRecord(beginTime, endTime, glsAgentList);
-            List<EntRecordCheckResultVo> entRecordCheckResultList = checkBigEntPlatformRecord(recordList, checkTime, beginTime, endTime, glsAgentList);
-            resultVo = new PlatformRecordCheckResultVo(this.platformId, this.platformName, checkTime, beginTime, endTime, entRecordCheckResultList);
+            List<EntRecordCheckResultSumVo> entRecordCheckResultList = checkBigEntPlatformRecord(recordList, checkTime, beginTime, endTime, glsAgentList);
+            resultVo = new PlatformRecordCheckResultSumVo(this.platformId, this.platformName, checkTime, beginTime, endTime, entRecordCheckResultList);
         }
         catch (Exception e)
         {
             logger.error(String.format("check %s(%s) record exception", this.platformName, this.platformId), e);
-            resultVo = PlatformRecordCheckResultVo.fail(this.platformId, this.platformName, e.getMessage());
+            resultVo = PlatformRecordCheckResultSumVo.fail(this.platformId, this.platformName, e.getMessage());
         }
         return resultVo;
     }

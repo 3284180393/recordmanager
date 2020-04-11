@@ -2,7 +2,7 @@ package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
 import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,7 @@ public class CloudPlatformRecordServiceImpl implements IPlatformRecordService {
     private final static Logger logger = LoggerFactory.getLogger(CloudPlatformRecordServiceImpl.class);
 
     @Override
-    public PlatformRecordCheckResultVo check(Date beginTime, Date endTime) {
+    public PlatformRecordCheckResultSumVo check(Date beginTime, Date endTime) {
         return null;
     }
 

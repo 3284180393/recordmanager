@@ -1,6 +1,5 @@
 package com.channelsoft.ccod.recordmanager.backup.vo;
 
-import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
 
 import java.text.SimpleDateFormat;

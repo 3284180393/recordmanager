@@ -1,7 +1,7 @@
 package com.channelsoft.ccod.recordmanager.notify.service;
 
 import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 
 /**
  * @ClassName: INotifyService
@@ -16,7 +16,7 @@ public interface INotifyService {
      * 通知平台录音检查结果
      * @param checkResultVo 平台录音检查结果
      */
-    void notify(PlatformRecordCheckResultVo checkResultVo);
+    void notify(PlatformRecordCheckResultSumVo checkResultVo);
 
     /**
      * 通知平台录音备份结果

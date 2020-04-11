@@ -1,11 +1,9 @@
 package com.channelsoft.ccod.recordmanager.monitor.service;
 
 import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * @ClassName: IPlatformRecordService
@@ -22,7 +20,7 @@ public interface IPlatformRecordService {
      * @param endTime 检查的结束时间
      * @return 检查结果
      */
-    PlatformRecordCheckResultVo check(Date beginTime, Date endTime);
+    PlatformRecordCheckResultSumVo check(Date beginTime, Date endTime);
 
     /**
      * 备份指定日期的平台录音

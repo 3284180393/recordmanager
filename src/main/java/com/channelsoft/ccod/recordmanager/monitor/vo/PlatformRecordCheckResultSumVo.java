@@ -5,14 +5,13 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @ClassName: PlatformRecordCheckResultVo
+ * @ClassName: /home/recordmanager/logs
  * @Author: lanhb
- * @Description: 用来定义整个平台所有企业录音检查结果
- * @Date: 2020/4/5 20:16
+ * @Description: 平台录音检查结果汇总
+ * @Date: 2020/4/11 19:13
  * @Version: 1.0
  */
-public class PlatformRecordCheckResultVo {
-
+public class PlatformRecordCheckResultSumVo {
     private String platformId;
 
     private String platformName;
@@ -27,11 +26,11 @@ public class PlatformRecordCheckResultVo {
 
     private boolean result;
 
-    private List<EntRecordCheckResultVo> entRecordCheckResultList;
+    private List<EntRecordCheckResultSumVo> entRecordCheckResultList;
 
     private String comment;
 
-    public PlatformRecordCheckResultVo(String platformId, String platformName, Date checkTime, Date startTime, Date endTime, List<EntRecordCheckResultVo> entRecordCheckResultList)
+    public PlatformRecordCheckResultSumVo(String platformId, String platformName, Date checkTime, Date startTime, Date endTime, List<EntRecordCheckResultSumVo> entRecordCheckResultList)
     {
         this.platformId = platformId;
         this.platformName = platformName;
@@ -45,7 +44,7 @@ public class PlatformRecordCheckResultVo {
         this.comment = toString();
     }
 
-    protected PlatformRecordCheckResultVo(String platformId, String platformName, boolean result, String comment)
+    protected PlatformRecordCheckResultSumVo(String platformId, String platformName, boolean result, String comment)
     {
         this.platformId = platformId;
         this.platformName = platformName;
@@ -53,12 +52,12 @@ public class PlatformRecordCheckResultVo {
         this.comment = comment;
     }
 
-    public static PlatformRecordCheckResultVo fail(String platformId, String platformName, String errorMsg)
+    public static PlatformRecordCheckResultSumVo fail(String platformId, String platformName, String errorMsg)
     {
         Date now = new Date();
         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
         String comment = String.format("[%s]检查%s(%s)录音异常:%s", sf.format(now), platformId, platformName, errorMsg);
-        return new PlatformRecordCheckResultVo(platformId, platformName, false, comment);
+        return new PlatformRecordCheckResultSumVo(platformId, platformName, false, comment);
     }
 
     public String getPlatformId() {
@@ -117,11 +116,11 @@ public class PlatformRecordCheckResultVo {
         this.result = result;
     }
 
-    public List<EntRecordCheckResultVo> getEntRecordCheckResultList() {
+    public List<EntRecordCheckResultSumVo> getEntRecordCheckResultList() {
         return entRecordCheckResultList;
     }
 
-    public void setEntRecordCheckResultList(List<EntRecordCheckResultVo> entRecordCheckResultList) {
+    public void setEntRecordCheckResultList(List<EntRecordCheckResultSumVo> entRecordCheckResultList) {
         this.entRecordCheckResultList = entRecordCheckResultList;
     }
 
@@ -147,7 +146,7 @@ public class PlatformRecordCheckResultVo {
         int notFileCount = 0;
         int notBkIndexCount = 0;
         int notBkFileCount = 0;
-        for(EntRecordCheckResultVo resultVo : this.entRecordCheckResultList)
+        for(EntRecordCheckResultSumVo resultVo : this.entRecordCheckResultList)
         {
             if(!resultVo.isResult())
             {

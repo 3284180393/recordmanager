@@ -1,7 +1,7 @@
 package com.channelsoft.ccod.recordmanager.ontimer;
 
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +56,7 @@ public class PlatformRecordCheckOntimer {
         Date beginTime = ca.getTime();
         ca.add(Calendar.MINUTE, (0-interval));
         Date endTime = ca.getTime();
-        PlatformRecordCheckResultVo checkResultVo;
+        PlatformRecordCheckResultSumVo checkResultVo;
         try
         {
             checkResultVo = platformRecordService.check(beginTime, endTime);
@@ -64,7 +64,7 @@ public class PlatformRecordCheckOntimer {
         catch (Exception e)
         {
             logger.error(String.format("check %s(%s) record exception", this.platformName, this.platformId), e);
-            checkResultVo = PlatformRecordCheckResultVo.fail(this.platformId, this.platformName, e.getMessage());
+            checkResultVo = PlatformRecordCheckResultSumVo.fail(this.platformId, this.platformName, e.getMessage());
         }
         logger.info(String.format("platform record check task finish : %s", checkResultVo.getComment()));
         notifyService.notify(checkResultVo);
