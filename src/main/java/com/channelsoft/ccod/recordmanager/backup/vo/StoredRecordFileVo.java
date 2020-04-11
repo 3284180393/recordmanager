@@ -32,6 +32,8 @@ public class StoredRecordFileVo {
 
     private String backupSavePath; //存储路径
 
+    private boolean result; //备份结果
+
     private boolean verifyResult; //验证结果
 
     private String verifyComment; //验证结果说明
@@ -135,5 +137,13 @@ public class StoredRecordFileVo {
 
     public void setVerifyComment(String verifyComment) {
         this.verifyComment = verifyComment;
+    }
+
+    public boolean isResult() {
+        return result;
+    }
+
+    public void setResult(boolean result) {
+        this.result = result;
     }
 }

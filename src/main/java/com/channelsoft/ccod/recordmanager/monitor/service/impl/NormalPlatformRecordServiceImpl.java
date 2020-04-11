@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -43,6 +44,21 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @PostConstruct
     public void init()
     {
+        PlatformRecordBackupResultVo resultVo;
+        Date now = new Date();
+        try
+        {
+            String dateStr = "20200401";
+            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
+            Date chosenDate = sf.parse(dateStr);
+            now = chosenDate;
+            resultVo = backup(chosenDate);
+        }
+        catch (Exception ex)
+        {
+            resultVo = PlatformRecordBackupResultVo.fail(this.platformId, this.platformName, now, ex);
+        }
+        notifyService.notify(resultVo);
         System.out.println("1111111111111111111111111111111111111111111111111111111111111111111111");
     }
 

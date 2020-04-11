@@ -29,5 +29,5 @@ public interface IPlatformRecordService {
      * @param backupDate 需要备份的日期
      * @return 备份结果
      */
-    PlatformRecordBackupResultVo backup(Date backupDate);
+    PlatformRecordBackupResultVo backup(Date backupDate) throws Exception;
 }

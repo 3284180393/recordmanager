@@ -88,6 +88,19 @@ public class NotifyServiceImpl implements INotifyService {
 
     @Override
     public void notify(PlatformRecordBackupResultVo backupResultVo) {
-
+        for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
+        {
+            String msg = String.format("%s %s", group.getTag(), backupResultVo.getComment());
+            logger.debug(String.format("send message[%s] to %s", msg, group.getWebHookToken() ));
+            TextMessage message = new TextMessage(msg, group.isAtAll(), group.getAtList());
+            try
+            {
+                RobotClient.send(group.getWebHookToken(), message);
+            }
+            catch (Exception ex)
+            {
+                ex.printStackTrace();
+            }
+        }
     }
 }
