@@ -20,7 +20,6 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @ClassName: PlatformRecordCheckResultDaoImpl
@@ -69,18 +68,22 @@ public class PlatformRecordCheckResultDaoImpl implements IPlatformRecordCheckRes
 
     @Override
     public int insert(PlatformRecordCheckResultPo checkResultVo) {
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("insert into platform_record_check_result (id, platformId, platformName, checkTime, timeUsage, beginTime, endTime, result, comment) values (NULL, '%s', '%s', '%s', %d, '%s', '%s', %d, '%s')",
-                checkResultVo.getPlatformId(), checkResultVo.getPlatformName(), sf.format(checkResultVo.getCheckTime())
-                , checkResultVo.getTimeUsage(), sf.format(checkResultVo.getBeginTime()),
-                sf.format(checkResultVo.getEndTime()), checkResultVo.isResult() ? 1 : 0, checkResultVo.getComment());
+        String sql = String.format("insert into platform_record_check_result (id, platformId, platformName, checkTime, timeUsage, beginTime, endTime, result, comment, checkEntCount, failEntCount, checkCount, successCount, notIndexCount, notFileCount, notBakIndexCount, notBakFileCount) values (NULL, '%s', '%s', '%s', %d, '%s', '%s', %d, '%s', %d, %d, %d, %d, %d, %d, %d, %d)",
+                checkResultVo.getPlatformId(), checkResultVo.getPlatformName(), sf.format(checkResultVo.getCheckTime()),
+                checkResultVo.getTimeUsage(), sf.format(checkResultVo.getBeginTime()),
+                sf.format(checkResultVo.getEndTime()), checkResultVo.isResult() ? 1 : 0, checkResultVo.getComment(),
+                checkResultVo.getCheckEntCount(), checkResultVo.getFailEntCount(), checkResultVo.getCheckCount(),
+                checkResultVo.getSuccessCount(), checkResultVo.getNotIndexCount(), checkResultVo.getNotFileCount(),
+                checkResultVo.getNotBakIndexCount(), checkResultVo.getNotBakIndexCount());
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             return ps;
         };
+        logger.debug(String.format("insert new platform record checkResult sql=%s", sql));
         sqliteJdbcTemplate.update(preparedStatementCreator, keyHolder);
+        logger.debug(String.format("insert new platform record checkResult success, id=%d", keyHolder.getKey().intValue()));
         return keyHolder.getKey().intValue();
     }
 
@@ -105,12 +108,20 @@ public class PlatformRecordCheckResultDaoImpl implements IPlatformRecordCheckRes
             po.setResult(rs.getBoolean("result"));
             po.setPlatformName(rs.getString("platformName"));
             po.setPlatformId(rs.getString("platformId"));
-            po.setEndTime(rs.getDate("endTime"));
+            po.setEndTime(rs.getTime("endTime"));
             po.setComment(rs.getString("comment"));
             po.setCheckTime(rs.getTime("checkTime"));
             po.setBeginTime(rs.getTime("beginTime"));
             po.setTimeUsage(rs.getInt("timeUsage"));
             po.setId(rs.getInt("id"));
+            po.setCheckEntCount(rs.getInt("checkEntCount"));
+            po.setFailEntCount(rs.getInt("failEntCount"));
+            po.setCheckCount(rs.getInt("checkCount"));
+            po.setSuccessCount(rs.getInt("successCount"));
+            po.setNotIndexCount(rs.getInt("notIndexCount"));
+            po.setNotFileCount(rs.getInt("notFileCount"));
+            po.setNotBakIndexCount(rs.getInt("notBakIndexCount"));
+            po.setNotBakFileCount(rs.getInt("notBakFileCount"));
             return po;
         }
     }

@@ -43,13 +43,22 @@ create table platform_record_check_result
     beginTime datetime,
     endTime datetime,
     result boolean,
-    comment nvarchar(1000)
+    comment nvarchar(1000),
+    checkEntCount integer,
+    failEntCount integer,
+    checkCount integer,
+    successCount integer,
+    notIndexCount integer,
+    notFileCount integer,
+    notBakIndexCount integer,
+    notBakFileCount integer
 );
 
 create table fail_check_record_detail
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     platformCheckId integer,
+    entCheckId integer,
     enterpriseId nvarchar(20),
     enterpriseName nvarchar(20),
     sessionId nvarchar(40),
@@ -64,10 +73,10 @@ create table fail_check_record_detail
     failReason nvarchar(20)
 );
 
-create table not_backup_record_detail
+create table miss_backup_record_detail
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    platformBackupId integer,
+    backupId integer,
     enterpriseId nvarchar(20),
     enterpriseName nvarchar(20),
     sessionId nvarchar(40),
@@ -86,6 +95,7 @@ create table fail_backup_record_file
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     platformBackupId integer,
+    recordDate datetime,
     fileSavePath nvarchar(255),
     backupPath nvarchar(255),
     failReason nvarchar(20)
@@ -94,6 +104,6 @@ create table fail_backup_record_file
 create table next_backup_date
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nextBackupDate nvarchar(20),
+    nextBackupDate datetime,
     updateTime datetime
 );

@@ -1,6 +1,5 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
-import com.channelsoft.ccod.recordmanager.config.CloudPlatformCondition;
 import com.channelsoft.ccod.recordmanager.config.UCDSCondtion;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IEnterpriseDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.EnterpriseVo;

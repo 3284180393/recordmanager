@@ -3,23 +3,23 @@ package com.channelsoft.ccod.recordmanager.monitor.po;
 import java.util.Date;
 
 /**
- * @ClassName: PlatformRecordCheckResultPo
+ * @ClassName: EntRecordCheckResultPo
  * @Author: lanhb
- * @Description: 平台录音检查结果pojo类
- * @Date: 2020/4/11 19:19
+ * @Description: 用来定义企业录音检查结果的pojo类
+ * @Date: 2020/4/12 14:28
  * @Version: 1.0
  */
-public class PlatformRecordCheckResultPo {
+public class EntRecordCheckResultPo {
 
     private int id;   //id，数据库自动生成
 
-    private String platformId; //平台id
+    private int platformCheckId; //对应的平台录音检查任务id
 
-    private String platformName; //平台名
+    private String enterpriseId; //企业id
+
+    private String enterpriseName; //企业名
 
     private Date checkTime; //检查时间
-
-    private int timeUsage; //用时
 
     private Date beginTime; //被检查时间段的开始时间
 
@@ -29,9 +29,7 @@ public class PlatformRecordCheckResultPo {
 
     private String comment; //备注
 
-    private int checkEntCount; //检查企业数
-
-    private int failEntCount; //检查失败的企业数
+    private boolean hasBak; //是否检查备分录音
 
     private int checkCount; //检查录音数
 
@@ -53,20 +51,28 @@ public class PlatformRecordCheckResultPo {
         this.id = id;
     }
 
-    public String getPlatformId() {
-        return platformId;
+    public int getPlatformCheckId() {
+        return platformCheckId;
     }
 
-    public void setPlatformId(String platformId) {
-        this.platformId = platformId;
+    public void setPlatformCheckId(int platformCheckId) {
+        this.platformCheckId = platformCheckId;
     }
 
-    public String getPlatformName() {
-        return platformName;
+    public String getEnterpriseId() {
+        return enterpriseId;
     }
 
-    public void setPlatformName(String platformName) {
-        this.platformName = platformName;
+    public void setEnterpriseId(String enterpriseId) {
+        this.enterpriseId = enterpriseId;
+    }
+
+    public String getEnterpriseName() {
+        return enterpriseName;
+    }
+
+    public void setEnterpriseName(String enterpriseName) {
+        this.enterpriseName = enterpriseName;
     }
 
     public Date getCheckTime() {
@@ -109,28 +115,12 @@ public class PlatformRecordCheckResultPo {
         this.comment = comment;
     }
 
-    public int getTimeUsage() {
-        return timeUsage;
+    public boolean isHasBak() {
+        return hasBak;
     }
 
-    public void setTimeUsage(int timeUsage) {
-        this.timeUsage = timeUsage;
-    }
-
-    public int getCheckEntCount() {
-        return checkEntCount;
-    }
-
-    public void setCheckEntCount(int checkEntCount) {
-        this.checkEntCount = checkEntCount;
-    }
-
-    public int getFailEntCount() {
-        return failEntCount;
-    }
-
-    public void setFailEntCount(int failEntCount) {
-        this.failEntCount = failEntCount;
+    public void setHasBak(boolean hasBak) {
+        this.hasBak = hasBak;
     }
 
     public int getCheckCount() {
