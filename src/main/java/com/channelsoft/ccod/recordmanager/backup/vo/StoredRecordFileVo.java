@@ -34,6 +34,8 @@ public class StoredRecordFileVo {
 
     private boolean result; //备份结果
 
+    private String comment; //备注
+
     private boolean verifyResult; //验证结果
 
     private String verifyComment; //验证结果说明
@@ -145,5 +147,18 @@ public class StoredRecordFileVo {
 
     public void setResult(boolean result) {
         this.result = result;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public String getFileBackupPath(String backupRootPath)
+    {
+        return String.format("%s%s", backupRootPath, this.getFileSavePath());
     }
 }

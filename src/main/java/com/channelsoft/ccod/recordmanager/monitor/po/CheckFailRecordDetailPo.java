@@ -1,6 +1,8 @@
 package com.channelsoft.ccod.recordmanager.monitor.po;
 
+import com.channelsoft.ccod.recordmanager.constant.RecordCheckResult;
 import com.channelsoft.ccod.recordmanager.constant.RecordType;
+import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
 
 import java.util.Date;
 
@@ -42,6 +44,27 @@ public class CheckFailRecordDetailPo {
     private String bakRecordIndex;    //备份录音索引
 
     private String failReason; //检查失败原因
+
+    public CheckFailRecordDetailPo()
+    {
+
+    }
+
+    public CheckFailRecordDetailPo(String enterpriseName, RecordDetailVo detailVo, RecordCheckResult checkResult)
+    {
+        this.enterpriseId = detailVo.getEnterpriseId();
+        this.enterpriseName = enterpriseName;
+        this.sessionId = detailVo.getSessionId();
+        this.agentId = detailVo.getAgentId();
+        this.startTime = detailVo.getStartTime();
+        this.endTime = detailVo.getEndTime();
+        this.talkDuration = detailVo.getTalkDuration();
+        this.callType = detailVo.getCallType();
+        this.endType = detailVo.getEndType();
+        this.recordIndex = detailVo.getRecordIndex();
+        this.bakRecordIndex = detailVo.getBakRecordIndex();
+        this.failReason = checkResult.name;
+    }
 
     public int getId() {
         return id;

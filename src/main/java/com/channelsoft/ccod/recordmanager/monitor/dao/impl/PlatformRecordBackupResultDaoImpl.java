@@ -40,9 +40,9 @@ public class PlatformRecordBackupResultDaoImpl implements IPlatformRecordBackupR
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String sql = String.format("insert into platform_record_backup_result (id, platformId, platformName, backupDate, startTime, endTime, result, comment, backupCount, failCount, notBackupCount) values (NULL, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, %d)",
-                backupResultPo.getPlatformId(), backupResultPo.getPlatformName(), sf.format(backupResultPo.getBackupDate())
-                , backupResultPo.getStartTime(), sf.format(backupResultPo.getEndTime()), backupResultPo.isResult() ? 1 : 0, backupResultPo.getComment()
-        , backupResultPo.getComment(), backupResultPo.getBackupCount(), backupResultPo.getFailCount(), backupResultPo.getNotBackupCount());
+                backupResultPo.getPlatformId(), backupResultPo.getPlatformName(), sf.format(backupResultPo.getBackupDate()),
+                sf.format(backupResultPo.getStartTime()), sf.format(backupResultPo.getEndTime()), backupResultPo.isResult() ? 1 : 0,
+                backupResultPo.getComment(), backupResultPo.getBackupCount(), backupResultPo.getFailCount(), backupResultPo.getNotBackupCount());
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             return ps;

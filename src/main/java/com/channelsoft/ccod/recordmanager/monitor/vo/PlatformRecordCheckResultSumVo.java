@@ -1,5 +1,7 @@
 package com.channelsoft.ccod.recordmanager.monitor.vo;
 
+import com.channelsoft.ccod.recordmanager.monitor.po.PlatformRecordCheckResultPo;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.List;
  * @Version: 1.0
  */
 public class PlatformRecordCheckResultSumVo {
+
     private String platformId;
 
     private String platformName;
@@ -189,5 +192,50 @@ public class PlatformRecordCheckResultSumVo {
             msg = String.format("%d个企业检查录音时发生异常", failEntCount);
         }
         return msg.replaceAll(",$", "");
+    }
+
+    public PlatformRecordCheckResultPo getCheckResult()
+    {
+        PlatformRecordCheckResultPo resultPo = new PlatformRecordCheckResultPo();
+        resultPo.setPlatformId(this.platformId);
+        resultPo.setPlatformName(this.platformName);
+        resultPo.setCheckTime(this.checkTime);
+        resultPo.setTimeUsage(this.timeUsage);
+        resultPo.setBeginTime(this.startTime);
+        resultPo.setEndTime(this.endTime);
+        resultPo.setResult(this.result);
+        resultPo.setComment(this.comment);
+        if(!result)
+            return resultPo;
+        resultPo.setCheckEntCount(this.entRecordCheckResultList.size());
+        int failEntCount = 0;
+        int checkCount = 0;
+        int successCount = 0;
+        int notIndexCount = 0;
+        int notFileCount = 0;
+        int notBakIndexCount = 0;
+        int notBakFileCount = 0;
+        for(EntRecordCheckResultSumVo vo : this.entRecordCheckResultList)
+        {
+            if(!vo.isResult())
+                failEntCount++;
+            else
+            {
+                checkCount += vo.getAllRecordCount();
+                successCount += vo.getSuccessList().size();
+                notIndexCount += vo.getNotIndexList().size();
+                notFileCount += vo.getNotFileList().size();
+                notBakIndexCount += vo.getNotBakIndexList().size();
+                notBakFileCount += vo.getNotBakFileList().size();
+            }
+        }
+        resultPo.setFailEntCount(failEntCount);
+        resultPo.setCheckCount(checkCount);
+        resultPo.setSuccessCount(successCount);
+        resultPo.setNotIndexCount(notIndexCount);
+        resultPo.setNotFileCount(notFileCount);
+        resultPo.setNotBakIndexCount(notBakIndexCount);
+        resultPo.setNotBakFileCount(notBakFileCount);
+        return resultPo;
     }
 }

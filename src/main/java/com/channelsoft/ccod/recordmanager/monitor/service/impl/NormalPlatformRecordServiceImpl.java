@@ -1,13 +1,9 @@
 package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
-import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
 import com.channelsoft.ccod.recordmanager.config.NormalPlatformCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IEnterpriseDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
-import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultSumVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.EnterpriseVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +38,7 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @PostConstruct
     public void init()
     {
-        PlatformRecordBackupResultVo resultVo;
+        PlatformRecordBackupResultSumVo resultVo;
         Date now = new Date();
         try
         {
@@ -51,28 +47,21 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
             Date chosenDate = sf.parse(dateStr);
             now = chosenDate;
             resultVo = backup(chosenDate);
+            addPlatformRecordBackupResult(resultVo);
         }
         catch (Exception ex)
         {
-            resultVo = PlatformRecordBackupResultVo.fail(this.platformId, this.platformName, now, ex);
+            resultVo = PlatformRecordBackupResultSumVo.fail(this.platformId, this.platformName, now, ex);
+            ex.printStackTrace();
         }
         notifyService.notify(resultVo);
         System.out.println("1111111111111111111111111111111111111111111111111111111111111111111111");
     }
 
-    @Override
-    public PlatformRecordCheckResultSumVo check(Date beginTime, Date endTime) {
+    protected PlatformRecordCheckResultSumVo checkPlatformRecord(Date beginTime, Date endTime) throws Exception
+    {
         Date startCheckTime = new Date();
-        List<EnterpriseVo> enterpriseList;
-        try
-        {
-             enterpriseList = enterpriseDao.select();
-        }
-        catch (Exception ex)
-        {
-            logger.error(String.format("查询平台企业异常", ex));
-            return PlatformRecordCheckResultSumVo.fail(this.platformId, this.platformName, ex.getMessage());
-        }
+        List<EnterpriseVo> enterpriseList = enterpriseDao.select();
         List<EntRecordCheckResultSumVo> entCheckResultList = new ArrayList<>();
         for(EnterpriseVo enterpriseVo : enterpriseList)
         {

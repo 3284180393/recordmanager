@@ -21,6 +21,8 @@ public class EnterpriseCfg {
 
     private List<String> list; //企业列表
 
+    private List<String> notCheckBakList; //忽略备份录音企业列表
+
     public EnterpriseChoseMethod getChoseMethod() {
         return choseMethod;
     }
@@ -35,5 +37,13 @@ public class EnterpriseCfg {
 
     public void setList(List<String> list) {
         this.list = list;
+    }
+
+    public List<String> getNotCheckBakList() {
+        return notCheckBakList;
+    }
+
+    public void setNotCheckBakList(List<String> notCheckBakList) {
+        this.notCheckBakList = notCheckBakList;
     }
 }

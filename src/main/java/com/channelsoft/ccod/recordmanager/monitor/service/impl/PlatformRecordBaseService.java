@@ -1,9 +1,12 @@
 package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
-import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
 import com.channelsoft.ccod.recordmanager.backup.vo.StoredRecordFileVo;
 import com.channelsoft.ccod.recordmanager.config.*;
 import com.channelsoft.ccod.recordmanager.constant.BackupMethod;
+import com.channelsoft.ccod.recordmanager.constant.CCODPlatformType;
+import com.channelsoft.ccod.recordmanager.constant.RecordCheckResult;
+import com.channelsoft.ccod.recordmanager.monitor.dao.*;
+import com.channelsoft.ccod.recordmanager.monitor.po.*;
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
 import com.channelsoft.ccod.recordmanager.monitor.vo.*;
 import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
@@ -49,6 +52,24 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     @Autowired
     INotifyService notifyService;
 
+    @Autowired
+    IPlatformRecordBackupResultDao platformRecordBackupResultDao;
+
+    @Autowired
+    IPlatformRecordCheckResultDao platformRecordCheckResultDao;
+
+    @Autowired
+    IEntRecordCheckResultDao entRecordCheckResultDao;
+
+    @Autowired
+    ICheckFailRecordDetailDao checkFailRecordDetailDao;
+
+    @Autowired
+    IFailBackupRecordFileDao failBackupRecordFileDao;
+
+    @Autowired
+    IMissBackupRecordDetailDao missBackupRecordDetailDao;
+
     @Value("${env.windows}")
     private boolean isWin;
 
@@ -70,147 +91,120 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     @Value("${jobs.backup.compareWithDB}")
     protected boolean compareWithDB;
 
+    @Value("${ccod.platformType}")
+    protected CCODPlatformType platformType;
+
     protected int threadPoolSize = 4;
 
     @Override
-    public PlatformRecordBackupResultVo backup(Date backupDate) throws Exception{
+    public PlatformRecordCheckResultSumVo check(Date beginTime, Date endTime) {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        logger.debug(String.format("begin to check platform record from %s to %s",
+                sf.format(beginTime), sf.format(endTime)));
+        PlatformRecordCheckResultSumVo sumVo;
+        try
+        {
+            sumVo = checkPlatformRecord(beginTime, endTime);
+        }
+        catch (Exception ex)
+        {
+            logger.debug(String.format("check platform record from %s to %s exception",
+                    sf.format(beginTime), sf.format(endTime)), ex);
+            sumVo = PlatformRecordCheckResultSumVo.fail(this.platformId, this.platformName, ex.getMessage());
+        }
+        try
+        {
+            addNewPlatformCheckResult(sumVo);
+        }
+        catch (Exception ex)
+        {
+            logger.error(String.format("insert platform check result to db exception"), ex);
+        }
+        return sumVo;
+    }
+
+    @Override
+    public PlatformRecordBackupResultSumVo backup(Date backupDate) throws Exception{
         Date startTime = new Date();
-        List<StoredRecordFileVo> fileList = new ArrayList<>();
-        for(RecordStoreRole storeRole : this.recordStoreCfg.getStoreRoles())
-        {
-            List<StoredRecordFileVo> scanList = scanMntDir(storeRole, backupDate);
-            logger.debug(String.format("scan mntDir=%s with grokPattern=%s find %d record files",
-                    storeRole.getMntDir(), storeRole.getGrokPattern(), scanList.size()));
-            fileList.addAll(scanList);
-        }
-        backupByCopyDirectory(fileList, this.backupRootPath, this.verify);
-        List<StoredRecordFileVo> backupList = new ArrayList<>();
-        List<StoredRecordFileVo> failList = new ArrayList<>();
-        for(StoredRecordFileVo fileVo : fileList)
-        {
-            if(fileVo.isResult())
-                backupList.add(fileVo);
-            else
-                failList.add(fileVo);
-        }
-        PlatformRecordBackupResultVo resultVo;
+        List<StoredRecordFileVo> fileList = scanRecordFile(backupDate);
+        List<FailBackupRecordFilePo> failList = backupByCopyDirectory(fileList, this.backupRootPath, this.verify, backupDate);
+        PlatformRecordBackupResultSumVo resultVo;
         if(!this.compareWithDB)
         {
-            resultVo = new PlatformRecordBackupResultVo(this.platformId, this.platformName, backupDate, startTime, backupList, failList);
+            resultVo = new PlatformRecordBackupResultSumVo(this.platformId, this.platformName, backupDate, startTime, fileList, failList);
         }
         else
         {
-            PlatformRecordCheckResultSumVo checkResultVo;
-            Calendar ca = Calendar.getInstance();
-            ca.setTime(backupDate);
-            ca.set(Calendar.MILLISECOND, 0);
-            ca.set(Calendar.SECOND, 0);
-            ca.set(Calendar.MINUTE, 0);
-            ca.set(Calendar.HOUR, 0);
-            Date beginTime = ca.getTime();
-            ca.add(Calendar.DATE, 1);
-            Date endTime = ca.getTime();
-            try
-            {
-                checkResultVo = check(beginTime, endTime);
-            }
-            catch (Exception ex)
-            {
-                checkResultVo = PlatformRecordCheckResultSumVo.fail(this.platformId, this.platformName, ex.getMessage());
-                notifyService.notify(checkResultVo);
-            }
-            List<RecordDetailVo> notBackList = new ArrayList<>();
-            Map<String, List<StoredRecordFileVo>> entRecordFileMap = backupList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getEnterpriseId));
-            for(EntRecordCheckResultSumVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList())
-            {
-                if(!entRecordFileMap.containsKey(entRecordCheckResultVo.getEnterpriseId()))
-                {
-                    logger.warn(String.format("%s %d record not been backup",
-                            entRecordCheckResultVo.getEnterpriseId(), entRecordCheckResultVo.getSuccessList().size()));
-                    notBackList.addAll(entRecordCheckResultVo.getSuccessList());
-                    continue;
-                }
-                Map<String, StoredRecordFileVo> fileMap = entRecordFileMap.get(entRecordCheckResultVo.getEnterpriseId())
-                        .stream().collect(Collectors.toMap(StoredRecordFileVo::getRecordIndex, Function.identity()));
-                for(RecordDetailVo detailVo : entRecordCheckResultVo.getSuccessList())
-                {
-                    if(!fileMap.containsKey(detailVo.getRecordIndex()))
-                    {
-                        logger.error(String.format("%s[%s] %s not been backup",
-                                detailVo.getEnterpriseId(), detailVo.getSessionId(), detailVo.getRecordIndex()));
-                        notBackList.add(detailVo);
-                    }
-                }
-            }
-            resultVo = new PlatformRecordBackupResultVo(this.platformId, this.platformName, backupDate, startTime, backupList, failList, notBackList);
+            List<RecordDetailVo> notBackList = checkMissBackupRecordDetail(fileList, backupDate);
+            resultVo = new PlatformRecordBackupResultSumVo(this.platformId, this.platformName, backupDate, startTime, fileList, failList, notBackList);
         }
         return resultVo;
     }
 
-
-    protected EntRecordCheckResultSumVo checkEntRecord(EnterpriseVo enterpriseVo, Date checkTime, Date beginTime, Date endTime, List<RecordDetailVo> entRecordList) {
-
-        List<RecordDetailVo> successList = new ArrayList<>();
-        List<RecordDetailVo> notIndexList = new ArrayList<>();
-        List<RecordDetailVo> notFileList = new ArrayList<>();
-        List<RecordDetailVo> notBakIndexList = new ArrayList<>();
-        List<RecordDetailVo> notBakFileList = new ArrayList<>();
-        RecordStoreRole storeRole = null;
-        RecordStoreRole bkStoreRole = null;
-        EntRecordCheckResultSumVo resultVo = null;
-        for(RecordDetailVo detailVo : entRecordList)
+    /**
+     * 扫描某个日期的所有录音文件
+     * @param scanDate 被扫描的日期
+     * @return 扫描出的素有录音文件
+     */
+    protected List<StoredRecordFileVo> scanRecordFile(Date scanDate) throws IOException
+    {
+        List<StoredRecordFileVo> fileList = new ArrayList<>();
+        for(RecordStoreRole storeRole : this.recordStoreCfg.getStoreRoles())
         {
-            //检查录音索引
-            if(StringUtils.isBlank(detailVo.getRecordIndex()))
-            {
-                notIndexList.add(detailVo);
+            List<StoredRecordFileVo> scanList = scanMntDir(storeRole, scanDate);
+            logger.debug(String.format("scan mntDir=%s with grokPattern=%s find %d record files",
+                    storeRole.getMntDir(), storeRole.getGrokPattern(), scanList.size()));
+            fileList.addAll(scanList);
+        }
+        return fileList;
+    }
+
+    protected List<RecordDetailVo> checkMissBackupRecordDetail(List<StoredRecordFileVo> backupList, Date backupDate)
+    {
+        List<RecordDetailVo> retList = new ArrayList<>();
+        PlatformRecordCheckResultSumVo checkResultVo;
+        Calendar ca = Calendar.getInstance();
+        ca.setTime(backupDate);
+        ca.set(Calendar.MILLISECOND, 0);
+        ca.set(Calendar.SECOND, 0);
+        ca.set(Calendar.MINUTE, 0);
+        ca.set(Calendar.HOUR, 0);
+        Date beginTime = ca.getTime();
+        ca.add(Calendar.DATE, 1);
+        Date endTime = ca.getTime();
+        try
+        {
+            checkResultVo = check(beginTime, endTime);
+
+        }
+        catch (Exception ex)
+        {
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            logger.error(String.format("query record detail form %s to %s exception",
+                    sf.format(beginTime), sf.format(endTime)), ex);
+            checkResultVo = PlatformRecordCheckResultSumVo.fail(this.platformId, this.platformName, ex.getMessage());
+            notifyService.notify(checkResultVo);
+            return retList;
+        }
+        Map<String, List<StoredRecordFileVo>> entRecordFileMap = backupList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getEnterpriseId));
+        for(EntRecordCheckResultSumVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList()) {
+            if (!entRecordFileMap.containsKey(entRecordCheckResultVo.getEnterpriseId())) {
+                logger.warn(String.format("%s %d record not been backup",
+                        entRecordCheckResultVo.getEnterpriseId(), entRecordCheckResultVo.getSuccessList().size()));
+                retList.addAll(entRecordCheckResultVo.getSuccessList());
                 continue;
             }
-            //检查录音文件
-            RecordIndexSearch indexSearch = new RecordIndexSearch();
-            indexSearch.storeRole = storeRole;
-            indexSearch.recordIndex = detailVo.getRecordIndex();
-            String fileSavePath = searchRecordIndexAbsolutePath(indexSearch);
-            if(StringUtils.isBlank(fileSavePath))
-            {
-                notFileList.add(detailVo);
-                continue;
-            }
-            storeRole = indexSearch.storeRole;
-            if(this.hasBak)
-            {
-                if(StringUtils.isBlank(detailVo.getBakRecordIndex()))
-                {
-                    notBakIndexList.add(detailVo);
-                    continue;
-                }
-                else
-                {
-                    RecordIndexSearch bakIndexSearch = new RecordIndexSearch();
-                    bakIndexSearch.recordIndex = detailVo.getBakRecordIndex();
-                    bakIndexSearch.storeRole = bkStoreRole;
-                    String bkFileSavePath = searchRecordIndexAbsolutePath(bakIndexSearch);
-                    if(StringUtils.isNotBlank(bkFileSavePath))
-                    {
-                        notBakFileList.add(detailVo);
-                        continue;
-                    }
-                    bkStoreRole = bakIndexSearch.storeRole;
+            Map<String, StoredRecordFileVo> fileMap = entRecordFileMap.get(entRecordCheckResultVo.getEnterpriseId())
+                    .stream().collect(Collectors.toMap(StoredRecordFileVo::getRecordIndex, Function.identity()));
+            for (RecordDetailVo detailVo : entRecordCheckResultVo.getSuccessList()) {
+                if (!fileMap.containsKey(detailVo.getRecordIndex())) {
+                    logger.error(String.format("%s[%s] %s not been backup",
+                            detailVo.getEnterpriseId(), detailVo.getSessionId(), detailVo.getRecordIndex()));
+                    retList.add(detailVo);
                 }
             }
-            successList.add(detailVo);
         }
-        if(hasBak)
-        {
-            resultVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, beginTime, endTime, successList,
-                    notIndexList, notFileList, notBakIndexList, notBakFileList);
-        }
-        else
-        {
-            resultVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, endTime, endTime, successList,
-                    notIndexList, notFileList);
-        }
-        return resultVo;
+        return retList;
     }
 
     protected String searchRecordIndexAbsolutePath(RecordIndexSearch indexSearch)
@@ -279,23 +273,6 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 return !(new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId));
         }
         return false;
-    }
-
-    protected List<EntRecordCheckResultSumVo> checkBigEntPlatformRecord(List<RecordDetailVo> recordList, Date checkTime, Date beginTime, Date endTime, List<GlsAgentVo> agentList)
-    {
-        Map<String, List<RecordDetailVo>> entRecordMap = recordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getEnterpriseId));
-        Map<String, List<GlsAgentVo>> entAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
-        List<EntRecordCheckResultSumVo> entRecordCheckResultList = new ArrayList<>();
-        for(String enterpriseId : entAgentMap.keySet())
-        {
-            EnterpriseVo enterpriseVo = new EnterpriseVo();
-            enterpriseVo.setEnterpriseId(enterpriseId);
-            enterpriseVo.setEnterpriseName(entAgentMap.get(enterpriseId).get(0).getEntName());
-            List<RecordDetailVo> entRecordList = entRecordMap.containsKey(enterpriseId) ? entRecordMap.get(enterpriseId) : new ArrayList<>();
-            EntRecordCheckResultSumVo entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
-            entRecordCheckResultList.add(entRecordCheckResultVo);
-        }
-        return entRecordCheckResultList;
     }
 
     private List<StoredRecordFileVo> scanMntDir(RecordStoreRole storeRole, Date chosenDate) throws IOException
@@ -415,6 +392,71 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         scan(searchPath, dept, true, regex, resultList);
     }
 
+    protected EntRecordCheckResultSumVo checkEntRecord(EnterpriseVo enterpriseVo, Date checkTime, Date beginTime, Date endTime, List<RecordDetailVo> entRecordList) {
+
+        List<RecordDetailVo> successList = new ArrayList<>();
+        List<RecordDetailVo> notIndexList = new ArrayList<>();
+        List<RecordDetailVo> notFileList = new ArrayList<>();
+        List<RecordDetailVo> notBakIndexList = new ArrayList<>();
+        List<RecordDetailVo> notBakFileList = new ArrayList<>();
+        RecordStoreRole storeRole = null;
+        RecordStoreRole bkStoreRole = null;
+        EntRecordCheckResultSumVo resultVo = null;
+        for(RecordDetailVo detailVo : entRecordList)
+        {
+            //检查录音索引
+            if(StringUtils.isBlank(detailVo.getRecordIndex()))
+            {
+                notIndexList.add(detailVo);
+                continue;
+            }
+            //检查录音文件
+            RecordIndexSearch indexSearch = new RecordIndexSearch();
+            indexSearch.storeRole = storeRole;
+            indexSearch.recordIndex = detailVo.getRecordIndex();
+            String fileSavePath = searchRecordIndexAbsolutePath(indexSearch);
+            if(StringUtils.isBlank(fileSavePath))
+            {
+                notFileList.add(detailVo);
+                continue;
+            }
+            storeRole = indexSearch.storeRole;
+            if(this.hasBak)
+            {
+                if(StringUtils.isBlank(detailVo.getBakRecordIndex()))
+                {
+                    notBakIndexList.add(detailVo);
+                    continue;
+                }
+                else
+                {
+                    RecordIndexSearch bakIndexSearch = new RecordIndexSearch();
+                    bakIndexSearch.recordIndex = detailVo.getBakRecordIndex();
+                    bakIndexSearch.storeRole = bkStoreRole;
+                    String bkFileSavePath = searchRecordIndexAbsolutePath(bakIndexSearch);
+                    if(StringUtils.isNotBlank(bkFileSavePath))
+                    {
+                        notBakFileList.add(detailVo);
+                        continue;
+                    }
+                    bkStoreRole = bakIndexSearch.storeRole;
+                }
+            }
+            successList.add(detailVo);
+        }
+        if(hasBak)
+        {
+            resultVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, beginTime, endTime, successList,
+                    notIndexList, notFileList, notBakIndexList, notBakFileList);
+        }
+        else
+        {
+            resultVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, endTime, endTime, successList,
+                    notIndexList, notFileList);
+        }
+        return resultVo;
+    }
+
     /**
      * 获取某个目录下指定深度的且文件名或是最后一级目录满足正则表达式的所有文件(目录)
      * @param pathName 被扫描的目录
@@ -458,35 +500,56 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         }
     }
 
-    public void backupByCopyDirectory(List<StoredRecordFileVo> storedRecordFileList, String backupRootDirectory, boolean isVerify) throws IOException, Exception
+    public List<FailBackupRecordFilePo> backupByCopyDirectory(List<StoredRecordFileVo> storedRecordFileList, String backupRootDirectory, boolean isVerify, Date recordDate) throws IOException, Exception
     {
-
+        List<FailBackupRecordFilePo> failList = new ArrayList<>();
         Map<String, List<StoredRecordFileVo>> dirFileMap = storedRecordFileList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getStoreDir));
         final ExecutorService executor = Executors.newFixedThreadPool(threadPoolSize);
-        List<FutureTask<List<StoredRecordFileVo>>> taskList = new ArrayList<>();
+        List<FutureTask<List<FailBackupRecordFilePo>>> taskList = new ArrayList<>();
         for(String storeDir : dirFileMap.keySet())
         {
-            FutureTask<List<StoredRecordFileVo>> task = new FutureTask<>(new Callable<List<StoredRecordFileVo>>() {
+            FutureTask<List<FailBackupRecordFilePo>> task = new FutureTask<>(new Callable<List<FailBackupRecordFilePo>>() {
                 @Override
-                public List<StoredRecordFileVo> call() throws Exception {
-                    List<StoredRecordFileVo> list = backupDirByCopy(storeDir, dirFileMap.get(storeDir), backupRootDirectory, isVerify);
-                    return list;
+                public List<FailBackupRecordFilePo> call() throws Exception {
+                    List<StoredRecordFileVo> fileList =  dirFileMap.get(storeDir);
+                    List<FailBackupRecordFilePo> failList;
+                    try
+                    {
+                        failList = backupDirByCopy(storeDir, fileList, backupRootDirectory, isVerify, recordDate);
+                    }
+                    catch (Exception ex)
+                    {
+                        failList = new ArrayList<>();
+                        logger.error(String.format("copy files from %s to %s%s exception", storeDir, storeDir, backupRootDirectory), ex);
+                        for(StoredRecordFileVo fileVo : fileList)
+                        {
+                            FailBackupRecordFilePo failPo = new FailBackupRecordFilePo();
+                            failPo.setFailReason(ex.getMessage());
+                            failPo.setRecordDate(recordDate);
+                            failPo.setBackupPath(fileVo.getFileSavePath());
+                            failPo.setFileSavePath(fileVo.getFileBackupPath(backupRootPath));
+                            failList.add(failPo);
+                        }
+                    }
+                    return failList;
                 }
             });
             taskList.add(task);
             executor.execute(task);
         }
         executor.shutdown();
-        for(FutureTask<List<StoredRecordFileVo>> task : taskList)
+        for(FutureTask<List<FailBackupRecordFilePo>> task : taskList)
         {
-            task.get();
+            failList.addAll(task.get());
         }
+        return failList;
     }
 
-    private List<StoredRecordFileVo> backupDirByCopy(String storeDir, List<StoredRecordFileVo> recordFileList, String backupRootDirectory, boolean isVerify) throws IOException
+    private List<FailBackupRecordFilePo> backupDirByCopy(String storeDir, List<StoredRecordFileVo> recordFileList, String backupRootDirectory, boolean isVerify, Date recordDate) throws IOException
     {
+        List<FailBackupRecordFilePo> failList = new ArrayList<>();
         String backupDir = String.format("%s%s", backupRootDirectory, storeDir);
-        if(this.isWin)
+        if(!this.isWin)
             backupDir = String.format("%s%s", backupRootDirectory, storeDir.replaceAll("^[A-Z]:", ""));
         logger.debug(String.format("begin to copy all file from %s to %s", storeDir, backupDir));
         File srcDir = new File(storeDir);
@@ -498,9 +561,6 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         {
             fileVo.setBackupMethod(BackupMethod.COPY);
             fileVo.setBackupSavePath(String.format("%s/%s", backupDir, fileVo.getFileName()));
-        }
-        for(StoredRecordFileVo fileVo : recordFileList)
-        {
             if(isVerify)
             {
                 File dstFile = new File(fileVo.getBackupSavePath());
@@ -509,6 +569,22 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                     logger.error(String.format("backup file verify fail : %s not exist", fileVo.getBackupSavePath()));
                     fileVo.setVerifyResult(false);
                     fileVo.setVerifyComment(String.format("%s not exist", fileVo.getBackupSavePath()));
+                    FailBackupRecordFilePo po = new FailBackupRecordFilePo();
+                    po.setBackupPath(fileVo.getBackupSavePath());
+                    po.setRecordDate(recordDate);
+                    po.setFailReason(String.format("%s not exist", fileVo.getBackupSavePath()));
+                    failList.add(po);
+                }
+                else if(!dstFile.isFile())
+                {
+                    logger.error(String.format("backup file verify fail : %s not file", fileVo.getBackupSavePath()));
+                    fileVo.setVerifyResult(false);
+                    fileVo.setVerifyComment(String.format("%s not file", fileVo.getBackupSavePath()));
+                    FailBackupRecordFilePo po = new FailBackupRecordFilePo();
+                    po.setBackupPath(fileVo.getBackupSavePath());
+                    po.setRecordDate(recordDate);
+                    po.setFailReason(String.format("%s not file", fileVo.getBackupSavePath()));
+                    failList.add(po);
                 }
                 else
                 {
@@ -519,6 +595,11 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                         logger.error(String.format("backup file verify fail : %s md5=%s but %s md5=%s ", fileVo.getFileSavePath(), srcMd5, fileVo.getBackupSavePath(), dstMd5));
                         fileVo.setVerifyResult(false);
                         fileVo.setVerifyComment(String.format("%s md5=%s but %s md5=%s ", fileVo.getFileSavePath(), srcMd5, fileVo.getBackupSavePath(), dstMd5));
+                        FailBackupRecordFilePo po = new FailBackupRecordFilePo();
+                        po.setBackupPath(fileVo.getBackupSavePath());
+                        po.setRecordDate(recordDate);
+                        po.setFailReason(String.format("%s md5=%s but %s md5=%s ", fileVo.getFileSavePath(), srcMd5, fileVo.getBackupSavePath(), dstMd5));
+                        failList.add(po);
                     }
                     else
                     {
@@ -534,7 +615,76 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 fileVo.setResult(true);
             }
         }
-        return recordFileList;
+        return failList;
+    }
+
+    protected boolean isCheckBak(String enterpriseId)
+    {
+        if(!this.hasBak)
+            return false;
+        else if(this.enterpriseCfg.getNotCheckBakList() == null || this.enterpriseCfg.getNotCheckBakList().size() == 0)
+            return false;
+        Set<String> entSet = new HashSet<>(this.enterpriseCfg.getNotCheckBakList());
+        if(entSet.contains(enterpriseId))
+            return false;
+        return true;
+    }
+
+    protected boolean addNewPlatformCheckResult(PlatformRecordCheckResultSumVo platformRecordCheckResultSumVo)
+    {
+        PlatformRecordCheckResultPo platformRecordCheckResultPo = platformRecordCheckResultSumVo.getCheckResult();
+        int platformCheckId = this.platformRecordCheckResultDao.insert(platformRecordCheckResultPo);
+        for(EntRecordCheckResultSumVo entSumVo : platformRecordCheckResultSumVo.getEntRecordCheckResultList())
+        {
+            int entCheckId = this.entRecordCheckResultDao.insert(platformCheckId, entSumVo.getCheckResult());
+            if(!entSumVo.isResult())
+                continue;
+            for(RecordDetailVo detailVo : entSumVo.getNotIndexList())
+            {
+                CheckFailRecordDetailPo po = new CheckFailRecordDetailPo(entSumVo.getEnterpriseName(), detailVo, RecordCheckResult.INDEX_NOT_EXIST);
+                checkFailRecordDetailDao.insert(platformCheckId, entCheckId, po);
+            }
+            for(RecordDetailVo detailVo : entSumVo.getNotFileList())
+            {
+                CheckFailRecordDetailPo po = new CheckFailRecordDetailPo(entSumVo.getEnterpriseName(), detailVo, RecordCheckResult.FILE_NOT_EXIST);
+                checkFailRecordDetailDao.insert(platformCheckId, entCheckId, po);
+            }
+            for(RecordDetailVo detailVo : entSumVo.getNotBakIndexList())
+            {
+                CheckFailRecordDetailPo po = new CheckFailRecordDetailPo(entSumVo.getEnterpriseName(), detailVo, RecordCheckResult.BAK_INDEX_NOT_EXIST);
+                checkFailRecordDetailDao.insert(platformCheckId, entCheckId, po);
+            }
+            for(RecordDetailVo detailVo : entSumVo.getNotBakFileList())
+            {
+                CheckFailRecordDetailPo po = new CheckFailRecordDetailPo(entSumVo.getEnterpriseName(), detailVo, RecordCheckResult.BAK_FILE_NOT_EXIST);
+                checkFailRecordDetailDao.insert(platformCheckId, entCheckId, po);
+            }
+        }
+        return true;
+    }
+
+    protected PlatformRecordCheckResultSumVo checkPlatformRecord(Date beginTime, Date endTime) throws Exception
+    {
+        logger.error(String.format("checkPlatformRecord function must been implement for %s platform", this.platformType.name));
+        throw new Exception(String.format("checkPlatformRecord function must been implement for %s platform", this.platformType.name));
+    }
+
+    protected void addPlatformRecordBackupResult(PlatformRecordBackupResultSumVo platformRecordBackupResultSumVo)
+    {
+        PlatformRecordBackupResultPo backupResultPo = platformRecordBackupResultSumVo.getBackupResult();
+        int backupId = this.platformRecordBackupResultDao.insert(backupResultPo);
+        if(platformRecordBackupResultSumVo.isResult())
+        {
+            for(FailBackupRecordFilePo filePo : platformRecordBackupResultSumVo.getFailList())
+            {
+                this.failBackupRecordFileDao.insert(backupId, filePo);
+            }
+            for(RecordDetailVo detailPo : platformRecordBackupResultSumVo.getNotBackupList())
+            {
+                MissBackupRecordDetailPo po = new MissBackupRecordDetailPo(detailPo);
+                this.missBackupRecordDetailDao.insert(backupId, po);
+            }
+        }
     }
 
     protected class RecordIndexSearch

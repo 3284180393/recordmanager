@@ -16,10 +16,11 @@ public interface IFailBackupRecordFileDao {
 
     /**
      * 向数据库添加一条新的录音文件备份失败记录
+     * @param platformBackupId 平台备份任务id
      * @param recordFilePo 备份失败的录音文件
      * @return 新添加记录的id
      */
-    int insert(FailBackupRecordFilePo recordFilePo);
+    int insert(int platformBackupId, FailBackupRecordFilePo recordFilePo);
 
     /**
      * 查询指定时间段备份失败的录音文件信息

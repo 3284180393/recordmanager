@@ -1,5 +1,7 @@
 package com.channelsoft.ccod.recordmanager.monitor.vo;
 
+import com.channelsoft.ccod.recordmanager.monitor.po.EntRecordCheckResultPo;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -222,5 +224,28 @@ public class EntRecordCheckResultSumVo {
             return msg;
         }
         return this.comment;
+    }
+
+    public EntRecordCheckResultPo getCheckResult()
+    {
+        EntRecordCheckResultPo po = new EntRecordCheckResultPo();
+        po.setEnterpriseId(this.enterpriseId);
+        po.setEnterpriseName(this.enterpriseName);
+        po.setCheckTime(this.checkTime);
+        po.setBeginTime(this.startTime);
+        po.setEndTime(this.endTime);
+        po.setResult(this.result);
+        po.setComment(this.comment);
+        if(!this.result)
+            return po;
+        po.setHasBak(this.hasBak);
+        po.setCheckCount(this.getAllRecordCount());
+        po.setSuccessCount(this.successList.size());
+        po.setNotIndexCount(this.notIndexList.size());
+        po.setNotFileCount(this.notFileList.size());
+        po.setNotBakIndexCount(this.notBakIndexList.size());
+        po.setNotBakFileCount(this.notBakFileList.size());
+        return po;
+
     }
 }

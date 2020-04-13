@@ -1,10 +1,10 @@
 package com.channelsoft.ccod.recordmanager.notify.service.impl;
 
-import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
 import com.channelsoft.ccod.recordmanager.config.DingDingGroup;
 import com.channelsoft.ccod.recordmanager.config.RecordBackupNotifyCfg;
 import com.channelsoft.ccod.recordmanager.config.RecordCheckNotifyCfg;
 import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultSumVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordBackupResultSumVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import com.channelsoft.ccod.recordmanager.notify.vo.RobotClient;
@@ -87,7 +87,7 @@ public class NotifyServiceImpl implements INotifyService {
     }
 
     @Override
-    public void notify(PlatformRecordBackupResultVo backupResultVo) {
+    public void notify(PlatformRecordBackupResultSumVo backupResultVo) {
         for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
         {
             String msg = String.format("%s %s", group.getTag(), backupResultVo.getComment());

@@ -26,6 +26,7 @@ ccod:
   enterprise:
     choseMethod: ALL
     list:
+    notCheckBakList:
 
 call:
   callTypes:

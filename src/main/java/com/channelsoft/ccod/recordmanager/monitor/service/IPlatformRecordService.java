@@ -1,6 +1,6 @@
 package com.channelsoft.ccod.recordmanager.monitor.service;
 
-import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordBackupResultSumVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 
 import java.util.Date;
@@ -27,5 +27,5 @@ public interface IPlatformRecordService {
      * @param backupDate 需要备份的日期
      * @return 备份结果
      */
-    PlatformRecordBackupResultVo backup(Date backupDate) throws Exception;
+    PlatformRecordBackupResultSumVo backup(Date backupDate) throws Exception;
 }

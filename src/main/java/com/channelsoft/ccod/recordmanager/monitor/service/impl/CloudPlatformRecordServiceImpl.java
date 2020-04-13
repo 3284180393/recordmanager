@@ -1,7 +1,7 @@
 package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
-import com.channelsoft.ccod.recordmanager.backup.vo.PlatformRecordBackupResultVo;
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
+import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordBackupResultSumVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ public class CloudPlatformRecordServiceImpl implements IPlatformRecordService {
     }
 
     @Override
-    public PlatformRecordBackupResultVo backup(Date backupDate) {
+    public PlatformRecordBackupResultSumVo backup(Date backupDate) {
         return null;
     }
 }

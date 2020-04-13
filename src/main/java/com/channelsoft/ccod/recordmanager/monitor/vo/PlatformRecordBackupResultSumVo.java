@@ -1,6 +1,9 @@
-package com.channelsoft.ccod.recordmanager.backup.vo;
+package com.channelsoft.ccod.recordmanager.monitor.vo;
 
-import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
+import com.channelsoft.ccod.recordmanager.backup.vo.StoredRecordFileVo;
+import com.channelsoft.ccod.recordmanager.monitor.po.FailBackupRecordFilePo;
+import com.channelsoft.ccod.recordmanager.monitor.po.PlatformRecordBackupResultPo;
+import com.channelsoft.ccod.recordmanager.monitor.po.PlatformRecordCheckResultPo;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -8,19 +11,19 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @ClassName: PlatformRecordBackupResultVo
+ * @ClassName: PlatformRecordBackupResultSumVo
  * @Author: lanhb
- * @Description: 用来定义平台录音备份结果
- * @Date: 2020/4/6 14:35
+ * @Description: 用来保存平台备份结果的类
+ * @Date: 2020/4/13 15:59
  * @Version: 1.0
  */
-public class PlatformRecordBackupResultVo {
+public class PlatformRecordBackupResultSumVo {
 
     private String platformId;  //平台id
 
     private String platformName; //平台名
 
-    private String backupDate; //备份的哪天的录音文件
+    private Date backupDate; //备份的哪天的录音文件
 
     private Date beginTime; //开始备份时间
 
@@ -30,62 +33,63 @@ public class PlatformRecordBackupResultVo {
 
     private String comment; //如果备份失败，失败的原因
 
-    private List<StoredRecordFileVo> backupList; //成功备份的录音文件
+    private int backupCount; //备份录音文件数目
 
-    private List<StoredRecordFileVo> failList; //失败备份的录音文件
+    private int successBackupCount; //成功备份的录音文件
+
+    private List<FailBackupRecordFilePo> failList; //失败备份的录音文件
 
     private boolean compareWithDB; //是否同数据库记录进行对比
 
     private List<RecordDetailVo> notBackupList; //如果需要同数据库记录对比,记录需要备份但没有备份的录音
 
-    public PlatformRecordBackupResultVo(
+    public PlatformRecordBackupResultSumVo(
             String platformId, String platformName, Date backupDate, Date beginTime,
-            List<StoredRecordFileVo> backupList, List<StoredRecordFileVo> failList)
+            List<StoredRecordFileVo> backupList, List<FailBackupRecordFilePo> failList)
     {
         this.result = true;
         this.platformId = platformId;
         this.platformName = platformName;
-        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
-        this.backupDate = sf.format(backupDate);
+        this.backupDate = backupDate;
         this.beginTime = beginTime;
         this.endTime = new Date();
-        this.backupList = backupList;
+        this.backupCount = backupList.size();
+        this.successBackupCount = backupList.size() - failList.size();
         this.failList = failList;
         this.compareWithDB = false;
         this.notBackupList = new ArrayList<>();
         this.comment = toString();
     }
 
-    public PlatformRecordBackupResultVo(
+    public PlatformRecordBackupResultSumVo(
             String platformId, String platformName, Date backupDate, Date beginTime,
-            List<StoredRecordFileVo> backupList, List<StoredRecordFileVo> failList, List<RecordDetailVo> notBackupList)
+            List<StoredRecordFileVo> backupList, List<FailBackupRecordFilePo> failList, List<RecordDetailVo> notBackupList)
     {
         this.result = true;
         this.platformId = platformId;
         this.platformName = platformName;
-        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
-        this.backupDate = sf.format(backupDate);
+        this.backupDate = backupDate;
         this.beginTime = beginTime;
         this.endTime = new Date();
-        this.backupList = backupList;
+        this.backupCount = backupList.size();
+        this.successBackupCount = backupList.size() - failList.size();
         this.failList = failList;
         this.compareWithDB = true;
         this.notBackupList = notBackupList;
         this.comment = toString();
     }
 
-    private PlatformRecordBackupResultVo(String platformId, String platformName, Date backupDate, String errorMsg)
+    private PlatformRecordBackupResultSumVo(String platformId, String platformName, Date backupDate, String errorMsg)
     {
         this.platformId = platformId;
         this.platformName = platformName;
-        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
-        this.backupDate = sf.format(backupDate);
+        this.backupDate = backupDate;
         this.comment = errorMsg;
     }
 
-    public static PlatformRecordBackupResultVo fail(String platformId, String platformName, Date backupDate, Exception ex)
+    public static PlatformRecordBackupResultSumVo fail(String platformId, String platformName, Date backupDate, Exception ex)
     {
-        return new PlatformRecordBackupResultVo(platformId, platformName, backupDate, ex.getMessage());
+        return new PlatformRecordBackupResultSumVo(platformId, platformName, backupDate, ex.getMessage());
     }
     public String getPlatformId() {
         return platformId;
@@ -103,11 +107,11 @@ public class PlatformRecordBackupResultVo {
         this.platformName = platformName;
     }
 
-    public String getBackupDate() {
+    public Date getBackupDate() {
         return backupDate;
     }
 
-    public void setBackupDate(String backupDate) {
+    public void setBackupDate(Date backupDate) {
         this.backupDate = backupDate;
     }
 
@@ -119,19 +123,27 @@ public class PlatformRecordBackupResultVo {
         this.result = result;
     }
 
-    public List<StoredRecordFileVo> getBackupList() {
-        return backupList;
+    public int getBackupCount() {
+        return backupCount;
     }
 
-    public void setBackupList(List<StoredRecordFileVo> backupList) {
-        this.backupList = backupList;
+    public void setBackupCount(int backupCount) {
+        this.backupCount = backupCount;
     }
 
-    public List<StoredRecordFileVo> getFailList() {
+    public int getSuccessBackupCount() {
+        return successBackupCount;
+    }
+
+    public void setSuccessBackupCount(int successBackupCount) {
+        this.successBackupCount = successBackupCount;
+    }
+
+    public List<FailBackupRecordFilePo> getFailList() {
         return failList;
     }
 
-    public void setFailList(List<StoredRecordFileVo> failList) {
+    public void setFailList(List<FailBackupRecordFilePo> failList) {
         this.failList = failList;
     }
 
@@ -179,24 +191,39 @@ public class PlatformRecordBackupResultVo {
     public String toString()
     {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sf1 = new SimpleDateFormat("yyyy-MM-dd");
         Date now = new Date();
-        if(!this.result)
-        {
+        if(!this.result) {
             return this.comment;
         }
-        int allCount = this.backupList.size() + this.failList.size();
         this.comment = String.format("%s %s(%s)平台一共备份%s期间%d条录音文件,成功备份%d条",
-                sf.format(now), this.platformName, this.platformId, this.backupDate, allCount, this.backupList.size());
+                sf.format(now), this.platformName, this.platformId, sf.format(this.backupDate), this.backupCount, this.successBackupCount);
         if(this.failList.size() > 0)
             this.comment = String.format("%s,%d条录音备份失败", this.comment, this.failList.size());
         if(this.compareWithDB)
         {
             if(notBackupList.size() > 0)
-                this.comment = String.format("%s,同数据库呼叫记录比较%d条呼叫没有找到录音文件",
+                this.comment = String.format("%s,同数据库呼叫记录比较%d条呼叫录音文件应该备份而未备份",
                         this.comment, this.notBackupList.size());
             else
-                this.comment = String.format("%s,同数据库呼叫记录比较%d条呼叫没有遗漏", this.comment);
+                this.comment = String.format("%s,同数据库呼叫记录比较所有呼叫录音文件都已经备份", this.comment);
         }
         return this.comment;
+    }
+
+    public PlatformRecordBackupResultPo getBackupResult()
+    {
+        PlatformRecordBackupResultPo po = new PlatformRecordBackupResultPo();
+        po.setPlatformId(this.platformId);
+        po.setPlatformName(this.platformName);
+        po.setBackupDate(this.backupDate);
+        po.setStartTime(this.beginTime);
+        po.setEndTime(this.endTime);
+        po.setResult(this.result);
+        po.setComment(this.comment);
+        po.setBackupCount(this.backupCount);
+        po.setFailCount(this.failList.size());
+        po.setNotBackupCount(this.notBackupList.size());
+        return po;
     }
 }

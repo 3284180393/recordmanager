@@ -36,11 +36,11 @@ public class FailBackupRecordFileDaoImpl implements IFailBackupRecordFileDao {
     JdbcTemplate sqliteJdbcTemplate;
 
     @Override
-    public int insert(FailBackupRecordFilePo recordFilePo) {
+    public int insert(int platformBackupId, FailBackupRecordFilePo recordFilePo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String sql = String.format("insert into fail_backup_record_file (id, platformBackupId, recordDate, fileSavePath, backupPath, failReason) values (NULL, %d, '%s', '%s', '%s', '%s')",
-                recordFilePo.getPlatformBackupId(), sf.format(recordFilePo.getRecordDate()), recordFilePo.getFileSavePath(),
+                platformBackupId, sf.format(recordFilePo.getRecordDate()), recordFilePo.getFileSavePath(),
                 recordFilePo.getBackupPath(), recordFilePo.getFailReason());
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
