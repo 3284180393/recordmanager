@@ -85,6 +85,7 @@ public class PlatformRecordBackupResultSumVo {
         this.platformName = platformName;
         this.backupDate = backupDate;
         this.comment = errorMsg;
+        this.failList = new ArrayList<>();
     }
 
     public static PlatformRecordBackupResultSumVo fail(String platformId, String platformName, Date backupDate, Exception ex)

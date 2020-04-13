@@ -47,6 +47,7 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
             Date chosenDate = sf.parse(dateStr);
             now = chosenDate;
             resultVo = backup(chosenDate);
+            generateTestDate(resultVo);
             addPlatformRecordBackupResult(resultVo);
         }
         catch (Exception ex)
@@ -80,7 +81,7 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
             catch (Exception ex)
             {
                 logger.error(String.format("check %s(%s) record exception", enterpriseVo.getEnterpriseName(), enterpriseVo.getEnterpriseId()), ex);
-                entRecordCheckResultVo = EntRecordCheckResultSumVo.fail(enterpriseVo, ex);
+                entRecordCheckResultVo = EntRecordCheckResultSumVo.fail(enterpriseVo, beginTime, endTime, ex);
             }
             logger.debug(entRecordCheckResultVo.toString());
             entCheckResultList.add(entRecordCheckResultVo);

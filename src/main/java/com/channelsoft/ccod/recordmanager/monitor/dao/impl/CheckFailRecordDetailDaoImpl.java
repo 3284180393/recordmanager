@@ -39,13 +39,24 @@ public class CheckFailRecordDetailDaoImpl implements ICheckFailRecordDetailDao {
     public int insert(int platformRecordCheckId, int entRecordCheckId, CheckFailRecordDetailPo detailPo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("insert into fail_check_record_detail (id, platformCheckId, enterpriseCheckId, enterpriseId, enterpriseName, sessionId, agentId, startTime, endTime, talkDuration, callType, endType, recordIndex, bakRecordIndex, failReason) values (NULL, %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s', '%s', '%s')",
-                platformRecordCheckId, entRecordCheckId, detailPo.getEnterpriseId(), detailPo.getEnterpriseName(),
-                detailPo.getSessionId(), detailPo.getAgentId(), sf.format(detailPo.getStartTime()),
-                sf.format(detailPo.getEndTime()), detailPo.getTalkDuration(), detailPo.getCallType(), detailPo.getEndType(),
-                detailPo.getRecordIndex(), detailPo.getBakRecordIndex(), detailPo.getFailReason());
+        String sql = "insert into fail_check_record_detail (platformCheckId, entCheckId, enterpriseId, enterpriseName, sessionId, agentId, startTime, endTime, talkDuration, callType, endType, recordIndex, bakRecordIndex, failReason) " +
+                "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, platformRecordCheckId);
+            ps.setInt(2, entRecordCheckId);
+            ps.setString(3, detailPo.getEnterpriseId());
+            ps.setString(4, detailPo.getEnterpriseName());
+            ps.setString(5, detailPo.getSessionId());
+            ps.setString(6, detailPo.getAgentId());
+            ps.setString(7, sf.format(detailPo.getStartTime()));
+            ps.setString(8, sf.format(detailPo.getEndTime()));
+            ps.setInt(9, detailPo.getTalkDuration());
+            ps.setInt(10, detailPo.getCallType());
+            ps.setInt(11, detailPo.getEndType());
+            ps.setString(12, detailPo.getRecordIndex());
+            ps.setString(13, detailPo.getBakRecordIndex());
+            ps.setString(14, detailPo.getFailReason());
             return ps;
         };
         logger.debug(String.format("insert new fail check record detail, sql=%s", sql));

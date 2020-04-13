@@ -5,6 +5,7 @@ import com.channelsoft.ccod.recordmanager.config.*;
 import com.channelsoft.ccod.recordmanager.constant.BackupMethod;
 import com.channelsoft.ccod.recordmanager.constant.CCODPlatformType;
 import com.channelsoft.ccod.recordmanager.constant.RecordCheckResult;
+import com.channelsoft.ccod.recordmanager.constant.RecordType;
 import com.channelsoft.ccod.recordmanager.monitor.dao.*;
 import com.channelsoft.ccod.recordmanager.monitor.po.*;
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
@@ -114,6 +115,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         }
         try
         {
+            generateTestDate(sumVo);
             addNewPlatformCheckResult(sumVo);
         }
         catch (Exception ex)
@@ -128,6 +130,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         Date startTime = new Date();
         List<StoredRecordFileVo> fileList = scanRecordFile(backupDate);
         List<FailBackupRecordFilePo> failList = backupByCopyDirectory(fileList, this.backupRootPath, this.verify, backupDate);
+
         PlatformRecordBackupResultSumVo resultVo;
         if(!this.compareWithDB)
         {
@@ -685,6 +688,103 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 this.missBackupRecordDetailDao.insert(backupId, po);
             }
         }
+    }
+
+    protected void generateTestDate(PlatformRecordCheckResultSumVo sumVo)
+    {
+        for(EntRecordCheckResultSumVo entSumVo : sumVo.getEntRecordCheckResultList())
+        {
+            if(!entSumVo.isResult())
+                continue;
+            RecordDetailVo detailVo = new RecordDetailVo();
+            detailVo.setEnterpriseId("11111");
+            detailVo.setRecordIndex("0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav");
+            detailVo.setRecordType(RecordType.MIX);
+            detailVo.setHasBak(true);
+            detailVo.setAgentId("2345");
+            detailVo.setBakRecordIndex("0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav");
+            detailVo.setCallType(1);
+            Calendar ca = Calendar.getInstance();
+            detailVo.setSessionId("6666688888");
+            detailVo.setEndTime(ca.getTime());
+            ca.add(Calendar.MINUTE, 22);
+            detailVo.setStartTime(ca.getTime());
+            detailVo.setEndType(255);
+            detailVo.setTalkDuration(123);
+            entSumVo.getNotBakFileList().add(detailVo);
+            detailVo = new RecordDetailVo();
+            detailVo.setEnterpriseId("11111");
+            detailVo.setRecordIndex("0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav");
+            detailVo.setRecordType(RecordType.MIX);
+            detailVo.setHasBak(true);
+            detailVo.setAgentId("2345");
+            detailVo.setBakRecordIndex(null);
+            detailVo.setCallType(1);
+            detailVo.setSessionId("6666688888");
+            detailVo.setEndTime(ca.getTime());
+            ca.add(Calendar.MINUTE, 22);
+            detailVo.setStartTime(ca.getTime());
+            detailVo.setEndType(255);
+            detailVo.setTalkDuration(123);
+            entSumVo.getNotBakIndexList().add(detailVo);
+            detailVo = new RecordDetailVo();
+            detailVo.setEnterpriseId("11111");
+            detailVo.setRecordIndex("0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav");
+            detailVo.setRecordType(RecordType.MIX);
+            detailVo.setHasBak(true);
+            detailVo.setAgentId("2345");
+            detailVo.setBakRecordIndex(null);
+            detailVo.setCallType(1);
+            detailVo.setSessionId("6666688888");
+            detailVo.setEndTime(ca.getTime());
+            ca.add(Calendar.MINUTE, 22);
+            detailVo.setStartTime(ca.getTime());
+            detailVo.setEndType(255);
+            detailVo.setTalkDuration(123);
+            entSumVo.getNotFileList().add(detailVo);
+            detailVo = new RecordDetailVo();
+            detailVo.setEnterpriseId("11111");
+            detailVo.setRecordIndex(null);
+            detailVo.setRecordType(RecordType.MIX);
+            detailVo.setHasBak(true);
+            detailVo.setAgentId("2345");
+            detailVo.setBakRecordIndex(null);
+            detailVo.setCallType(1);
+            detailVo.setSessionId("6666688888");
+            detailVo.setEndTime(ca.getTime());
+            ca.add(Calendar.MINUTE, 22);
+            detailVo.setStartTime(ca.getTime());
+            detailVo.setEndType(255);
+            detailVo.setTalkDuration(123);
+            entSumVo.getNotIndexList().add(detailVo);
+        }
+    }
+
+    protected void generateTestDate(PlatformRecordBackupResultSumVo sumVo)
+    {
+        RecordDetailVo detailVo = new RecordDetailVo();
+        detailVo.setEnterpriseId("11111");
+        detailVo.setRecordIndex("0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav");
+        detailVo.setRecordType(RecordType.MIX);
+        detailVo.setHasBak(true);
+        detailVo.setAgentId("2345");
+        detailVo.setBakRecordIndex("0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav");
+        detailVo.setCallType(1);
+        Calendar ca = Calendar.getInstance();
+        detailVo.setSessionId("6666688888");
+        detailVo.setEndTime(ca.getTime());
+        ca.add(Calendar.MINUTE, 22);
+        detailVo.setStartTime(ca.getTime());
+        detailVo.setEndType(255);
+        detailVo.setTalkDuration(123);
+        sumVo.getNotBackupList().add(detailVo);
+        FailBackupRecordFilePo filePo = new FailBackupRecordFilePo();
+        filePo.setFileSavePath("d:/temp/1.txt");
+        filePo.setBackupPath("d:/temp/backup/temp/1.txt");
+        ca.add(Calendar.HOUR, 1);
+        filePo.setRecordDate(ca.getTime());
+        filePo.setFailReason("just a test");
+        sumVo.getFailList().add(filePo);
     }
 
     protected class RecordIndexSearch

@@ -39,17 +39,25 @@ public class PlatformRecordBackupResultDaoImpl implements IPlatformRecordBackupR
     public int insert(PlatformRecordBackupResultPo backupResultPo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("insert into platform_record_backup_result (id, platformId, platformName, backupDate, startTime, endTime, result, comment, backupCount, failCount, notBackupCount) values (NULL, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, %d)",
-                backupResultPo.getPlatformId(), backupResultPo.getPlatformName(), sf.format(backupResultPo.getBackupDate()),
-                sf.format(backupResultPo.getStartTime()), sf.format(backupResultPo.getEndTime()), backupResultPo.isResult() ? 1 : 0,
-                backupResultPo.getComment(), backupResultPo.getBackupCount(), backupResultPo.getFailCount(), backupResultPo.getNotBackupCount());
+        String sql = "insert into platform_record_backup_result (platformId, platformName, backupDate, startTime, endTime, result, comment, backupCount, failCount, notBackupCount) " +
+                "values (?,?,?,?,?,?,?,?,?,?)";
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, backupResultPo.getPlatformId());
+            ps.setString(2, backupResultPo.getPlatformName());
+            ps.setString(3, sf.format(backupResultPo.getBackupDate()));
+            ps.setString(4, sf.format(backupResultPo.getStartTime()));
+            ps.setString(5, sf.format(backupResultPo.getEndTime()));
+            ps.setInt(6, backupResultPo.isResult() ? 1 : 0);
+            ps.setString(7, backupResultPo.getComment());
+            ps.setInt(8, backupResultPo.getBackupCount());
+            ps.setInt(9,  backupResultPo.getFailCount());
+            ps.setInt(10, backupResultPo.getNotBackupCount());
             return ps;
         };
-        logger.debug(String.format("insert new platform record backup result sql=%s", sql));
+        logger.debug(String.format("insert platform record backup result sql=%s", sql));
         sqliteJdbcTemplate.update(preparedStatementCreator, keyHolder);
-        logger.debug(String.format("insert new platform record backup result success, id=%d", keyHolder.getKey().intValue()));
+        logger.debug(String.format("insert platform record backup result success, id=%d", keyHolder.getKey().intValue()));
         return keyHolder.getKey().intValue();
     }
 

@@ -70,15 +70,26 @@ public class PlatformRecordCheckResultDaoImpl implements IPlatformRecordCheckRes
     public int insert(PlatformRecordCheckResultPo checkResultVo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("insert into platform_record_check_result (id, platformId, platformName, checkTime, timeUsage, beginTime, endTime, result, comment, checkEntCount, failEntCount, checkCount, successCount, notIndexCount, notFileCount, notBakIndexCount, notBakFileCount) values (NULL, '%s', '%s', '%s', %d, '%s', '%s', %d, '%s', %d, %d, %d, %d, %d, %d, %d, %d)",
-                checkResultVo.getPlatformId(), checkResultVo.getPlatformName(), sf.format(checkResultVo.getCheckTime()),
-                checkResultVo.getTimeUsage(), sf.format(checkResultVo.getBeginTime()),
-                sf.format(checkResultVo.getEndTime()), checkResultVo.isResult() ? 1 : 0, checkResultVo.getComment(),
-                checkResultVo.getCheckEntCount(), checkResultVo.getFailEntCount(), checkResultVo.getCheckCount(),
-                checkResultVo.getSuccessCount(), checkResultVo.getNotIndexCount(), checkResultVo.getNotFileCount(),
-                checkResultVo.getNotBakIndexCount(), checkResultVo.getNotBakIndexCount());
+        String sql = "insert into platform_record_check_result (platformId, platformName, checkTime, timeUsage, beginTime, endTime, result, comment, checkEntCount, failEntCount, checkCount, successCount, notIndexCount, notFileCount, notBakIndexCount, notBakFileCount) " +
+                "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, checkResultVo.getPlatformId());
+            ps.setString(2, checkResultVo.getPlatformName());
+            ps.setString(3, sf.format(checkResultVo.getCheckTime()));
+            ps.setInt(4, checkResultVo.getTimeUsage());
+            ps.setString(5, sf.format(checkResultVo.getBeginTime()));
+            ps.setString(6, sf.format(checkResultVo.getEndTime()));
+            ps.setInt(7, checkResultVo.isResult() ? 1 : 0);
+            ps.setString(8, checkResultVo.getComment());
+            ps.setInt(9, checkResultVo.getCheckEntCount());
+            ps.setInt(10, checkResultVo.getFailEntCount());
+            ps.setInt(11, checkResultVo.getCheckCount());
+            ps.setInt(12, checkResultVo.getSuccessCount());
+            ps.setInt(13, checkResultVo.getNotIndexCount());
+            ps.setInt(14, checkResultVo.getNotFileCount());
+            ps.setInt(15, checkResultVo.getNotBakIndexCount());
+            ps.setInt(16, checkResultVo.getNotFileCount());
             return ps;
         };
         logger.debug(String.format("insert new platform record checkResult sql=%s", sql));

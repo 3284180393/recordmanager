@@ -3,6 +3,7 @@ package com.channelsoft.ccod.recordmanager.monitor.vo;
 import com.channelsoft.ccod.recordmanager.monitor.po.PlatformRecordCheckResultPo;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -53,6 +54,7 @@ public class PlatformRecordCheckResultSumVo {
         this.platformName = platformName;
         this.result = result;
         this.comment = comment;
+        this.entRecordCheckResultList = new ArrayList<>();
     }
 
     public static PlatformRecordCheckResultSumVo fail(String platformId, String platformName, String errorMsg)

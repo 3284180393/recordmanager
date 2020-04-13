@@ -39,18 +39,28 @@ public class MissBackupRecordDetailDaoImpl implements IMissBackupRecordDetailDao
     public int insert(int platformRecordBackupId, MissBackupRecordDetailPo detailPo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("insert into miss_backup_record_detail (id, backupId, enterpriseId, enterpriseName, sessionId, agentId, startTime, endTime, talkDuration, callType, endType, recordIndex, bakRecordIndex, failReason) values (NULL, %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s', '%s', '%s')",
-                platformRecordBackupId, detailPo.getEnterpriseId(), detailPo.getEnterpriseName(),
-                detailPo.getSessionId(), detailPo.getAgentId(), sf.format(detailPo.getStartTime()),
-                sf.format(detailPo.getEndTime()), detailPo.getTalkDuration(), detailPo.getCallType(), detailPo.getEndType(),
-                detailPo.getRecordIndex(), detailPo.getBakRecordIndex(), detailPo.getFailReason());
+        String sql = "insert into miss_backup_record_detail (backupId, enterpriseId, enterpriseName, sessionId, agentId, startTime, endTime, talkDuration, callType, endType, recordIndex, bakRecordIndex, failReason) " +
+                "values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, platformRecordBackupId);
+            ps.setString(2, detailPo.getEnterpriseId());
+            ps.setString(3, detailPo.getEnterpriseName());
+            ps.setString(4, detailPo.getSessionId());
+            ps.setString(5, detailPo.getAgentId());
+            ps.setString(6, sf.format(detailPo.getStartTime()));
+            ps.setString(7, sf.format(detailPo.getEndTime()));
+            ps.setInt(8, detailPo.getTalkDuration());
+            ps.setInt(9, detailPo.getCallType());
+            ps.setInt(10, detailPo.getEndType());
+            ps.setString(11, detailPo.getRecordIndex());
+            ps.setString(12, detailPo.getBakRecordIndex());
+            ps.setString(13, detailPo.getFailReason());
             return ps;
         };
-        logger.debug(String.format("insert new not backup record detail, sql=%s", sql));
+        logger.debug(String.format("insert miss backup record detail, sql=%s", sql));
         sqliteJdbcTemplate.update(preparedStatementCreator, keyHolder);
-        logger.debug(String.format("insert new not backup record detail success, id=%d", keyHolder.getKey().intValue()));
+        logger.debug(String.format("insert miss backup record detail success, id=%d", keyHolder.getKey().intValue()));
         return keyHolder.getKey().intValue();
     }
 

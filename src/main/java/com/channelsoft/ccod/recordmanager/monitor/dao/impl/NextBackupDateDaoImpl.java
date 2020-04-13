@@ -38,15 +38,16 @@ public class NextBackupDateDaoImpl implements INextBackupDateDao {
     public int insert(NextBackupDatePo nextBackupDatePo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("insert into next_backup_date (id, nextBackupDate, updateTime) values (NULL, '%s', '%s')",
-                sf.format(nextBackupDatePo.getNextBackupDate()), sf.format(nextBackupDatePo.getUpdateTime()));
+        String sql = "insert into next_backup_date (nextBackupDate, updateTime) values (?,?)";
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, sf.format(nextBackupDatePo.getNextBackupDate()));
+            ps.setString(2, sf.format(nextBackupDatePo.getUpdateTime()));
             return ps;
         };
         logger.debug(String.format("insert next backup date, sql=%s", sql));
         sqliteJdbcTemplate.update(preparedStatementCreator, keyHolder);
-        logger.debug(String.format("insert new next backup date success, id=%d", keyHolder.getKey().intValue()));
+        logger.debug(String.format("insert next backup date success, id=%d", keyHolder.getKey().intValue()));
         return keyHolder.getKey().intValue();
     }
 

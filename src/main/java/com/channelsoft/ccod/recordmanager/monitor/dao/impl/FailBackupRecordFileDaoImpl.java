@@ -39,16 +39,20 @@ public class FailBackupRecordFileDaoImpl implements IFailBackupRecordFileDao {
     public int insert(int platformBackupId, FailBackupRecordFilePo recordFilePo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("insert into fail_backup_record_file (id, platformBackupId, recordDate, fileSavePath, backupPath, failReason) values (NULL, %d, '%s', '%s', '%s', '%s')",
-                platformBackupId, sf.format(recordFilePo.getRecordDate()), recordFilePo.getFileSavePath(),
-                recordFilePo.getBackupPath(), recordFilePo.getFailReason());
+        String sql = "insert into fail_backup_record_file (platformBackupId, recordDate, fileSavePath, backupPath, failReason) " +
+                "values (?,?,?,?,?)";
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, platformBackupId);
+            ps.setString(2, sf.format(recordFilePo.getRecordDate()));
+            ps.setString(3, recordFilePo.getFileSavePath());
+            ps.setString(4, recordFilePo.getBackupPath());
+            ps.setString(5, recordFilePo.getFailReason());
             return ps;
         };
-        logger.debug(String.format("insert new fail backup record file, sql=%s", sql));
+        logger.debug(String.format("insert fail backup record file, sql=%s", sql));
         sqliteJdbcTemplate.update(preparedStatementCreator, keyHolder);
-        logger.debug(String.format("insert new fail backup record file success, id=%d", keyHolder.getKey().intValue()));
+        logger.debug(String.format("insert fail backup record file success, id=%d", keyHolder.getKey().intValue()));
         return keyHolder.getKey().intValue();
     }
 

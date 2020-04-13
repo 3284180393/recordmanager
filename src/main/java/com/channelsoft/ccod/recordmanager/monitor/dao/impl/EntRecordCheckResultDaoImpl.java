@@ -39,15 +39,25 @@ public class EntRecordCheckResultDaoImpl implements IEntRecordCheckResultDao {
     public int insert(int platformRecordCheckId, EntRecordCheckResultPo checkResultVo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("insert into ent_record_check_result (id, platformCheckId, enterpriseId, enterpriseName, checkTime, beginTime, endTime, result, comment, hasBak, checkCount, successCount, notIndexCount, notFileCount, notBakIndexCount, notBakFileCount) values (NULL, %d, '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, %d, %d, %d, %d, %d)",
-                platformRecordCheckId, checkResultVo.getEnterpriseId(), checkResultVo.getEnterpriseName(), sf.format(checkResultVo.getCheckTime()),
-                sf.format(checkResultVo.getBeginTime()),
-                sf.format(checkResultVo.getEndTime()), checkResultVo.isResult() ? 1 : 0, checkResultVo.getComment(),
-                checkResultVo.isHasBak() ? 1 : 0, checkResultVo.getCheckCount(),
-                checkResultVo.getSuccessCount(), checkResultVo.getNotIndexCount(), checkResultVo.getNotFileCount(),
-                checkResultVo.getNotBakIndexCount(), checkResultVo.getNotBakIndexCount());
+        String sql = "insert into ent_record_check_result (platformCheckId, enterpriseId, enterpriseName, checkTime, beginTime, endTime, result, comment, hasBak, checkCount, successCount, notIndexCount, notFileCount, notBakIndexCount, notBakFileCount) values " +
+                "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatementCreator preparedStatementCreator = con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, platformRecordCheckId);
+            ps.setString(2, checkResultVo.getEnterpriseId());
+            ps.setString(3, checkResultVo.getEnterpriseName());
+            ps.setString(4, sf.format(checkResultVo.getCheckTime()));
+            ps.setString(5, sf.format(checkResultVo.getBeginTime()));
+            ps.setString(6, sf.format(checkResultVo.getEndTime()));
+            ps.setInt(7, checkResultVo.isResult() ? 1 : 0);
+            ps.setString(8, checkResultVo.getComment());
+            ps.setInt(9, checkResultVo.isHasBak() ? 1 : 0);
+            ps.setInt(10, checkResultVo.getCheckCount());
+            ps.setInt(11, checkResultVo.getSuccessCount());
+            ps.setInt(12, checkResultVo.getNotIndexCount());
+            ps.setInt(13, checkResultVo.getNotFileCount());
+            ps.setInt(14, checkResultVo.getNotBakIndexCount());
+            ps.setInt(15, checkResultVo.getNotBakFileCount());
             return ps;
         };
         logger.debug(String.format("insert new enterprise record check result sql=%s", sql));

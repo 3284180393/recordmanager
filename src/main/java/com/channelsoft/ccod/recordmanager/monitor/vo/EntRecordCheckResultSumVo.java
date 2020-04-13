@@ -83,16 +83,23 @@ public class EntRecordCheckResultSumVo {
         this.comment = toString();
     }
 
-    protected EntRecordCheckResultSumVo(EnterpriseVo enterpriseVo, String erorrMsg)
+    protected EntRecordCheckResultSumVo(EnterpriseVo enterpriseVo, Date startTime, Date endTime, String erorrMsg)
     {
         this.enterpriseId = enterpriseVo.getEnterpriseId();
         this.enterpriseName = enterpriseVo.getEnterpriseName();
+        this.checkTime = new Date();
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.comment = String.format("检查%s[%s]录音文件失败:%s", this.enterpriseId, this.enterpriseName, erorrMsg);
+        this.notIndexList = new ArrayList<>();
+        this.notFileList = new ArrayList<>();
+        this.notBakIndexList = new ArrayList<>();
+        this.notBakFileList = new ArrayList<>();
     }
 
-    public static EntRecordCheckResultSumVo fail(EnterpriseVo enterpriseVo, Exception e)
+    public static EntRecordCheckResultSumVo fail(EnterpriseVo enterpriseVo, Date startTime, Date endTime, Exception e)
     {
-        return new EntRecordCheckResultSumVo(enterpriseVo, e.getMessage());
+        return new EntRecordCheckResultSumVo(enterpriseVo, startTime, endTime, e.getMessage());
     }
 
     public String getEnterpriseId() {
