@@ -83,9 +83,9 @@ public class PlatformRecordBackupResultDaoImpl implements IPlatformRecordBackupR
             po.setPlatformName(rs.getString("platformName"));
             po.setPlatformId(rs.getString("platformId"));
             po.setComment(rs.getString("comment"));
-            po.setBackupDate(rs.getTime("backupDate"));
-            po.setStartTime(rs.getTime("startTime"));
-            po.setEndTime(rs.getTime("endTime"));
+            po.setBackupDate(rs.getTimestamp("backupDate"));
+            po.setStartTime(rs.getTimestamp("startTime"));
+            po.setEndTime(rs.getTimestamp("endTime"));
             po.setId(rs.getInt("id"));
             po.setBackupCount(rs.getInt("backupCount"));
             po.setFailCount(rs.getInt("failCount"));

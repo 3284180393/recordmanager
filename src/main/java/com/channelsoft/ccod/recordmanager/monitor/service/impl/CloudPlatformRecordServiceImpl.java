@@ -15,7 +15,7 @@ import java.util.Date;
  * @Date: 2020/4/8 21:15
  * @Version: 1.0
  */
-public class CloudPlatformRecordServiceImpl implements IPlatformRecordService {
+public abstract class CloudPlatformRecordServiceImpl implements IPlatformRecordService {
 
     private final static Logger logger = LoggerFactory.getLogger(CloudPlatformRecordServiceImpl.class);
 

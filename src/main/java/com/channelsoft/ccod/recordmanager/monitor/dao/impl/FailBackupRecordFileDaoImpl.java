@@ -76,7 +76,7 @@ public class FailBackupRecordFileDaoImpl implements IFailBackupRecordFileDao {
             FailBackupRecordFilePo po = new FailBackupRecordFilePo();
             po.setId(rs.getInt("id"));
             po.setPlatformBackupId(rs.getInt("platformBackupId"));
-            po.setRecordDate(rs.getTime("recordDate"));
+            po.setRecordDate(rs.getTimestamp("recordDate"));
             po.setFileSavePath(rs.getString("fileSavePath"));
             po.setFailReason(rs.getString("backupPath"));
             po.setFailReason(rs.getString("failReason"));

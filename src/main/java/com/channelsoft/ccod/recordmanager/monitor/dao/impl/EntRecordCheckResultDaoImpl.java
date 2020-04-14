@@ -78,6 +78,18 @@ public class EntRecordCheckResultDaoImpl implements IEntRecordCheckResultDao {
         return list;
     }
 
+    @Override
+    public List<EntRecordCheckResultPo> select(Date beginTime, Date endTime) {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String sql = String.format("select * from ent_record_check_result where beginTime>='%s' and endTime<='%s'",
+                sf.format(beginTime), sf.format(endTime));
+        logger.debug(String.format("begin to query all enterprise record check result from %s to %s"
+                , sf.format(beginTime), sf.format(endTime)));
+        List<EntRecordCheckResultPo> list = sqliteJdbcTemplate.query(sql, new RowMap());
+        logger.debug(String.format("find %d record of enterprise check result", list.size()));
+        return list;
+    }
+
     class RowMap implements RowMapper<EntRecordCheckResultPo>
     {
         @Override
@@ -88,9 +100,9 @@ public class EntRecordCheckResultDaoImpl implements IEntRecordCheckResultDao {
             po.setPlatformCheckId(rs.getInt("platformCheckId"));
             po.setEnterpriseId(rs.getString("enterpriseId"));
             po.setEnterpriseName(rs.getString("enterpriseName"));
-            po.setCheckTime(rs.getTime("checkTime"));
-            po.setBeginTime(rs.getTime("beginTime"));
-            po.setEndTime(rs.getTime("endTime"));
+            po.setCheckTime(rs.getTimestamp("checkTime"));
+            po.setBeginTime(rs.getTimestamp("beginTime"));
+            po.setEndTime(rs.getTimestamp("endTime"));
             po.setResult(rs.getBoolean("result"));
             po.setComment(rs.getString("comment"));
             po.setHasBak(rs.getBoolean("hasBak"));

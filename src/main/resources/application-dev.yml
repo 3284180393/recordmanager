@@ -88,7 +88,7 @@ jobs:
     cron: 0 0/2 * * * ?
     delay: 2
   backup:
-    cron: 0 0/2 * * * ?
+    cron: 0 0/20 * * * ?
     backupRootPath: /mnt/backup
     verify: true
     compareWithDB: false

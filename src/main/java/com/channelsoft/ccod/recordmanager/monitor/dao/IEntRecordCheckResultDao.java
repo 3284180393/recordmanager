@@ -29,4 +29,12 @@ public interface IEntRecordCheckResultDao {
      * @return
      */
     List<EntRecordCheckResultPo> select(String enterpriseId, Date beginTime, Date endTime);
+
+    /**
+     * 查询某个时间段内所有企业录音检查结果
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    List<EntRecordCheckResultPo> select(Date beginTime, Date endTime);
 }

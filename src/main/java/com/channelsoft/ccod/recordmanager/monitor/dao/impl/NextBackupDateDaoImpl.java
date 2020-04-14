@@ -78,8 +78,8 @@ public class NextBackupDateDaoImpl implements INextBackupDateDao {
         {
             NextBackupDatePo po = new NextBackupDatePo();
             po.setId(rs.getInt("id"));
-            po.setNextBackupDate(rs.getTime("nextBackupDate"));
-            po.setUpdateTime(rs.getTime("updateTime"));
+            po.setNextBackupDate(rs.getTimestamp("nextBackupDate"));
+            po.setUpdateTime(rs.getTimestamp("updateTime"));
             return po;
         }
     }

@@ -101,7 +101,7 @@ public class PlatformRecordCheckResultDaoImpl implements IPlatformRecordCheckRes
     @Override
     public List<PlatformRecordCheckResultPo> select(Date beginTime, Date endTime) {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("select * from platform_record_check_result where checkTime>='%s' and checkTime<='%s'",
+        String sql = String.format("select * from platform_record_check_result where beginTime>='%s' and endTime<='%s'",
                 sf.format(beginTime), sf.format(endTime));
         logger.debug(String.format("begin to query all platform check result from %s to %s"
                 , sf.format(beginTime), sf.format(endTime)));
@@ -119,10 +119,10 @@ public class PlatformRecordCheckResultDaoImpl implements IPlatformRecordCheckRes
             po.setResult(rs.getBoolean("result"));
             po.setPlatformName(rs.getString("platformName"));
             po.setPlatformId(rs.getString("platformId"));
-            po.setEndTime(rs.getTime("endTime"));
+            po.setEndTime(rs.getTimestamp("endTime"));
             po.setComment(rs.getString("comment"));
-            po.setCheckTime(rs.getTime("checkTime"));
-            po.setBeginTime(rs.getTime("beginTime"));
+            po.setCheckTime(rs.getTimestamp("checkTime"));
+            po.setBeginTime(rs.getTimestamp("beginTime"));
             po.setTimeUsage(rs.getInt("timeUsage"));
             po.setId(rs.getInt("id"));
             po.setCheckEntCount(rs.getInt("checkEntCount"));

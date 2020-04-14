@@ -144,6 +144,36 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return resultVo;
     }
 
+    @Override
+    public List<PlatformRecordCheckResultPo> queryPlatformRecordCheckResult(Date beginTime, Date endTime) throws Exception {
+        return this.platformRecordCheckResultDao.select(beginTime, endTime);
+    }
+
+    @Override
+    public List<EntRecordCheckResultPo> queryEntRecordCheckResult(Date beginTime, Date endTime) throws Exception {
+        return this.entRecordCheckResultDao.select(beginTime, endTime);
+    }
+
+    @Override
+    public List<CheckFailRecordDetailPo> queryEntRecordCheckDetail(String enterpriseId, Date beginTime, Date endTime) throws Exception {
+        return this.checkFailRecordDetailDao.select(enterpriseId, beginTime, endTime);
+    }
+
+    @Override
+    public List<PlatformRecordBackupResultPo> queryPlatformRecordBackupResult(Date beginTime, Date endTime) throws Exception {
+        return this.platformRecordBackupResultDao.select(beginTime, endTime);
+    }
+
+    @Override
+    public List<MissBackupRecordDetailPo> queryPlatformBackupMissRecordDetail(Date beginTime, Date endTime) throws Exception {
+        return this.missBackupRecordDetailDao.select(beginTime, endTime);
+    }
+
+    @Override
+    public List<FailBackupRecordFilePo> queryPlatformFailBackupFile(Date beginTime, Date endTime) throws Exception {
+        return this.failBackupRecordFileDao.select(beginTime, endTime);
+    }
+
     /**
      * 扫描某个日期的所有录音文件
      * @param scanDate 被扫描的日期
@@ -503,7 +533,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         }
     }
 
-    public List<FailBackupRecordFilePo> backupByCopyDirectory(List<StoredRecordFileVo> storedRecordFileList, String backupRootDirectory, boolean isVerify, Date recordDate) throws IOException, Exception
+    protected List<FailBackupRecordFilePo> backupByCopyDirectory(List<StoredRecordFileVo> storedRecordFileList, String backupRootDirectory, boolean isVerify, Date recordDate) throws IOException, Exception
     {
         List<FailBackupRecordFilePo> failList = new ArrayList<>();
         Map<String, List<StoredRecordFileVo>> dirFileMap = storedRecordFileList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getStoreDir));
@@ -757,6 +787,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             detailVo.setEndType(255);
             detailVo.setTalkDuration(123);
             entSumVo.getNotIndexList().add(detailVo);
+            entSumVo.setComment(entSumVo.toString());
         }
     }
 
@@ -785,6 +816,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         filePo.setRecordDate(ca.getTime());
         filePo.setFailReason("just a test");
         sumVo.getFailList().add(filePo);
+        sumVo.setComment(sumVo.toString());
     }
 
     protected class RecordIndexSearch

@@ -88,8 +88,8 @@ public class MissBackupRecordDetailDaoImpl implements IMissBackupRecordDetailDao
             po.setEnterpriseName(rs.getString("enterpriseName"));
             po.setSessionId(rs.getString("sessionId"));
             po.setAgentId(rs.getString("agentId"));
-            po.setStartTime(rs.getTime("startTime"));
-            po.setEndTime(rs.getDate("endTime"));
+            po.setStartTime(rs.getTimestamp("startTime"));
+            po.setEndTime(rs.getTimestamp("endTime"));
             po.setTalkDuration(rs.getInt("talkDuration"));
             po.setCallType(rs.getInt("callType"));
             po.setEndType(rs.getInt("endType"));

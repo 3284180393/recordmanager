@@ -1,9 +1,11 @@
 package com.channelsoft.ccod.recordmanager.monitor.service;
 
+import com.channelsoft.ccod.recordmanager.monitor.po.*;
 import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordBackupResultSumVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @ClassName: IPlatformRecordService
@@ -28,4 +30,59 @@ public interface IPlatformRecordService {
      * @return 备份结果
      */
     PlatformRecordBackupResultSumVo backup(Date backupDate) throws Exception;
+
+    /**
+     * 查询指定时间段内的平台录音检查结果
+     * @param beginTime 开始时间
+     * @param endTime 结束时间
+     * @return 检查结果
+     * @throws Exception
+     */
+    List<PlatformRecordCheckResultPo> queryPlatformRecordCheckResult(Date beginTime, Date endTime) throws Exception;
+
+    /**
+     * 查询指定时间段内所有企业录音检查结果
+     * @param beginTime 开始时间
+     * @param endTime 结束时间
+     * @return 查询结果
+     * @throws Exception
+     */
+    List<EntRecordCheckResultPo> queryEntRecordCheckResult(Date beginTime, Date endTime) throws Exception;
+
+    /**
+     * 查询某个企业在某个时间段内检查失败的呼叫明细
+     * @param enterpriseId 企业id
+     * @param beginTime 开始时间
+     * @param endTime 结束时间
+     * @return 查询结果
+     * @throws Exception
+     */
+    List<CheckFailRecordDetailPo> queryEntRecordCheckDetail(String enterpriseId, Date beginTime, Date endTime) throws Exception;
+
+    /**
+     * 查询平台在某个时间录音备份结果
+     * @param beginTime 开始时间
+     * @param endTime 结束时间
+     * @return 查询结果
+     * @throws Exception
+     */
+    List<PlatformRecordBackupResultPo> queryPlatformRecordBackupResult(Date beginTime, Date endTime) throws Exception;
+
+    /**
+     * 查询平台在某个时间段内备份失败的录音文件明细
+     * @param beginTime 开始时间
+     * @param endTime 结束时间
+     * @return 查询结果
+     * @throws Exception
+     */
+    List<MissBackupRecordDetailPo> queryPlatformBackupMissRecordDetail(Date beginTime, Date endTime) throws Exception;
+
+    /**
+     * 查询平台在某个时间段内应该备份而未备份的呼叫明细
+     * @param beginTime 开始时间
+     * @param endTime 结束时间
+     * @return 查询结果
+     * @throws Exception
+     */
+    List<FailBackupRecordFilePo> queryPlatformFailBackupFile(Date beginTime, Date endTime) throws Exception;
 }
