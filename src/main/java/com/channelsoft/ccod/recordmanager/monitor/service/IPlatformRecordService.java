@@ -29,7 +29,7 @@ public interface IPlatformRecordService {
      * @param backupDate 需要备份的日期
      * @return 备份结果
      */
-    PlatformRecordBackupResultSumVo backup(Date backupDate) throws Exception;
+    PlatformRecordBackupResultSumVo backup(Date backupDate);
 
     /**
      * 查询指定时间段内的平台录音检查结果

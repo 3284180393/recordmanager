@@ -126,20 +126,36 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     }
 
     @Override
-    public PlatformRecordBackupResultSumVo backup(Date backupDate) throws Exception{
+    public PlatformRecordBackupResultSumVo backup(Date backupDate){
         Date startTime = new Date();
-        List<StoredRecordFileVo> fileList = scanRecordFile(backupDate);
-        List<FailBackupRecordFilePo> failList = backupByCopyDirectory(fileList, this.backupRootPath, this.verify, backupDate);
-
         PlatformRecordBackupResultSumVo resultVo;
-        if(!this.compareWithDB)
+        try
         {
-            resultVo = new PlatformRecordBackupResultSumVo(this.platformId, this.platformName, backupDate, startTime, fileList, failList);
+            List<StoredRecordFileVo> fileList = scanRecordFile(backupDate);
+            List<FailBackupRecordFilePo> failList = backupByCopyDirectory(fileList, this.backupRootPath, this.verify, backupDate);
+            if(!this.compareWithDB)
+            {
+                resultVo = new PlatformRecordBackupResultSumVo(this.platformId, this.platformName, backupDate, startTime, fileList, failList);
+            }
+            else
+            {
+                List<RecordDetailVo> notBackList = checkMissBackupRecordDetail(fileList, backupDate);
+                resultVo = new PlatformRecordBackupResultSumVo(this.platformId, this.platformName, backupDate, startTime, fileList, failList, notBackList);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            List<RecordDetailVo> notBackList = checkMissBackupRecordDetail(fileList, backupDate);
-            resultVo = new PlatformRecordBackupResultSumVo(this.platformId, this.platformName, backupDate, startTime, fileList, failList, notBackList);
+            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
+            logger.error(String.format("backup %s platform record exception", sf.format(backupDate)), ex);
+            resultVo = PlatformRecordBackupResultSumVo.fail(this.platformId, this.platformName, backupDate, ex);
+        }
+        try
+        {
+            this.addPlatformRecordBackupResult(resultVo);
+        }
+        catch (Exception ex)
+        {
+            logger.error(String.format("add platform backup result exception"), ex);
         }
         return resultVo;
     }

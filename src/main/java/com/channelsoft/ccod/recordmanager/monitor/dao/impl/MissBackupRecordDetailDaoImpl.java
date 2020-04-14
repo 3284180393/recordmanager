@@ -67,7 +67,7 @@ public class MissBackupRecordDetailDaoImpl implements IMissBackupRecordDetailDao
     @Override
     public List<MissBackupRecordDetailPo> select(Date beginDate, Date endDate) {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sql = String.format("select * from miss_backup_record_detail where backupDate>='%s' and backupDate<='%s'",
+        String sql = String.format("select * from miss_backup_record_detail where endTime>='%s' and endTime<='%s'",
                 sf.format(beginDate), sf.format(endDate));
         logger.debug(String.format("begin to query not backup check record detail from %s to %s",
                 sf.format(beginDate), sf.format(endDate)));
