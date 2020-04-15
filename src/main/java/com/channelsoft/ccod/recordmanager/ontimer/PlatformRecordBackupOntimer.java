@@ -55,6 +55,9 @@ public class PlatformRecordBackupOntimer {
     @Value("${jobs.backup.businessEndTime}")
     private String businessEndTimeStr;
 
+    @Value("${debug}")
+    private boolean debug;
+
     @Scheduled(cron = "${jobs.backup.cron}")
     private void start() throws Exception{
         Date now = new Date();
@@ -79,6 +82,16 @@ public class PlatformRecordBackupOntimer {
         else
         {
             backupDate = sf.parse(this.startDate);
+        }
+        if(debug)
+        {
+            ca.set(Calendar.YEAR, 2019);
+            ca.set(Calendar.MONTH, 7);
+            ca.set(Calendar.DATE, 14);
+            ca.set(Calendar.HOUR_OF_DAY, 0);
+            ca.set(Calendar.MINUTE, 0);
+            ca.set(Calendar.SECOND, 0);
+            backupDate = ca.getTime();
         }
         while(true)
         {
@@ -115,6 +128,8 @@ public class PlatformRecordBackupOntimer {
             nextBackupDatePo.setUpdateTime(new Date());
             nextBackupDatePo.setNextBackupDate(backupDate);
             nextBackupDateDao.insert(nextBackupDatePo);
+            if(debug)
+                break;
         }
     }
 }

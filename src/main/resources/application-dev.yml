@@ -22,10 +22,16 @@ ccod:
   platformType: NORMAL
   buzDBCount: 1
   recordType: COMBINATION
-  hasBak: false
+  hasBak: true
   enterprise:
-    choseMethod: ALL
+    choseMethod: INCLUDE
     list:
+      - "0000099999"
+      - "0000057711"
+      - "0000057722"
+      - "0000057733"
+      - "0000057744"
+      - "0000057755"
     notCheckBakList:
 
 call:
@@ -51,73 +57,87 @@ db:
     enterprise: GLS_ENTERPRISE_INFO
     mix: ENT_RECORD_TABLE
     combination: ENT_RECORD_BX_TABLE
-    bak: ENT_RECORD_BX_TABLE_BAK
+    bak: ENT_RECORD_BX_TABLE
     dbAgentRelate: GLS_DB_AGENT_RELATE
     dbEntRelate: GLS_DB_ENT_RELATE
 
 
 record:
-  storeRoles[0]:
-    mntDir: "D:/mnt"
-    grokPattern: ^D:/mnt/Data/record/(?<entId>\d+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-    example: D:/mnt/Data/record/0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
-    recordIndex: 0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
-    dateFormat:
-      date: yyyyMMdd
-      yearAndMonth: yyyyMM
-      monthAndDay: MMdd
-      year: yyyy
-      month: MM
-      day: dd
-  storeRoles[1]:
-    mntDir: "/mnt"
-    grokPattern: ^/mnt/Date1/(?<entId>\d+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/(?<AgentDn1>\d+)/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<localUrl>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-    example: /mnt/Date1/0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
-    recordIndex: 0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
-    dateFormat:
-      date: yyyyMMdd
-      yearAndMonth: yyyyMM
-      monthAndDay: MMdd
-      year: yyyy
-      month: MM
-      day: dd
-  storeRoles[2]:
-    mntDir: "/mnt"
-    grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-    example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
-    recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
-    dateFormat:
-      date: yyyyMMdd
-      yearAndMonth: yyyyMM
-      monthAndDay: MMdd
-      year: yyyy
-      month: MM
-      day: dd
+  master:
+    storeRoles[0]:
+      mntDir: "D:/mnt"
+      grokPattern: ^D:/mnt/Data/record/(?<entId>\d+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+      example: D:/mnt/Data/record/0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
+      recordIndex: 0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+    storeRoles[1]:
+      mntDir: "/mnt"
+      grokPattern: ^/mnt/Date1/(?<entId>\d+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/(?<AgentDn1>\d+)/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<localUrl>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+      example: /mnt/Date1/0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
+      recordIndex: 0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+    storeRoles[2]:
+      mntDir: "/mnt"
+      grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+      example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
+      recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+  backup:
+    storeRoles[0]:
+      mntDir: "/mnt"
+      grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+      example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
+      recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
 
 jobs:
   recordCheck:
-    interval: 10
-    cron: 0 0/30 * * * ?
-    delay: 2
+    interval: 20
+    cron: 0 0/1 * * * ?
+    delay: 10
   backup:
     startDate: 2020-01-01
     cron: 0 0/2 * * * ?
-    backupRootPath: /mnt/backup
+    backupRootPath: D:/mnt/backup
     verify: true
-    compareWithDB: false
+    compareWithDB: true
     businessEndTime: "23:00"
     stopTime: "05:00"
 
 notify:
   record-check:
-    indexLostCount: 5
-    indexLostRate: 3
-    fileLostCount: 5
-    fileLostRate: 3
-    bakIndexLostCount: 5
-    bakIndexLostRate: 3
-    bakFileLostCount: 5
-    bakFileLostRate: 3
+    indexLostCount: 9
+    indexLostRate: 10
+    fileLostCount: 8
+    fileLostRate: 9
+    bakIndexLostCount: 7
+    bakIndexLostRate: 8
+    bakFileLostCount: 6
+    bakFileLostRate: 7
     dingding:
       group[0]:
         webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
@@ -125,6 +145,9 @@ notify:
         atAll: true
         atList:
           - 18515100747
+    sysLog:
+      write: true
+      tag: "ccod"
   record-backup:
     dingding:
       group[0]:
@@ -133,9 +156,14 @@ notify:
         atAll: true
         atList:
           - 18515100747
+    sysLog:
+      write: true
+      tag: "ccod"
 
 env:
   windows: false
+
+debug: true
 
 
 

@@ -16,11 +16,21 @@ public class RecordBackupNotifyCfg {
 
     private DingDing dingding;  //用来定义接受报警消息的钉钉配置
 
+    private SysLog sysLog; //用来定义消息是否写到sysLog以及怎么写到sysLog
+
     public DingDing getDingding() {
         return dingding;
     }
 
     public void setDingding(DingDing dingding) {
         this.dingding = dingding;
+    }
+
+    public SysLog getSysLog() {
+        return sysLog;
+    }
+
+    public void setSysLog(SysLog sysLog) {
+        this.sysLog = sysLog;
     }
 }

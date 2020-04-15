@@ -16,13 +16,23 @@ import java.util.List;
 @ConfigurationProperties(prefix = "record")
 public class RecordStoreCfg {
 
-    private List<RecordStoreRole> storeRoles;
+    private MasterRecord master;
 
-    public List<RecordStoreRole> getStoreRoles() {
-        return storeRoles;
+    private BackupRecord backup;
+
+    public MasterRecord getMaster() {
+        return master;
     }
 
-    public void setStoreRoles(List<RecordStoreRole> storeRoles) {
-        this.storeRoles = storeRoles;
+    public void setMaster(MasterRecord master) {
+        this.master = master;
+    }
+
+    public BackupRecord getBackup() {
+        return backup;
+    }
+
+    public void setBackup(BackupRecord backup) {
+        this.backup = backup;
     }
 }

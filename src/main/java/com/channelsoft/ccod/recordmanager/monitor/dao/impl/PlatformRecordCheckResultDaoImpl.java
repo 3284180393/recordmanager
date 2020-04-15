@@ -39,30 +39,30 @@ public class PlatformRecordCheckResultDaoImpl implements IPlatformRecordCheckRes
     @PostConstruct
     public void init()
     {
-        try
-        {
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date beginTime = sf.parse("2020-03-01 00:00:00");
-            Date endTime = sf.parse("2020-05-31 00:00:00");
-            List<PlatformRecordCheckResultPo> list = select(beginTime, endTime);
-            System.out.println(list.size());
-            PlatformRecordCheckResultPo resultPo = new PlatformRecordCheckResultPo();
-            Date now = new Date();
-            resultPo.setBeginTime(now);
-            resultPo.setCheckTime(now);
-            resultPo.setComment("just a test");
-            resultPo.setEndTime(now);
-            resultPo.setPlatformId("shltPA");
-            resultPo.setPlatformName("上海联通平安");
-            resultPo.setResult(true);
-            resultPo.setTimeUsage(1234);
-            int id = insert(resultPo);
-            System.out.println(id);
-        }
-        catch (Exception ex)
-        {
-            ex.printStackTrace();
-        }
+//        try
+//        {
+//            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            Date beginTime = sf.parse("2020-03-01 00:00:00");
+//            Date endTime = sf.parse("2020-05-31 00:00:00");
+//            List<PlatformRecordCheckResultPo> list = select(beginTime, endTime);
+//            System.out.println(list.size());
+//            PlatformRecordCheckResultPo resultPo = new PlatformRecordCheckResultPo();
+//            Date now = new Date();
+//            resultPo.setBeginTime(now);
+//            resultPo.setCheckTime(now);
+//            resultPo.setComment("just a test");
+//            resultPo.setEndTime(now);
+//            resultPo.setPlatformId("shltPA");
+//            resultPo.setPlatformName("上海联通平安");
+//            resultPo.setResult(true);
+//            resultPo.setTimeUsage(1234);
+//            int id = insert(resultPo);
+//            System.out.println(id);
+//        }
+//        catch (Exception ex)
+//        {
+//            ex.printStackTrace();
+//        }
 
     }
 

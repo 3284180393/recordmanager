@@ -54,9 +54,9 @@ public class PlatformRecordCheckOntimer {
         ca.set(Calendar.MILLISECOND, 0);
         ca.set(Calendar.SECOND, 0);
         ca.add(Calendar.MINUTE, (0-delay));
-        Date beginTime = ca.getTime();
-        ca.add(Calendar.MINUTE, (0-interval));
         Date endTime = ca.getTime();
+        ca.add(Calendar.MINUTE, (0-interval));
+        Date beginTime = ca.getTime();
         PlatformRecordCheckResultSumVo checkResultVo;
         try
         {

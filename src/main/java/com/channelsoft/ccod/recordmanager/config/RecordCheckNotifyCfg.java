@@ -32,6 +32,8 @@ public class RecordCheckNotifyCfg {
 
     private DingDing dingding;  //用来定义接受报警消息的钉钉配置
 
+    private SysLog sysLog; //用来定义写sysLog的配置
+
     public int getIndexLostCount() {
         return indexLostCount;
     }
@@ -102,5 +104,13 @@ public class RecordCheckNotifyCfg {
 
     public void setDingding(DingDing dingding) {
         this.dingding = dingding;
+    }
+
+    public SysLog getSysLog() {
+        return sysLog;
+    }
+
+    public void setSysLog(SysLog sysLog) {
+        this.sysLog = sysLog;
     }
 }

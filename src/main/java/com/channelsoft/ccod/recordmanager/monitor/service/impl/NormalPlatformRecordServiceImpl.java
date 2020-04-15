@@ -38,24 +38,24 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @PostConstruct
     public void init()
     {
-        PlatformRecordBackupResultSumVo resultVo;
-        Date now = new Date();
-        try
-        {
-            String dateStr = "20200401";
-            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-            Date chosenDate = sf.parse(dateStr);
-            now = chosenDate;
-            resultVo = backup(chosenDate);
-            generateTestDate(resultVo);
-            addPlatformRecordBackupResult(resultVo);
-        }
-        catch (Exception ex)
-        {
-            resultVo = PlatformRecordBackupResultSumVo.fail(this.platformId, this.platformName, now, ex);
-            ex.printStackTrace();
-        }
-        notifyService.notify(resultVo);
+//        PlatformRecordBackupResultSumVo resultVo;
+//        Date now = new Date();
+//        try
+//        {
+//            String dateStr = "20200401";
+//            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
+//            Date chosenDate = sf.parse(dateStr);
+//            now = chosenDate;
+//            resultVo = backup(chosenDate);
+//            generateTestDate(resultVo);
+//            addPlatformRecordBackupResult(resultVo);
+//        }
+//        catch (Exception ex)
+//        {
+//            resultVo = PlatformRecordBackupResultSumVo.fail(this.platformId, this.platformName, now, ex);
+//            ex.printStackTrace();
+//        }
+//        notifyService.notify(resultVo);
         System.out.println("1111111111111111111111111111111111111111111111111111111111111111111111");
     }
 
@@ -76,6 +76,18 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
             {
                 Date checkTime = new Date();
                 List<RecordDetailVo> entRecordList = recordDetailDao.select(enterpriseVo.getEnterpriseId(), beginTime, endTime);
+                if(debug)
+                {
+                    int len = this.testIndexes.length;
+                    for(int i = 0; i < entRecordList.size(); i++)
+                    {
+                        if(i < len)
+                        {
+                            entRecordList.get(i).setRecordIndex(this.testIndexes[i]);
+                            entRecordList.get(i).setBakRecordIndex(this.testIndexes[len-i-1]);
+                        }
+                    }
+                }
                 entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
             }
             catch (Exception ex)

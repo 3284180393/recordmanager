@@ -112,7 +112,8 @@ public class RecordManagerServiceImpl implements IRecordManagerService {
                 logger.debug(String.format("index=%s not match for %s", recordIndex, storeRole.getGrokPattern()));
             }
         }
-        Map<String, RecordStoreRole> roleMap = this.recordStoreCfg.getStoreRoles().stream().collect(Collectors.toMap(RecordStoreRole::getGrokPattern, Function.identity()));
+        List<RecordStoreRole> roles = indexSearch.isMaster ? this.recordStoreCfg.getMaster().getStoreRoles() : this.recordStoreCfg.getBackup().getStoreRoles();
+        Map<String, RecordStoreRole> roleMap = roles.stream().collect(Collectors.toMap(RecordStoreRole::getGrokPattern, Function.identity()));
         if(storeRole != null)
             roleMap.remove(storeRole.getGrokPattern());
         for(RecordStoreRole role : roleMap.values())
@@ -151,5 +152,7 @@ public class RecordManagerServiceImpl implements IRecordManagerService {
         public String recordIndex;
 
         public RecordStoreRole storeRole;
+
+        public boolean isMaster;
     }
 }

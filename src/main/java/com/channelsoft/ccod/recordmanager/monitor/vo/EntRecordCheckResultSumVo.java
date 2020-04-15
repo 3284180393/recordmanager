@@ -77,8 +77,8 @@ public class EntRecordCheckResultSumVo {
         this.notFileList = notFileList;
         this.notIndexList = notIndexList;
         this.hasBak = true;
-        this.notBakFileList = notBakIndexList;
-        this.notBakIndexList = notBakFileList;
+        this.notBakIndexList = notBakIndexList;
+        this.notBakFileList = notBakFileList;
         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
         this.comment = toString();
     }
@@ -91,6 +91,7 @@ public class EntRecordCheckResultSumVo {
         this.startTime = startTime;
         this.endTime = endTime;
         this.comment = String.format("检查%s[%s]录音文件失败:%s", this.enterpriseId, this.enterpriseName, erorrMsg);
+        this.successList = new ArrayList<>();
         this.notIndexList = new ArrayList<>();
         this.notFileList = new ArrayList<>();
         this.notBakIndexList = new ArrayList<>();
@@ -215,11 +216,11 @@ public class EntRecordCheckResultSumVo {
     @Override
     public String toString()
     {
-        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+        SimpleDateFormat sf = new SimpleDateFormat("HH:mm:ss");
         if(result)
         {
-            String msg = String.format("%s-%s:一共检查了%s[%s]%d通呼叫,%d通正常",	sf.format(startTime), sf.format(endTime),
-                    enterpriseName, enterpriseId, getAllRecordCount(), successList.size());
+            String msg = String.format("一共检查了%s[%s]从%s到%s期间的%d通呼叫,%d通正常",	enterpriseName, enterpriseId,
+                    sf.format(startTime), sf.format(endTime), getAllRecordCount(), successList.size());
             if(this.notIndexList.size() > 0)
                 msg = String.format("%s,%d通没有录音索引", msg, this.notIndexList.size());
             if(this.notFileList.size() > 0)
