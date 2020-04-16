@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,6 +40,9 @@ public class UcdsEnterpriseDaoImpl implements IEnterpriseDao {
     @Value("${db.table.agent}")
     private String enterpriseAgentTable;
 
+    @Value("${debug}")
+    private boolean debug;
+
     @PostConstruct
     public void init() throws Exception
     {
@@ -51,6 +55,14 @@ public class UcdsEnterpriseDaoImpl implements IEnterpriseDao {
                 this.enterpriseAgentTable, this.enterpriseTable);
         logger.debug(String.format("begin to query all enterprise, sql=%s", sql));
         List<EnterpriseVo> list = this.ucdsJdbcTemplate.query(sql, new MapRow());
+        if(debug)
+        {
+            list = new ArrayList<>();
+            EnterpriseVo enterpriseVo = new EnterpriseVo();
+            enterpriseVo.setEnterpriseId("20190423");
+            enterpriseVo.setEnterpriseName("20190423");
+            list.add(enterpriseVo);
+        }
         logger.debug(String.format("find %d enterprise in platform", list.size()));
         return list;
     }
@@ -61,8 +73,8 @@ public class UcdsEnterpriseDaoImpl implements IEnterpriseDao {
         public EnterpriseVo mapRow(ResultSet rs, int i) throws SQLException
         {
             EnterpriseVo vo = new EnterpriseVo();
-            vo.setEnterpriseName(rs.getString("ENT_NAME"));
-            vo.setEnterpriseId(rs.getString("ENT_ID"));
+            vo.setEnterpriseName(rs.getString("enterprise_name"));
+            vo.setEnterpriseId(rs.getString("enterprise_id"));
             return vo;
         }
     }

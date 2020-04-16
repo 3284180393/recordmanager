@@ -6,7 +6,8 @@ spring:
       jdbc-url: jdbc:mysql://10.130.41.12:3306/ucds
       driver-class-name: com.mysql.jdbc.Driver
 
-
+    business:
+      conn-str: 10.130.41.212:30065
 
     sqlite:
       jdbc-url: jdbc:sqlite:D:/My Work/Java/idea/recordmanager/src/main/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss

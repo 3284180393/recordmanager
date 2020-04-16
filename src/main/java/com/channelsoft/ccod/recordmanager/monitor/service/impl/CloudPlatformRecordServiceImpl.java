@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
@@ -29,8 +30,8 @@ public class CloudPlatformRecordServiceImpl extends PlatformRecordBaseService {
 
     private final static Logger logger = LoggerFactory.getLogger(CloudPlatformRecordServiceImpl.class);
 
-    @Autowired
-    IEnterpriseDao enterpriseDao;
+    @Value("${ccod.platformId}")
+    protected String connStr;
 
     public void init() throws Exception
     {
@@ -54,9 +55,9 @@ public class CloudPlatformRecordServiceImpl extends PlatformRecordBaseService {
             }
             else
                 notFileList.add(detailVo);
-            EntRecordCheckResultSumVo sumVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, beginTime, endTime, successList, notIndexList, notFileList);
-            return sumVo;
+
         }
-        return super.checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
+        EntRecordCheckResultSumVo sumVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, beginTime, endTime, successList, notIndexList, notFileList);
+        return sumVo;
     }
 }

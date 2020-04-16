@@ -6,10 +6,10 @@ import com.channelsoft.ccod.recordmanager.config.MongoBuzCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
 import com.mongodb.*;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * @Version: 1.0
  */
 @Conditional(MongoBuzCondition.class)
-@Component
+@Component(value = "recordDetailDao")
 public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
 
     @Autowired
@@ -37,7 +37,11 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
 
     private final static Logger logger = LoggerFactory.getLogger(MongoRecordDetailDaoImpl.class);
 
+    @Value("${spring.datasource.business.conn-str}")
     private String connStr;
+
+    @Value("${debug}")
+    private boolean debug;
 
     @PostConstruct
     public void init() throws Exception
@@ -48,7 +52,14 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
 
     @Override
     public List<RecordDetailVo> select(String schemaName, Date beginTime, Date endTime) {
-        MongoClient client = new MongoClient("10.130.41.212:30065");
+        if(debug)
+        {
+            Calendar ca = Calendar.getInstance();
+            endTime = ca.getTime();
+            ca.add(Calendar.YEAR, -5);
+            beginTime = ca.getTime();
+        }
+        MongoClient client = new MongoClient(connStr);
         DB db = client.getDB(schemaName);
         DBCollection collection = db.getCollection("session_detail");
         List<Integer> callTypes = callCheckRule.getCallTypes();
