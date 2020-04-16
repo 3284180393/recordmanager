@@ -39,9 +39,6 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @Autowired
     IGlsAgentDao glsAgentDao;
 
-    @Autowired
-    IRecordDetailDao recordDetailDao;
-
     protected String dbName = "db1";
 
     @PostConstruct

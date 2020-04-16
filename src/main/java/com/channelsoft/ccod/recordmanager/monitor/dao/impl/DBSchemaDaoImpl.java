@@ -1,11 +1,13 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
+import com.channelsoft.ccod.recordmanager.config.GLSCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IDBSchemaDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.DBSchemaVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ import java.util.List;
  * @Date: 2020/4/8 16:01
  * @Version: 1.0
  */
+@Conditional(GLSCondition.class)
 @Component(value = "dbSchemaDao")
 public class DBSchemaDaoImpl implements IDBSchemaDao {
 

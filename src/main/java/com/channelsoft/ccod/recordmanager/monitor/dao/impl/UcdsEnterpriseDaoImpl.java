@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -37,6 +38,12 @@ public class UcdsEnterpriseDaoImpl implements IEnterpriseDao {
 
     @Value("${db.table.agent}")
     private String enterpriseAgentTable;
+
+    @PostConstruct
+    public void init() throws Exception
+    {
+        System.out.println("3333333333333333333333333333333333333333333333333333333333333333333333");
+    }
 
     @Override
     public List<EnterpriseVo> select() {

@@ -233,38 +233,4 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
             return detailVo;
         }
     }
-
-    private void initTestParams()
-    {
-//        this.callTypes = new int[]{0, 1};
-//        this.endTypes = new int[]{254, 255};
-//        this.detailTable = "R_DETAIL";
-//        this.mixTable = "ENT_RECORD_BX_TABLE_H_201806";
-//        this.combinationTable = "ENT_RECORD_BX_TABLE_H_201806";
-//        this.bakTable = "ENT_RECORD_BX_TABLE_H_201806";
-//        this.minTalkDuration = 1;
-//        this.recordType = RecordType.MIX_AND_COMBINATION;
-//        this.hasBak = true;
-    }
-
-    @Test
-    public void sqlTest()
-    {
-        initTestParams();
-        try
-        {
-            String enterpriseId = "0000099999";
-            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-            Date beginTime = sf.parse("20190814");
-            Date endTime = sf.parse("20190815");
-            String sql = generateSql(enterpriseId, beginTime, endTime);
-            System.out.println(sql);
-            sql = generateSql(enterpriseId, beginTime, endTime);
-            System.out.println(sql);
-        }
-        catch (Exception ex)
-        {
-            ex.printStackTrace();
-        }
-    }
 }

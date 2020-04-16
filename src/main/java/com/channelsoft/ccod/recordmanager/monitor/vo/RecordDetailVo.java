@@ -33,6 +33,8 @@ public class RecordDetailVo {
 
     private String recordIndex;   //录音索引
 
+    private String recordFileFastDfsUrl; //索引对应的录音文件存放url,主要是4.5平台fastdfs存储
+
     private boolean hasBak; //是否有备份录音
 
     private String bakRecordIndex;    //备份录音索引
@@ -131,5 +133,13 @@ public class RecordDetailVo {
 
     public void setAgentId(String agentId) {
         this.agentId = agentId;
+    }
+
+    public String getRecordFileFastDfsUrl() {
+        return recordFileFastDfsUrl;
+    }
+
+    public void setRecordFileFastDfsUrl(String recordFileFastDfsUrl) {
+        this.recordFileFastDfsUrl = recordFileFastDfsUrl;
     }
 }

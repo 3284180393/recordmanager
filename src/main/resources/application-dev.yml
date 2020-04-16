@@ -116,10 +116,12 @@ record:
 
 jobs:
   recordCheck:
+    execute: true
     interval: 20
     cron: 0 0/1 * * * ?
     delay: 10
   backup:
+    execute: true
     startDate: 2020-01-01
     cron: 0 0/2 * * * ?
     backupRootPath: D:/mnt/backup
@@ -161,7 +163,7 @@ notify:
       tag: "ccod"
 
 env:
-  windows: false
+  windows: true
 
 debug: true
 

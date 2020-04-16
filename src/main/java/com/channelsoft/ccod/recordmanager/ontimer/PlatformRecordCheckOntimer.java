@@ -46,9 +46,17 @@ public class PlatformRecordCheckOntimer {
     @Value("${jobs.recordCheck.interval}")
     private int interval;
 
+    @Value("${jobs.recordCheck.execute}")
+    private boolean isExecute;
+
     @Scheduled(cron = "${jobs.recordCheck.cron}")
     private void start()
     {
+        if(!isExecute)
+        {
+            logger.info("not need execute platform record check task");
+            return;
+        }
         logger.debug(String.format("platform record check task start"));
         Calendar ca = Calendar.getInstance();
         ca.set(Calendar.MILLISECOND, 0);

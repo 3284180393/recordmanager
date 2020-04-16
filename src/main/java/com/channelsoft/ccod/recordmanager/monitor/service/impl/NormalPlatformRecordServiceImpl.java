@@ -29,12 +29,6 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
 
     private final static Logger logger = LoggerFactory.getLogger(NormalPlatformRecordServiceImpl.class);
 
-    @Autowired
-    IEnterpriseDao enterpriseDao;
-
-    @Autowired
-    IRecordDetailDao recordDetailDao;
-
     @PostConstruct
     public void init()
     {
@@ -56,51 +50,6 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
 //            ex.printStackTrace();
 //        }
 //        notifyService.notify(resultVo);
-        System.out.println("1111111111111111111111111111111111111111111111111111111111111111111111");
+       logger.debug("1111111111111111111111111111111111111111111111111111111111111111111111");
     }
-
-    protected PlatformRecordCheckResultSumVo checkPlatformRecord(Date beginTime, Date endTime) throws Exception
-    {
-        Date startCheckTime = new Date();
-        List<EnterpriseVo> enterpriseList = enterpriseDao.select();
-        List<EntRecordCheckResultSumVo> entCheckResultList = new ArrayList<>();
-        for(EnterpriseVo enterpriseVo : enterpriseList)
-        {
-            if(!isEnterpriseChosen(enterpriseVo.getEnterpriseId()))
-            {
-                logger.debug(String.format("%s(%s) is not been checked", enterpriseVo.getEnterpriseName(), enterpriseVo.getEnterpriseId()));
-                continue;
-            }
-            EntRecordCheckResultSumVo entRecordCheckResultVo;
-            try
-            {
-                Date checkTime = new Date();
-                List<RecordDetailVo> entRecordList = recordDetailDao.select(enterpriseVo.getEnterpriseId(), beginTime, endTime);
-                if(debug)
-                {
-                    int len = this.testIndexes.length;
-                    for(int i = 0; i < entRecordList.size(); i++)
-                    {
-                        if(i < len)
-                        {
-                            entRecordList.get(i).setRecordIndex(this.testIndexes[i]);
-                            entRecordList.get(i).setBakRecordIndex(this.testIndexes[len-i-1]);
-                        }
-                    }
-                }
-                entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
-            }
-            catch (Exception ex)
-            {
-                logger.error(String.format("check %s(%s) record exception", enterpriseVo.getEnterpriseName(), enterpriseVo.getEnterpriseId()), ex);
-                entRecordCheckResultVo = EntRecordCheckResultSumVo.fail(enterpriseVo, beginTime, endTime, ex);
-            }
-            logger.debug(entRecordCheckResultVo.toString());
-            entCheckResultList.add(entRecordCheckResultVo);
-        }
-        PlatformRecordCheckResultSumVo checkResultVo = new PlatformRecordCheckResultSumVo(this.platformId, this.platformName, startCheckTime, beginTime, endTime, entCheckResultList);
-        logger.debug(checkResultVo.toString());
-        return checkResultVo;
-    }
-
 }

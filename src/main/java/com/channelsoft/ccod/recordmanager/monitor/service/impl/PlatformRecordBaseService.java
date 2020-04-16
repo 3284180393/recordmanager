@@ -72,6 +72,12 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     @Autowired
     IMissBackupRecordDetailDao missBackupRecordDetailDao;
 
+    @Autowired
+    IEnterpriseDao enterpriseDao;
+
+    @Autowired
+    IRecordDetailDao recordDetailDao;
+
     @Value("${env.windows}")
     private boolean isWin;
 
@@ -938,6 +944,11 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return null;
     }
 
+    /**
+     * 确认某个企业是否应该检查录音或是备份录音
+     * @param enterpriseId 企业id
+     * @return 需要检查/备份则返回true否则false
+     */
     protected boolean isEnterpriseChosen(String enterpriseId) {
         switch (enterpriseCfg.getChoseMethod())
         {
@@ -1066,6 +1077,50 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         int dept = srcPath.split(String.format("/%s/", srcTime))[0].split("/").length + 1;
         String regex = String.format("^%s$", dstTime);
         scan(searchPath, dept, true, regex, resultList);
+    }
+
+    protected PlatformRecordCheckResultSumVo checkPlatformRecord(Date beginTime, Date endTime) throws Exception
+    {
+        Date startCheckTime = new Date();
+        List<EnterpriseVo> enterpriseList = enterpriseDao.select();
+        List<EntRecordCheckResultSumVo> entCheckResultList = new ArrayList<>();
+        for(EnterpriseVo enterpriseVo : enterpriseList)
+        {
+            if(!isEnterpriseChosen(enterpriseVo.getEnterpriseId()))
+            {
+                logger.debug(String.format("%s(%s) is not been checked", enterpriseVo.getEnterpriseName(), enterpriseVo.getEnterpriseId()));
+                continue;
+            }
+            EntRecordCheckResultSumVo entRecordCheckResultVo;
+            try
+            {
+                Date checkTime = new Date();
+                List<RecordDetailVo> entRecordList = recordDetailDao.select(enterpriseVo.getEnterpriseId(), beginTime, endTime);
+                if(debug)
+                {
+                    int len = this.testIndexes.length;
+                    for(int i = 0; i < entRecordList.size(); i++)
+                    {
+                        if(i < len)
+                        {
+                            entRecordList.get(i).setRecordIndex(this.testIndexes[i]);
+                            entRecordList.get(i).setBakRecordIndex(this.testIndexes[len-i-1]);
+                        }
+                    }
+                }
+                entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
+            }
+            catch (Exception ex)
+            {
+                logger.error(String.format("check %s(%s) record exception", enterpriseVo.getEnterpriseName(), enterpriseVo.getEnterpriseId()), ex);
+                entRecordCheckResultVo = EntRecordCheckResultSumVo.fail(enterpriseVo, beginTime, endTime, ex);
+            }
+            logger.debug(entRecordCheckResultVo.toString());
+            entCheckResultList.add(entRecordCheckResultVo);
+        }
+        PlatformRecordCheckResultSumVo checkResultVo = new PlatformRecordCheckResultSumVo(this.platformId, this.platformName, startCheckTime, beginTime, endTime, entCheckResultList);
+        logger.debug(checkResultVo.toString());
+        return checkResultVo;
     }
 
     protected EntRecordCheckResultSumVo checkEntRecord(EnterpriseVo enterpriseVo, Date checkTime, Date beginTime, Date endTime, List<RecordDetailVo> entRecordList) {
@@ -1336,12 +1391,6 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             }
         }
         return true;
-    }
-
-    protected PlatformRecordCheckResultSumVo checkPlatformRecord(Date beginTime, Date endTime) throws Exception
-    {
-        logger.error(String.format("checkPlatformRecord function must been implement for %s platform", this.platformType.name));
-        throw new Exception(String.format("checkPlatformRecord function must been implement for %s platform", this.platformType.name));
     }
 
     protected void addPlatformRecordBackupResult(PlatformRecordBackupResultSumVo platformRecordBackupResultSumVo)

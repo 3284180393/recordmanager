@@ -55,11 +55,19 @@ public class PlatformRecordBackupOntimer {
     @Value("${jobs.backup.businessEndTime}")
     private String businessEndTimeStr;
 
+    @Value("${jobs.backup.execute}")
+    private boolean isExecute;
+
     @Value("${debug}")
     private boolean debug;
 
     @Scheduled(cron = "${jobs.backup.cron}")
     private void start() throws Exception{
+        if(!isExecute)
+        {
+            logger.info("not need execute platform record backup task");
+            return;
+        }
         Date now = new Date();
         logger.debug("platform record backup task start");
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
