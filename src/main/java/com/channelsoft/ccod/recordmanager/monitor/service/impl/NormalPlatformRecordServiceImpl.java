@@ -30,26 +30,9 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
     private final static Logger logger = LoggerFactory.getLogger(NormalPlatformRecordServiceImpl.class);
 
     @PostConstruct
-    public void init()
+    public void init() throws Exception
     {
-//        PlatformRecordBackupResultSumVo resultVo;
-//        Date now = new Date();
-//        try
-//        {
-//            String dateStr = "20200401";
-//            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-//            Date chosenDate = sf.parse(dateStr);
-//            now = chosenDate;
-//            resultVo = backup(chosenDate);
-//            generateTestDate(resultVo);
-//            addPlatformRecordBackupResult(resultVo);
-//        }
-//        catch (Exception ex)
-//        {
-//            resultVo = PlatformRecordBackupResultSumVo.fail(this.platformId, this.platformName, now, ex);
-//            ex.printStackTrace();
-//        }
-//        notifyService.notify(resultVo);
+        cfgCheck();
        logger.debug("1111111111111111111111111111111111111111111111111111111111111111111111");
     }
 }

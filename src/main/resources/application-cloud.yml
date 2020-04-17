@@ -115,7 +115,7 @@ jobs:
     cron: 0 0/1 * * * ?
     delay: 10
   backup:
-    execute: true
+    execute: false
     startDate: 2020-01-01
     cron: 0 0/2 * * * ?
     backupRootPath: D:/mnt/backup

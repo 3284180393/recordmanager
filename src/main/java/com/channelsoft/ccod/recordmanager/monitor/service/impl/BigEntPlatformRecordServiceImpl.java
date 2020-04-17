@@ -1,16 +1,13 @@
 package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
 import com.channelsoft.ccod.recordmanager.config.BigEntPlatformCondition;
-import com.channelsoft.ccod.recordmanager.config.RecordStoreRole;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IGlsAgentDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.*;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 
@@ -42,8 +39,9 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
     protected String dbName = "db1";
 
     @PostConstruct
-    public void init()
+    public void init() throws Exception
     {
+        cfgCheck();
         System.out.println("222222222222222222222222222222222222222222222222222");
     }
 

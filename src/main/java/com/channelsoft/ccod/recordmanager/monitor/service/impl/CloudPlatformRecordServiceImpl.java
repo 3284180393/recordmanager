@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,9 +34,27 @@ public class CloudPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @Value("${ccod.platformId}")
     protected String connStr;
 
+    @PostConstruct
     public void init() throws Exception
     {
         System.out.println("^^^^^^^^^^^^^^^^^^^66");
+        cfgCheck();
+    }
+
+    @Override
+    protected void cfgCheck() throws Exception
+    {
+        logger.debug(String.format("begin to check cfg for cloud platform"));
+        if(this.isBackup)
+        {
+            logger.error(String.format("cloud platform not support record backup"));
+            throw new Exception(String.format("cloud platform not support record backup"));
+        }
+        if(this.hasBak)
+        {
+            logger.error(String.format("cloud platform not support backup record check"));
+            throw new Exception(String.format("cloud platform not support backup record check"));
+        }
     }
 
     @Override

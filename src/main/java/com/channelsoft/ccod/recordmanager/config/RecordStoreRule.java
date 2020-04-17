@@ -1,13 +1,13 @@
 package com.channelsoft.ccod.recordmanager.config;
 
 /**
- * @ClassName: RecordStoreRole
+ * @ClassName: RecordStoreRule
  * @Author: lanhb
- * @Description: 用来定义录音文件存储规则
- * @Date: 2020/4/4 22:28
+ * @Description: 用来定义平台录音存储规则定义
+ * @Date: 2020/4/17 9:41
  * @Version: 1.0
  */
-public class RecordStoreRole {
+public class RecordStoreRule {
 
     public String mntDir;  //录音盘阵的挂载目录
 

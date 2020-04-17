@@ -64,8 +64,7 @@ db:
 
 record:
   master:
-    storeRoles[0]:
-      mntDir: "D:/mnt"
+    storeRules[0]:
       grokPattern: ^D:/mnt/Data/record/(?<entId>\d+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
       example: D:/mnt/Data/record/0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
       recordIndex: 0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
@@ -76,8 +75,7 @@ record:
         year: yyyy
         month: MM
         day: dd
-    storeRoles[1]:
-      mntDir: "/mnt"
+    storeRules[1]:
       grokPattern: ^/mnt/Date1/(?<entId>\d+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/(?<AgentDn1>\d+)/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<localUrl>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
       example: /mnt/Date1/0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
       recordIndex: 0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
@@ -88,8 +86,7 @@ record:
         year: yyyy
         month: MM
         day: dd
-    storeRoles[2]:
-      mntDir: "/mnt"
+    storeRules[2]:
       grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
       example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
       recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
@@ -101,8 +98,7 @@ record:
         month: MM
         day: dd
   backup:
-    storeRoles[0]:
-      mntDir: "/mnt"
+    storeRules[0]:
       grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
       example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
       recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav

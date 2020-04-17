@@ -43,8 +43,9 @@ public class BigEntWith2BuzDBPlatformRecordServiceImpl extends BigEntPlatformRec
     protected IRecordDetailDao recordDetail2Dao;
 
     @PostConstruct
-    public void init()
+    public void init() throws Exception
     {
+        cfgCheck();
         System.out.println("3333333333333333333333333333333333333333333333333333333333333333333333");
     }
 

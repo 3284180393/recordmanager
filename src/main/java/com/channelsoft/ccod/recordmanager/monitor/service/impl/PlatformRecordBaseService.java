@@ -102,15 +102,209 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     @Value("${ccod.platformType}")
     protected CCODPlatformType platformType;
 
+    @Value("${jobs.recordCheck.execute}")
+    protected boolean isCheck;
+
+    @Value("${jobs.backup.execute}")
+    protected boolean isBackup;
+
     @Value("${debug}")
     private boolean debug;
 
     protected int threadPoolSize = 4;
 
-    @PostConstruct
-    public void init() throws Exception
+    protected void cfgCheck() throws Exception
     {
-        System.out.println("*********************");
+        if(!this.isCheck && !this.isBackup)
+        {
+            logger.warn("need not backup and check, so dont check cfg from check and backup");
+            return;
+        }
+        if(this.isBackup)
+        {
+            if(StringUtils.isBlank(this.backupRootPath))
+            {
+                logger.error("before backup you must define jobs.backup.backupRootPath");
+                throw new Exception("before backup you must define jobs.backup.backupRootPath");
+            }
+            if("/".equals(this.backupRootPath))
+            {
+                logger.error("jobs.backup.backupRootPath can not be /");
+                throw new Exception("jobs.backup.backupRootPath can not be /");
+            }
+            File file = new File(this.backupRootPath);
+            if(!file.exists())
+            {
+                logger.error(String.format("directory %s of jobs.backup.backupRootPath not exist", this.backupRootPath));
+                throw new Exception(String.format("directory %s of jobs.backup.backupRootPath not exist", this.backupRootPath));
+            }
+            else if(!file.isDirectory())
+            {
+                logger.error(String.format("%s of jobs.backup.backupRootPath is not directory", this.backupRootPath));
+                throw new Exception(String.format("%s of jobs.backup.backupRootPath is not directory", this.backupRootPath));
+            }
+        }
+        if(recordStoreCfg.getMaster() == null || recordStoreCfg.getMaster().getStoreRules() == null
+                || recordStoreCfg.getMaster().getStoreRules().size() == 0)
+        {
+            logger.error(String.format("record store role for master[record.master] can not be empty"));
+            throw new Exception(String.format("record store role for master[record.master] can not be empty"));
+        }
+        for(int i = 0; i < recordStoreCfg.getMaster().getStoreRules().size(); i++)
+        {
+            RecordStoreRule rule = recordStoreCfg.getMaster().getStoreRules().get(i);
+            if(StringUtils.isBlank(rule.getGrokPattern()))
+            {
+                logger.error(String.format("gork pattern of record.master.storeRules[%d] is blank", i));
+                throw new Exception(String.format("gork pattern of record.master.storeRules[%d] is blank", i));
+            }
+            if(StringUtils.isBlank(rule.getExample()))
+            {
+                logger.error(String.format("example of record.master.storeRules[%d] is blank", i));
+                throw new Exception(String.format("example of record.master.storeRules[%d] is blank", i));
+            }
+            if(StringUtils.isBlank(rule.getRecordIndex()))
+            {
+                logger.error(String.format("recordIndex of record.master.storeRules[%d] is blank", i));
+                throw new Exception(String.format("recordIndex of record.master.storeRules[%d] is blank", i));
+            }
+            if(GrokParser.match(rule.grokPattern, rule.getExample()) == null)
+            {
+                logger.error(String.format("example of record.master.storeRules[%d] is not matched for grok pattern", i));
+                throw new Exception(String.format("example of record.master.storeRules[%d] is not matched for grok pattern", i));
+            }
+            else
+            {
+                Map<String, Object> matchMap = GrokParser.match(rule.grokPattern, rule.getExample());
+                if(!matchMap.containsKey("entId"))
+                {
+                    logger.error(String.format("grok pattern %s of record.master.storeRules[%d] mush has define of entId",
+                            rule.getGrokPattern(), i));
+                    throw new Exception(String.format("grok pattern %s of record.master.storeRules[%d] mush has define of entId",
+                            rule.getGrokPattern(), i));
+                }
+                boolean dateCheck = false;
+                if(matchMap.containsKey("date"))
+                    dateCheck = true;
+                else if(matchMap.containsKey("yearAndMonth"))
+                {
+                    if(matchMap.containsKey("day") || matchMap.containsKey("monthAndDay"))
+                        dateCheck = true;
+                }
+                else if(matchMap.containsKey("year"))
+                {
+                    if(matchMap.containsKey("monthAndDay"))
+                        dateCheck = true;
+                    else if(matchMap.containsKey("month") && matchMap.containsKey("day"))
+                        dateCheck = true;
+                }
+                if(!dateCheck)
+                {
+                    logger.error(String.format("grok pattern %s of record.master.storeRules[%d] mush has define of year, month and day",
+                            rule.getGrokPattern(), i));
+                    throw new Exception(String.format("grok pattern %s of record.master.storeRules[%d] mush has define of year, month and day",
+                            rule.getGrokPattern(), i));
+                }
+            }
+            if(rule.getExample().matches(String.format("%s$", rule.getRecordIndex())))
+            {
+                logger.error(String.format("recordIndex of record.master.storeRules[%d] is not matched for example", i));
+                throw new Exception(String.format("recordIndex of record.master.storeRules[%d] is not matched for example", i));
+            }
+            rule.setMntDir(rule.getExample().replaceAll(String.format("%s$", rule.getRecordIndex()),  "").replaceAll("/$", ""));
+            File file = new File(rule.getMntDir());
+            if(!file.exists())
+            {
+                logger.error(String.format("directory %s of record.master.storeRules[%d] not exist", rule.getMntDir(), i));
+                throw new Exception(String.format("directory %s of record.master.storeRules[%d] not exist", rule.getMntDir(), i));
+            }
+            else if(!file.isDirectory())
+            {
+                logger.error(String.format("%s of record.master.storeRules[%d] is not directory", rule.getMntDir(), i));
+                throw new Exception(String.format("%s of record.master.storeRules[%d] is not directory", rule.getMntDir(), i));
+            }
+        }
+        Map<String, List<RecordStoreRule>> gorkMap = this.recordStoreCfg.getMaster().getStoreRules()
+                .stream().collect(Collectors.groupingBy(RecordStoreRule::getGrokPattern));
+        for(String grokPattern : gorkMap.keySet())
+        {
+            if(gorkMap.get(grokPattern).size() > 1)
+            {
+                logger.error(String.format("gork pattern %s for record.master is not unique", grokPattern));
+                throw new Exception(String.format("gork pattern %s for record.master is not unique", grokPattern));
+            }
+        }
+        Map<String, List<RecordStoreRule>> exampleMap = this.recordStoreCfg.getMaster().getStoreRules()
+                .stream().collect(Collectors.groupingBy(RecordStoreRule::getExample));
+        for(String example : exampleMap.keySet())
+        {
+            if(exampleMap.get(example).size() > 1)
+            {
+                logger.error(String.format("example %s for record.master is not unique", example));
+                throw new Exception(String.format("example %s for record.master is not unique", example));
+            }
+        }
+        for(String example : exampleMap.keySet())
+        {
+            for(String grokPattern : gorkMap.keySet())
+            {
+                if(GrokParser.match(grokPattern, example) != null)
+                {
+                    if(!exampleMap.get(example).get(0).getGrokPattern().equals(grokPattern))
+                    {
+                        logger.error(String.format("grok pattern semantics is not unique : %s is match for %s and %s",
+                                example, grokPattern, exampleMap.get(example).get(0).getGrokPattern()));
+                        throw new Exception(String.format("grok pattern semantics is not unique : %s is match for %s and %s",
+                                example, grokPattern, exampleMap.get(example).get(0).getGrokPattern()));
+                    }
+                }
+            }
+        }
+        if(hasBak)
+        {
+            if(recordStoreCfg.getBackup() == null || recordStoreCfg.getBackup().getStoreRules() == null
+                    || recordStoreCfg.getBackup().getStoreRules().size() == 0)
+            {
+                logger.error(String.format("record store role for backup[record.backup] can not be empty"));
+                throw new Exception(String.format("record store role for backup[record.backup] can not be empty"));
+            }
+            for(int i = 0; i < recordStoreCfg.getBackup().getStoreRules().size(); i++)
+            {
+                RecordStoreRule rule = recordStoreCfg.getBackup().getStoreRules().get(i);
+                if(StringUtils.isBlank(rule.getGrokPattern()))
+                {
+                    logger.error(String.format("gork pattern of record.backup.storeRules[%d] is blank", i));
+                    throw new Exception(String.format("gork pattern of record.backup.storeRules[%d] is blank", i));
+                }
+                if(StringUtils.isBlank(rule.getExample()))
+                {
+                    logger.error(String.format("example of record.backup.storeRules[%d] is blank", i));
+                    throw new Exception(String.format("example of record.backup.storeRules[%d] is blank", i));
+                }
+                if(StringUtils.isBlank(rule.getRecordIndex()))
+                {
+                    logger.error(String.format("recordIndex of record.backup.storeRules[%d] is blank", i));
+                    throw new Exception(String.format("recordIndex of record.backup.storeRules[%d] is blank", i));
+                }
+                if(GrokParser.match(rule.grokPattern, rule.getExample()) == null)
+                {
+                    logger.error(String.format("example of record.backup.storeRules[%d] is not matched for grok pattern", i));
+                    throw new Exception(String.format("example of record.backup.storeRules[%d] is not matched for grok pattern", i));
+                }
+                if(rule.getExample().matches(String.format("%s$", rule.getRecordIndex())))
+                {
+                    logger.error(String.format("recordIndex of record.backup.storeRules[%d] is not matched for example", i));
+                    throw new Exception(String.format("recordIndex of record.backup.storeRules[%d] is not matched for example", i));
+                }
+                rule.setMntDir(rule.getExample().replaceAll(String.format("%s$", rule.getRecordIndex()),  "").replaceAll("/$", ""));
+                File file = new File(rule.getMntDir());
+                if(!file.exists())
+                {
+                    logger.error(String.format("directory %s of record.backup.storeRules[%d] not exist", rule.getMntDir(), i));
+                    throw new Exception(String.format("directory %s of record.backup.storeRules[%d] not exist", rule.getMntDir(), i));
+                }
+            }
+        }
     }
 
     @Override
@@ -146,7 +340,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         PlatformRecordBackupResultSumVo resultVo;
         try
         {
-            List<StoredRecordFileVo> fileList = scanRecordFile(backupDate, this.recordStoreCfg.getMaster().getStoreRoles());
+            List<StoredRecordFileVo> fileList = scanRecordFile(backupDate, this.recordStoreCfg.getMaster().getStoreRules());
             List<FailBackupRecordFilePo> failList = backupByCopyDirectory(fileList, this.backupRootPath, this.verify, backupDate);
             if(!this.compareWithDB)
             {
@@ -208,17 +402,17 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     /**
      * 扫描某个日期的所有录音文件
      * @param scanDate 被扫描的日期
-     * @param storeRoles 录音存储规则
+     * @param storeRules 录音存储规则
      * @return 扫描出的素有录音文件
      */
-    protected List<StoredRecordFileVo> scanRecordFile(Date scanDate, List<RecordStoreRole> storeRoles) throws IOException
+    protected List<StoredRecordFileVo> scanRecordFile(Date scanDate, List<RecordStoreRule> storeRules) throws IOException
     {
         List<StoredRecordFileVo> fileList = new ArrayList<>();
-        for(RecordStoreRole storeRole : storeRoles)
+        for(RecordStoreRule storeRule : storeRules)
         {
-            List<StoredRecordFileVo> scanList = scanMntDir(storeRole, scanDate);
+            List<StoredRecordFileVo> scanList = scanMntDir(storeRule, scanDate);
             logger.debug(String.format("scan mntDir=%s with grokPattern=%s find %d record files",
-                    storeRole.getMntDir(), storeRole.getGrokPattern(), scanList.size()));
+                    storeRule.getMntDir(), storeRule.getGrokPattern(), scanList.size()));
             fileList.addAll(scanList);
         }
         return fileList;
@@ -279,13 +473,13 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     protected String searchRecordIndexAbsolutePath(RecordIndexSearch indexSearch)
     {
         logger.debug(String.format("search record save path for index=%s, master=%b", indexSearch.recordIndex, indexSearch.isMaster));
-        RecordStoreRole storeRole = indexSearch.storeRole;
+        RecordStoreRule storeRule = indexSearch.storeRule;
         String recordIndex = indexSearch.recordIndex;
         String path = null;
-        if(storeRole != null)
+        if(storeRule != null)
         {
-            path = storeRole.getExample().replace(storeRole.getRecordIndex(), recordIndex);
-            if(GrokParser.match(storeRole.grokPattern, path) != null)
+            path = storeRule.getExample().replace(storeRule.getRecordIndex(), recordIndex);
+            if(GrokParser.match(storeRule.grokPattern, path) != null)
             {
                 File file = new File(path);
                 if(file.exists() && file.isFile())
@@ -295,19 +489,19 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 }
                 else
                 {
-                    logger.warn(String.format("%s is match for %s, but not exist", path, storeRole.getGrokPattern()));
+                    logger.warn(String.format("%s is match for %s, but not exist", path, storeRule.getGrokPattern()));
                 }
             }
             else
             {
-                logger.debug(String.format("index=%s not match for %s", recordIndex, storeRole.getGrokPattern()));
+                logger.debug(String.format("index=%s not match for %s", recordIndex, storeRule.getGrokPattern()));
             }
         }
-        List<RecordStoreRole> roles = indexSearch.isMaster ? this.recordStoreCfg.getMaster().getStoreRoles() : this.recordStoreCfg.getBackup().getStoreRoles();
-        Map<String, RecordStoreRole> roleMap = roles.stream().collect(Collectors.toMap(RecordStoreRole::getGrokPattern, Function.identity()));
-        if(storeRole != null)
-            roleMap.remove(storeRole.getGrokPattern());
-        for(RecordStoreRole role : roleMap.values())
+        List<RecordStoreRule> rules = indexSearch.isMaster ? this.recordStoreCfg.getMaster().getStoreRules() : this.recordStoreCfg.getBackup().getStoreRules();
+        Map<String, RecordStoreRule> roleMap = rules.stream().collect(Collectors.toMap(RecordStoreRule::getGrokPattern, Function.identity()));
+        if(storeRule != null)
+            roleMap.remove(storeRule.getGrokPattern());
+        for(RecordStoreRule role : roleMap.values())
         {
             path = role.getExample().replace(role.getRecordIndex(), recordIndex);
             if(GrokParser.match(role.grokPattern, path) != null)
@@ -329,7 +523,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             }
         }
         logger.error(String.format("can not find record file for index=%s", recordIndex));
-        indexSearch.storeRole = null;
+        indexSearch.storeRule = null;
         return null;
     }
 
@@ -351,13 +545,13 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return false;
     }
 
-    private List<StoredRecordFileVo> scanMntDir(RecordStoreRole storeRole, Date chosenDate) throws IOException
+    private List<StoredRecordFileVo> scanMntDir(RecordStoreRule storeRule, Date chosenDate) throws IOException
     {
-        DateFormat dateFormatCfg = storeRole.getDateFormat();
-        String example = storeRole.getExample();
-        String grokPattern = storeRole.getGrokPattern();
-        String mntDir = storeRole.getMntDir();
-        Map<String, Object> resultMap = GrokParser.match(grokPattern, storeRole.getExample());
+        DateFormat dateFormatCfg = storeRule.getDateFormat();
+        String example = storeRule.getExample();
+        String grokPattern = storeRule.getGrokPattern();
+        String mntDir = storeRule.getMntDir();
+        Map<String, Object> resultMap = GrokParser.match(grokPattern, storeRule.getExample());
         List<String> saveDirs = new ArrayList<>();
         if(resultMap.containsKey("date"))
         {
@@ -428,7 +622,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         {
             scan(saveDir, dept, false, ".*", allFileList);
         }
-        int indexLen = storeRole.getRecordIndex().split("/").length;
+        int indexLen = storeRule.getRecordIndex().split("/").length;
         boolean escape = example.matches("^/") ? true : false;
         List<StoredRecordFileVo> retList = new ArrayList<>();
         for(String filePath : allFileList)
@@ -507,8 +701,8 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         List<RecordDetailVo> notFileList = new ArrayList<>();
         List<RecordDetailVo> notBakIndexList = new ArrayList<>();
         List<RecordDetailVo> notBakFileList = new ArrayList<>();
-        RecordStoreRole storeRole = null;
-        RecordStoreRole bkStoreRole = null;
+        RecordStoreRule storeRole = null;
+        RecordStoreRule bkStoreRole = null;
         EntRecordCheckResultSumVo resultVo = null;
         for(RecordDetailVo detailVo : entRecordList)
         {
@@ -520,7 +714,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             }
             //检查录音文件
             RecordIndexSearch indexSearch = new RecordIndexSearch();
-            indexSearch.storeRole = storeRole;
+            indexSearch.storeRule = storeRole;
             indexSearch.recordIndex = detailVo.getRecordIndex();
             indexSearch.isMaster = true;
             String fileSavePath = searchRecordIndexAbsolutePath(indexSearch);
@@ -529,7 +723,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 notFileList.add(detailVo);
                 continue;
             }
-            storeRole = indexSearch.storeRole;
+            storeRole = indexSearch.storeRule;
             if(isCheckBak(enterpriseVo.getEnterpriseId()))
             {
                 if(StringUtils.isBlank(detailVo.getBakRecordIndex()))
@@ -539,7 +733,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 }
                 RecordIndexSearch bakIndexSearch = new RecordIndexSearch();
                 bakIndexSearch.recordIndex = detailVo.getBakRecordIndex();
-                bakIndexSearch.storeRole = bkStoreRole;
+                bakIndexSearch.storeRule = bkStoreRole;
                 bakIndexSearch.isMaster = false;
                 String bkFileSavePath = searchRecordIndexAbsolutePath(bakIndexSearch);
                 if(StringUtils.isBlank(bkFileSavePath))
@@ -547,7 +741,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                     notBakFileList.add(detailVo);
                     continue;
                 }
-                bkStoreRole = bakIndexSearch.storeRole;
+                bkStoreRole = bakIndexSearch.storeRule;
             }
             successList.add(detailVo);
         }
@@ -834,7 +1028,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     {
         public String recordIndex;
 
-        public RecordStoreRole storeRole;
+        public RecordStoreRule storeRule;
 
         public boolean isMaster;
     }

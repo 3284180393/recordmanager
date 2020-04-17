@@ -11,13 +11,13 @@ import java.util.List;
  */
 public class BackupRecord
 {
-    private List<RecordStoreRole> storeRoles;
+    private List<RecordStoreRule> storeRules;
 
-    public List<RecordStoreRole> getStoreRoles() {
-        return storeRoles;
+    public List<RecordStoreRule> getStoreRules() {
+        return storeRules;
     }
 
-    public void setStoreRoles(List<RecordStoreRole> storeRoles) {
-        this.storeRoles = storeRoles;
+    public void setStoreRules(List<RecordStoreRule> storeRules) {
+        this.storeRules = storeRules;
     }
 }
