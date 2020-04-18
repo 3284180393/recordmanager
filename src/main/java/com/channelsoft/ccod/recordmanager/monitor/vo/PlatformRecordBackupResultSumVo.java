@@ -198,7 +198,7 @@ public class PlatformRecordBackupResultSumVo {
             return this.comment;
         }
         this.comment = String.format("%s %s(%s)平台一共备份%s期间%d条录音文件,成功备份%d条",
-                sf.format(now), this.platformName, this.platformId, sf.format(this.backupDate), this.backupCount, this.successBackupCount);
+                sf.format(now), this.platformName, this.platformId, sf1.format(this.backupDate), this.backupCount, this.successBackupCount);
         if(this.failList.size() > 0)
             this.comment = String.format("%s,%d条录音备份失败", this.comment, this.failList.size());
         if(this.compareWithDB)

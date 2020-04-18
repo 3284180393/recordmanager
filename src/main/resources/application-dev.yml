@@ -13,8 +13,23 @@ spring:
       driver-class-name: oracle.jdbc.OracleDriver
 
     sqlite:
-      jdbc-url: jdbc:sqlite:D:/My Work/Java/idea/recordmanager/src/main/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      jdbc-url: jdbc:sqlite:/home/recordmanager/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
+
+db:
+  gls:
+    type: GLS
+  business:
+    type: ORACLE
+    count: 1
+  table:
+    detail: R_DETAIL
+    enterprise: GLS_ENTERPRISE_INFO
+    mix: ENT_RECORD_TABLE
+    combination: ENT_RECORD_BX_TABLE
+    bak: ENT_RECORD_BX_TABLE_BX
+    dbAgentRelate: GLS_DB_AGENT_RELATE
+    dbEntRelate: GLS_DB_ENT_RELATE
 
 ccod:
   platformId: shltPA
@@ -24,14 +39,8 @@ ccod:
   recordType: COMBINATION
   hasBak: true
   enterprise:
-    choseMethod: INCLUDE
+    choseMethod: ALL
     list:
-      - "0000099999"
-      - "0000057711"
-      - "0000057722"
-      - "0000057733"
-      - "0000057744"
-      - "0000057755"
     notCheckBakList:
 
 call:
@@ -42,25 +51,6 @@ call:
     - 254
     - 255
   minTalkDuration: 1
-  notCheckeEnts:
-  notCheckBakEnts:
-
-db:
-  gls:
-    type: GLS
-  business:
-    type: ORACLE
-    count: 1
-    db1Name: db1
-  table:
-    detail: R_DETAIL
-    enterprise: GLS_ENTERPRISE_INFO
-    mix: ENT_RECORD_TABLE
-    combination: ENT_RECORD_BX_TABLE
-    bak: ENT_RECORD_BX_TABLE
-    dbAgentRelate: GLS_DB_AGENT_RELATE
-    dbEntRelate: GLS_DB_ENT_RELATE
-
 
 record:
   master:
@@ -113,17 +103,17 @@ record:
 jobs:
   recordCheck:
     execute: true
-    interval: 20
-    cron: 0 0/1 * * * ?
+    interval: 10
+    cron: 0 0/10 * * * ?
     delay: 10
   backup:
     execute: true
-    startDate: 2020-01-01
-    cron: 0 0/2 * * * ?
-    backupRootPath: D:/mnt/backup
+    startDate: 2020-04-10
+    cron: 0 00 22 * * ?
+    backupRootPath: /mnt/backup
     verify: true
     compareWithDB: true
-    businessEndTime: "23:00"
+    businessEndTime: "21:00"
     stopTime: "05:00"
 
 notify:
@@ -142,7 +132,6 @@ notify:
         tag: "[录音报警]"
         atAll: true
         atList:
-          - 18515100747
     sysLog:
       write: true
       tag: "ccod"
@@ -153,15 +142,14 @@ notify:
         tag: "[录音备份]"
         atAll: true
         atList:
-          - 18515100747
     sysLog:
       write: true
       tag: "ccod"
 
 env:
-  windows: true
+  windows: false
 
-debug: true
+debug: false
 
 
 

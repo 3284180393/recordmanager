@@ -1,5 +1,6 @@
 package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.channelsoft.ccod.recordmanager.backup.vo.StoredRecordFileVo;
 import com.channelsoft.ccod.recordmanager.config.*;
 import com.channelsoft.ccod.recordmanager.constant.BackupMethod;
@@ -152,114 +153,10 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         }
         for(int i = 0; i < recordStoreCfg.getMaster().getStoreRules().size(); i++)
         {
-            RecordStoreRule rule = recordStoreCfg.getMaster().getStoreRules().get(i);
-            if(StringUtils.isBlank(rule.getGrokPattern()))
-            {
-                logger.error(String.format("gork pattern of record.master.storeRules[%d] is blank", i));
-                throw new Exception(String.format("gork pattern of record.master.storeRules[%d] is blank", i));
-            }
-            if(StringUtils.isBlank(rule.getExample()))
-            {
-                logger.error(String.format("example of record.master.storeRules[%d] is blank", i));
-                throw new Exception(String.format("example of record.master.storeRules[%d] is blank", i));
-            }
-            if(StringUtils.isBlank(rule.getRecordIndex()))
-            {
-                logger.error(String.format("recordIndex of record.master.storeRules[%d] is blank", i));
-                throw new Exception(String.format("recordIndex of record.master.storeRules[%d] is blank", i));
-            }
-            if(GrokParser.match(rule.grokPattern, rule.getExample()) == null)
-            {
-                logger.error(String.format("example of record.master.storeRules[%d] is not matched for grok pattern", i));
-                throw new Exception(String.format("example of record.master.storeRules[%d] is not matched for grok pattern", i));
-            }
-            else
-            {
-                Map<String, Object> matchMap = GrokParser.match(rule.grokPattern, rule.getExample());
-                if(!matchMap.containsKey("entId"))
-                {
-                    logger.error(String.format("grok pattern %s of record.master.storeRules[%d] mush has define of entId",
-                            rule.getGrokPattern(), i));
-                    throw new Exception(String.format("grok pattern %s of record.master.storeRules[%d] mush has define of entId",
-                            rule.getGrokPattern(), i));
-                }
-                boolean dateCheck = false;
-                if(matchMap.containsKey("date"))
-                    dateCheck = true;
-                else if(matchMap.containsKey("yearAndMonth"))
-                {
-                    if(matchMap.containsKey("day") || matchMap.containsKey("monthAndDay"))
-                        dateCheck = true;
-                }
-                else if(matchMap.containsKey("year"))
-                {
-                    if(matchMap.containsKey("monthAndDay"))
-                        dateCheck = true;
-                    else if(matchMap.containsKey("month") && matchMap.containsKey("day"))
-                        dateCheck = true;
-                }
-                if(!dateCheck)
-                {
-                    logger.error(String.format("grok pattern %s of record.master.storeRules[%d] mush has define of year, month and day",
-                            rule.getGrokPattern(), i));
-                    throw new Exception(String.format("grok pattern %s of record.master.storeRules[%d] mush has define of year, month and day",
-                            rule.getGrokPattern(), i));
-                }
-            }
-            if(rule.getExample().matches(String.format("%s$", rule.getRecordIndex())))
-            {
-                logger.error(String.format("recordIndex of record.master.storeRules[%d] is not matched for example", i));
-                throw new Exception(String.format("recordIndex of record.master.storeRules[%d] is not matched for example", i));
-            }
-            rule.setMntDir(rule.getExample().replaceAll(String.format("%s$", rule.getRecordIndex()),  "").replaceAll("/$", ""));
-            File file = new File(rule.getMntDir());
-            if(!file.exists())
-            {
-                logger.error(String.format("directory %s of record.master.storeRules[%d] not exist", rule.getMntDir(), i));
-                throw new Exception(String.format("directory %s of record.master.storeRules[%d] not exist", rule.getMntDir(), i));
-            }
-            else if(!file.isDirectory())
-            {
-                logger.error(String.format("%s of record.master.storeRules[%d] is not directory", rule.getMntDir(), i));
-                throw new Exception(String.format("%s of record.master.storeRules[%d] is not directory", rule.getMntDir(), i));
-            }
+            checkStoreRule(recordStoreCfg.getMaster().getStoreRules().get(i), i, true);
         }
-        Map<String, List<RecordStoreRule>> gorkMap = this.recordStoreCfg.getMaster().getStoreRules()
-                .stream().collect(Collectors.groupingBy(RecordStoreRule::getGrokPattern));
-        for(String grokPattern : gorkMap.keySet())
-        {
-            if(gorkMap.get(grokPattern).size() > 1)
-            {
-                logger.error(String.format("gork pattern %s for record.master is not unique", grokPattern));
-                throw new Exception(String.format("gork pattern %s for record.master is not unique", grokPattern));
-            }
-        }
-        Map<String, List<RecordStoreRule>> exampleMap = this.recordStoreCfg.getMaster().getStoreRules()
-                .stream().collect(Collectors.groupingBy(RecordStoreRule::getExample));
-        for(String example : exampleMap.keySet())
-        {
-            if(exampleMap.get(example).size() > 1)
-            {
-                logger.error(String.format("example %s for record.master is not unique", example));
-                throw new Exception(String.format("example %s for record.master is not unique", example));
-            }
-        }
-        for(String example : exampleMap.keySet())
-        {
-            for(String grokPattern : gorkMap.keySet())
-            {
-                if(GrokParser.match(grokPattern, example) != null)
-                {
-                    if(!exampleMap.get(example).get(0).getGrokPattern().equals(grokPattern))
-                    {
-                        logger.error(String.format("grok pattern semantics is not unique : %s is match for %s and %s",
-                                example, grokPattern, exampleMap.get(example).get(0).getGrokPattern()));
-                        throw new Exception(String.format("grok pattern semantics is not unique : %s is match for %s and %s",
-                                example, grokPattern, exampleMap.get(example).get(0).getGrokPattern()));
-                    }
-                }
-            }
-        }
+        List<RecordStoreRule> allRules = new ArrayList<>();
+        allRules.addAll(this.recordStoreCfg.getMaster().getStoreRules());
         if(hasBak)
         {
             if(recordStoreCfg.getBackup() == null || recordStoreCfg.getBackup().getStoreRules() == null
@@ -270,41 +167,250 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             }
             for(int i = 0; i < recordStoreCfg.getBackup().getStoreRules().size(); i++)
             {
-                RecordStoreRule rule = recordStoreCfg.getBackup().getStoreRules().get(i);
-                if(StringUtils.isBlank(rule.getGrokPattern()))
-                {
-                    logger.error(String.format("gork pattern of record.backup.storeRules[%d] is blank", i));
-                    throw new Exception(String.format("gork pattern of record.backup.storeRules[%d] is blank", i));
-                }
-                if(StringUtils.isBlank(rule.getExample()))
-                {
-                    logger.error(String.format("example of record.backup.storeRules[%d] is blank", i));
-                    throw new Exception(String.format("example of record.backup.storeRules[%d] is blank", i));
-                }
-                if(StringUtils.isBlank(rule.getRecordIndex()))
-                {
-                    logger.error(String.format("recordIndex of record.backup.storeRules[%d] is blank", i));
-                    throw new Exception(String.format("recordIndex of record.backup.storeRules[%d] is blank", i));
-                }
-                if(GrokParser.match(rule.grokPattern, rule.getExample()) == null)
-                {
-                    logger.error(String.format("example of record.backup.storeRules[%d] is not matched for grok pattern", i));
-                    throw new Exception(String.format("example of record.backup.storeRules[%d] is not matched for grok pattern", i));
-                }
-                if(rule.getExample().matches(String.format("%s$", rule.getRecordIndex())))
-                {
-                    logger.error(String.format("recordIndex of record.backup.storeRules[%d] is not matched for example", i));
-                    throw new Exception(String.format("recordIndex of record.backup.storeRules[%d] is not matched for example", i));
-                }
-                rule.setMntDir(rule.getExample().replaceAll(String.format("%s$", rule.getRecordIndex()),  "").replaceAll("/$", ""));
-                File file = new File(rule.getMntDir());
-                if(!file.exists())
-                {
-                    logger.error(String.format("directory %s of record.backup.storeRules[%d] not exist", rule.getMntDir(), i));
-                    throw new Exception(String.format("directory %s of record.backup.storeRules[%d] not exist", rule.getMntDir(), i));
+                checkStoreRule(recordStoreCfg.getBackup().getStoreRules().get(i), i, false);
+            }
+            allRules.addAll(this.recordStoreCfg.getBackup().getStoreRules());
+        }
+        groupStoreRuleCheck(allRules);
+        logger.debug(String.format("%d record store rule check success", allRules.size()));
+    }
+
+    /**
+     * 检查一组录音备份规则之间是否有冲突
+     * @param rules 一组录音备份规则
+     * @throws Exception 如果有异常，将会以异常的形式抛出
+     */
+    protected void groupStoreRuleCheck(List<RecordStoreRule> rules) throws Exception
+    {
+        Map<String, List<RecordStoreRule>> gorkMap = rules.stream().collect(Collectors.groupingBy(RecordStoreRule::getGrokPattern));
+        for(String grokPattern : gorkMap.keySet())
+        {
+            if(gorkMap.get(grokPattern).size() > 1)
+            {
+                logger.error(String.format("gork pattern %s is not unique", grokPattern));
+                throw new Exception(String.format("gork pattern %s is not unique", grokPattern));
+            }
+        }
+        Map<String, List<RecordStoreRule>> exampleMap = this.recordStoreCfg.getMaster().getStoreRules()
+                .stream().collect(Collectors.groupingBy(RecordStoreRule::getExample));
+        for(String example : exampleMap.keySet())
+        {
+            if(exampleMap.get(example).size() > 1)
+            {
+                logger.error(String.format("example %s is not unique", example));
+                throw new Exception(String.format("example %s is not unique", example));
+            }
+        }
+        for(String example : exampleMap.keySet()) {
+            for (String grokPattern : gorkMap.keySet()) {
+                if (GrokParser.match(grokPattern, example) != null) {
+                    if (!exampleMap.get(example).get(0).getGrokPattern().equals(grokPattern)) {
+                        logger.error(String.format("grok pattern semantics is not unique : %s is matched for %s and %s",
+                                example, grokPattern, exampleMap.get(example).get(0).getGrokPattern()));
+                        throw new Exception(String.format("grok pattern semantics is not unique : %s is matched for %s and %s",
+                                example, grokPattern, exampleMap.get(example).get(0).getGrokPattern()));
+                    }
                 }
             }
         }
+    }
+
+    protected void checkStoreRule(RecordStoreRule rule, int i, boolean isMaster) throws Exception
+    {
+        DateFormat dateFormatCfg = rule.getDateFormat();
+        String tag = String.format("record.%s.storeRules[%d]", isMaster ? "master" : "backup", i);
+        if(StringUtils.isBlank(rule.getGrokPattern()))
+        {
+            logger.error(String.format("gork pattern of %s is blank", tag));
+            throw new Exception(String.format("gork pattern of %s is blank", tag));
+        }
+        if(StringUtils.isBlank(rule.getExample()))
+        {
+            logger.error(String.format("example of %s is blank", tag));
+            throw new Exception(String.format("example of %s is blank", tag));
+        }
+        if(StringUtils.isBlank(rule.getRecordIndex()))
+        {
+            logger.error(String.format("recordIndex of %s is blank", tag));
+            throw new Exception(String.format("recordIndex of %s is blank", tag));
+        }
+        if(rule.getExample().matches(String.format("/%s$", rule.getRecordIndex().replaceAll("^/", ""))))
+        {
+            logger.debug(String.format("%s is not legal recordIndex of %s in %s",
+                    rule.getRecordIndex(), rule.getExample(), tag));
+            throw new Exception(String.format("%s is not legal recordIndex of %s in %s",
+                    rule.getRecordIndex(), rule.getExample(), tag));
+        }
+        rule.setMntDir(rule.getExample().replaceAll(String.format("%s$", rule.getRecordIndex()),  "").replaceAll("/$", ""));
+        File file = new File(rule.getMntDir());
+        if(!file.exists())
+        {
+            logger.error(String.format("directory %s of %s not exist", rule.getMntDir(), tag));
+            throw new Exception(String.format("directory %s of %s not exist", rule.getMntDir(), tag));
+        }
+        Map<String, Object> matchMap = GrokParser.match(rule.grokPattern, rule.getExample());
+        if(matchMap == null)
+        {
+            logger.error(String.format("example of %s is not matched for grok pattern", tag));
+            throw new Exception(String.format("example of %s is not matched for grok pattern", tag));
+        }
+        if(!matchMap.containsKey("entId"))
+        {
+            logger.error(String.format("grok pattern %s of %s mush has define of entId",
+                    rule.getGrokPattern(), tag));
+            throw new Exception(String.format("grok pattern %s of %s mush has define of entId",
+                    rule.getGrokPattern(), tag));
+        }
+        String date = matchMap.containsKey("date") ? matchMap.get("date").toString() : null;
+        if(date != null)
+        {
+            if(StringUtils.isBlank(dateFormatCfg.getDate()))
+            {
+                logger.error(String.format("date format of %s is blank", tag));
+                throw new Exception(String.format("date format of %s is blank", tag));
+            }
+            try
+            {
+                SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getDate());
+                sf.parse(date);
+            }
+            catch (Exception ex)
+            {
+                logger.error(String.format("%s is error date format for %s in %s",
+                        dateFormatCfg.getDate(), date, tag));
+                throw new Exception(String.format("%s is error date format for %s in %s",
+                        dateFormatCfg.getDate(), date, tag));
+            }
+        }
+        String yearAndMonth = matchMap.containsKey("yearAndMonth") ? matchMap.get("yearAndMonth").toString() : null;
+        if(yearAndMonth != null)
+        {
+            if(StringUtils.isBlank(dateFormatCfg.getYearAndMonth()))
+            {
+                logger.error(String.format("yearAndMonth format of %s is blank", tag));
+                throw new Exception(String.format("yearAndMonth format of %s is blank", tag));
+            }
+            try
+            {
+                SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getYearAndMonth());
+                sf.parse(yearAndMonth);
+            }
+            catch (Exception ex)
+            {
+                logger.error(String.format("%s is error yearAndMonth format for %s in %s",
+                        dateFormatCfg.getYearAndMonth(), yearAndMonth, tag));
+                throw new Exception(String.format("%s is error yearAndMonth format for %s in %s",
+                        dateFormatCfg.getYearAndMonth(), yearAndMonth, tag));
+            }
+        }
+        String monthAndDay = matchMap.containsKey("monthAndDay") ? matchMap.get("monthAndDay").toString() : null;
+        if(monthAndDay != null)
+        {
+            if(StringUtils.isBlank(dateFormatCfg.getMonthAndDay()))
+            {
+                logger.error(String.format("monthAndDay format of %s is blank", tag));
+                throw new Exception(String.format("monthAndDay format of %s is blank", tag));
+            }
+            try
+            {
+                SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getMonthAndDay());
+                sf.parse(monthAndDay);
+            }
+            catch (Exception ex)
+            {
+                logger.error(String.format("%s is error monthAndDay format for %s in %s",
+                        dateFormatCfg.getMonthAndDay(), monthAndDay, tag));
+                throw new Exception(String.format("%s is error monthAndDay format for %s in %s",
+                        dateFormatCfg.getMonthAndDay(), monthAndDay, tag));
+            }
+        }
+        String year = matchMap.containsKey("year") ? matchMap.get("year").toString() : null;
+        if(year != null)
+        {
+            if(StringUtils.isBlank(dateFormatCfg.getYear()))
+            {
+                logger.error(String.format("year format of %s is blank", tag));
+                throw new Exception(String.format("year format of %s is blank", tag));
+            }
+            try
+            {
+                SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getYear());
+                sf.parse(year);
+            }
+            catch (Exception ex)
+            {
+                logger.error(String.format("%s is error year format for %s in %s",
+                        dateFormatCfg.getYear(), year, tag));
+                throw new Exception(String.format("%s is error year format for %s in %s",
+                        dateFormatCfg.getYear(), year, tag));
+            }
+        }
+        String month = matchMap.containsKey("month") ? matchMap.get("month").toString() : null;
+        if(month != null)
+        {
+            if(StringUtils.isBlank(dateFormatCfg.getMonth()))
+            {
+                logger.error(String.format("month format of %s is blank", tag));
+                throw new Exception(String.format("month format of %s is blank", tag));
+            }
+            try
+            {
+                SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getMonth());
+                sf.parse(month);
+            }
+            catch (Exception ex)
+            {
+                logger.error(String.format("%s is error month format for %s in %s",
+                        dateFormatCfg.getMonth(), month, tag));
+                throw new Exception(String.format("%s is error month format for %s in %s",
+                        dateFormatCfg.getMonth(), month, tag));
+            }
+        }
+        String day = matchMap.containsKey("day") ? matchMap.get("day").toString() : null;
+        if(day != null)
+        {
+            if(StringUtils.isBlank(dateFormatCfg.getDay()))
+            {
+                logger.error(String.format("day format of %s is blank", tag));
+                throw new Exception(String.format("day format of %s is blank", tag));
+            }
+            try
+            {
+                SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getDay());
+                sf.parse(day);
+            }
+            catch (Exception ex)
+            {
+                logger.error(String.format("%s is error day format for %s in %s",
+                        dateFormatCfg.getDay(), day, tag));
+                throw new Exception(String.format("%s is error day format for %s in %s",
+                        dateFormatCfg.getDay(), day, tag));
+            }
+        }
+        String errMsg = null;
+        if(date != null)
+        {
+        }
+        else if(yearAndMonth != null)
+        {
+            if(monthAndDay == null && day == null)
+                errMsg = String.format("monthAndDay or day is wanted in grok pattern of %s", tag);
+        }
+        else if(year != null)
+        {
+            if(monthAndDay == null && (month == null || day == null))
+                errMsg = String.format("monthAndDay or month and day is wanted in grok pattern of %s", tag);
+        }
+        else
+        {
+            errMsg = String.format("grok pattern of %s has not enough date define", tag);
+        }
+        if(errMsg != null)
+        {
+            logger.error(errMsg);
+            throw new Exception(errMsg);
+        }
+        logger.debug(String.format("record store rule[%s] of %s check success", JSONObject.toJSONString(rule), tag));
     }
 
     @Override
@@ -552,114 +658,149 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         String grokPattern = storeRule.getGrokPattern();
         String mntDir = storeRule.getMntDir();
         Map<String, Object> resultMap = GrokParser.match(grokPattern, storeRule.getExample());
-        List<String> saveDirs = new ArrayList<>();
-        if(resultMap.containsKey("date"))
-        {
-            String dateStr = resultMap.get("date").toString();
-            SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getDate());
-            searchForChosenTimeDir(mntDir, example, dateStr, sf.format(chosenDate), saveDirs);
-        }
-        else if(resultMap.containsKey("yearAndMonth"))
-        {
-            List<String> yearAndMonthDirList = new ArrayList<>();
-            String yearAndMonth = resultMap.get("yearAndMonth").toString();
-            SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getYearAndMonth());
-            searchForChosenTimeDir(mntDir, example, yearAndMonth, sf.format(chosenDate), yearAndMonthDirList);
-            if(resultMap.containsKey("monthAndDay"))
-            {
-                String monthAndDay = resultMap.get("monthAndDay").toString();
-                sf = new SimpleDateFormat(dateFormatCfg.getMonthAndDay());
-                for(String searchDir : yearAndMonthDirList)
-                {
-                    searchForChosenTimeDir(searchDir, example, monthAndDay, sf.format(chosenDate), saveDirs);
-                }
-            }
-            else
-            {
-                String dayStr = resultMap.get("dayStr").toString();
-                sf = new SimpleDateFormat(dateFormatCfg.getDay());
-                for(String searchDir : yearAndMonthDirList)
-                {
-                    searchForChosenTimeDir(searchDir, example, dayStr, sf.format(chosenDate), saveDirs);
-                }
-            }
-        }
-        else
-        {
-            List<String> yearList = new ArrayList<>();
-            String year = resultMap.get("year").toString();
-            SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getYear());
-            searchForChosenTimeDir(mntDir, example, year, sf.format(chosenDate), yearList);
-            if(resultMap.containsKey("monthAndDay"))
-            {
-                String monthAndDay = resultMap.get("monthAndDay").toString();
-                sf = new SimpleDateFormat(dateFormatCfg.getMonthAndDay());
-                for(String searchDir : yearList)
-                {
-                    searchForChosenTimeDir(searchDir, example, monthAndDay, sf.format(chosenDate), saveDirs);
-                }
-            }
-            else
-            {
-                String month = resultMap.get("dayStr").toString();
-                sf = new SimpleDateFormat(dateFormatCfg.getMonth());
-                List<String> monthDirList = new ArrayList<>();
-                for(String searchDir : yearList)
-                {
-                    searchForChosenTimeDir(searchDir, example, month, sf.format(chosenDate), monthDirList);
-                }
-                String dayStr = resultMap.get("dayStr").toString();
-                sf = new SimpleDateFormat(dateFormatCfg.getDay());
-                for(String searchDir : monthDirList)
-                {
-                    searchForChosenTimeDir(searchDir, example, dayStr, sf.format(chosenDate), saveDirs);
-                }
-            }
-        }
-        int dept = example.split("/").length;
-        List<String> allFileList = new ArrayList<>();
-        for(String saveDir : saveDirs)
-        {
-            scan(saveDir, dept, false, ".*", allFileList);
-        }
+        List<String> saveDirs = scanStoreDirForDay(chosenDate, storeRule);
         int indexLen = storeRule.getRecordIndex().split("/").length;
         boolean escape = example.matches("^/") ? true : false;
         List<StoredRecordFileVo> retList = new ArrayList<>();
-        for(String filePath : allFileList)
+        for(String saveDir : saveDirs)
         {
-            Map<String, Object> parseResultMap = GrokParser.match(grokPattern, filePath);
-            if(parseResultMap != null)
+            File dirFile = new File(saveDir);
+            for(File file : dirFile.listFiles())
             {
-                String enterpriseId = parseResultMap.get("entId").toString();
-                if(!isEnterpriseChosen(enterpriseId))
-                {
-                    logger.debug(String.format("[%s] %s need not backup", enterpriseId, filePath));
+                if(!file.isFile())
                     continue;
-                }
-                if(this.isWin)
-                    filePath = filePath.replaceAll("\\\\", "/");
-                String[] arr = filePath.split("/");
-                String index = "";
-                for(int i = indexLen; i >=1; i--)
+                String filePath = file.getAbsolutePath();
+                Map<String, Object> parseResultMap = GrokParser.match(grokPattern, filePath);
+                if(parseResultMap != null)
                 {
-                    index += "/" + arr[arr.length - i];
+                    String enterpriseId = parseResultMap.get("entId").toString();
+                    if(!isEnterpriseChosen(enterpriseId))
+                    {
+                        logger.debug(String.format("[%s] %s need not backup", enterpriseId, filePath));
+                        continue;
+                    }
+                    if(this.isWin)
+                        filePath = filePath.replaceAll("\\\\", "/");
+                    String[] arr = filePath.split("/");
+                    String index = "";
+                    for(int i = indexLen; i >=1; i--)
+                    {
+                        index += "/" + arr[arr.length - i];
+                    }
+                    if(!escape)
+                    {
+                        index = index.replaceAll("^/", "");
+                    }
+                    logger.debug(String.format("[%s] %s with index=%s is wanted record file", enterpriseId, filePath, index));
+                    StoredRecordFileVo fileVo = new StoredRecordFileVo(enterpriseId, chosenDate, filePath, index, grokPattern);
+                    retList.add(fileVo);
                 }
-                if(!escape)
-                {
-                    index = index.replaceAll("^/", "");
-                }
-                StoredRecordFileVo fileVo = new StoredRecordFileVo(enterpriseId, chosenDate, filePath, index, grokPattern);
-                retList.add(fileVo);
             }
         }
         return retList;
     }
 
-    private void searchForChosenTimeDir(String searchPath, String srcPath, String srcTime, String dstTime, List<String> resultList) throws IOException
+
+    /**
+     * 查找某个存在规则下某一天的所有录音存储目录
+     * @param chosenDay 指定的某一天
+     * @param storeRule 录音存储规则
+     * @return 满足条件的录音存储目录
+     */
+    protected List<String> scanStoreDirForDay(Date chosenDay, RecordStoreRule storeRule) throws IOException
     {
+        List<String> saveDirs = new ArrayList<>();
+        File file = new File(storeRule.getMntDir());
+        if(!file.exists())
+        {
+            logger.error(String.format("mntDir=%s not exist", storeRule.getMntDir()));
+            return saveDirs;
+        }
+        else if(!file.isDirectory())
+        {
+            logger.error(String.format("mntDir=%s is not directory", storeRule.getMntDir()));
+            return saveDirs;
+        }
+        DateFormat dateFormatCfg = storeRule.getDateFormat();
+        String example = storeRule.getExample();
+        String grokPattern = storeRule.getGrokPattern();
+        String mntDir = storeRule.getMntDir();
+        Map<String, Object> resultMap = GrokParser.match(grokPattern, storeRule.getExample());
+        String date = resultMap.containsKey("date") ? resultMap.get("date").toString() : null;
+        String yearAndMonth = resultMap.containsKey("yearAndMonth") ? resultMap.get("yearAndMonth").toString() : null;
+        String monthAndDay = resultMap.containsKey("monthAndDay") ? resultMap.get("monthAndDay").toString() : null;
+        String year = resultMap.containsKey("year") ? resultMap.get("year").toString() : null;
+        String month = resultMap.containsKey("month") ? resultMap.get("month").toString() : null;
+        String day = resultMap.containsKey("day") ? resultMap.get("day").toString() : null;
+
+        if(StringUtils.isNotBlank(date))
+        {
+            SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getDate());
+            saveDirs = searchForChosenTimeDir(mntDir, example, date, sf.format(chosenDay));
+        }
+        else if(StringUtils.isNotBlank(yearAndMonth))
+        {
+            SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getYearAndMonth());
+            List<String> yearAndMonthDirList = searchForChosenTimeDir(mntDir, example, yearAndMonth, sf.format(chosenDay));
+            if(StringUtils.isNotBlank(monthAndDay))
+            {
+                sf = new SimpleDateFormat(dateFormatCfg.getMonthAndDay());
+                for(String searchDir : yearAndMonthDirList)
+                {
+                    List<String> monthAndDayList = searchForChosenTimeDir(searchDir, example, monthAndDay, sf.format(chosenDay));
+                    saveDirs.addAll(monthAndDayList);
+                }
+            }
+            else
+            {
+                sf = new SimpleDateFormat(dateFormatCfg.getDay());
+                for(String searchDir : yearAndMonthDirList)
+                {
+                    List<String> dayList = searchForChosenTimeDir(searchDir, example, day, sf.format(day));
+                    saveDirs.addAll(dayList);
+                }
+            }
+        }
+        else
+        {
+            SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getYear());
+            List<String> yearList = searchForChosenTimeDir(mntDir, example, year, sf.format(chosenDay));
+            if(StringUtils.isNotBlank(monthAndDay))
+            {
+                sf = new SimpleDateFormat(dateFormatCfg.getMonthAndDay());
+                for(String searchDir : yearList)
+                {
+                    List<String> monthAndDayList = searchForChosenTimeDir(searchDir, example, monthAndDay, sf.format(chosenDay));
+                    saveDirs.addAll(monthAndDayList);
+                }
+            }
+            else
+            {
+                sf = new SimpleDateFormat(dateFormatCfg.getMonth());
+                List<String> monthDirList = new ArrayList<>();
+                for(String searchDir : yearList)
+                {
+                    monthDirList.addAll(searchForChosenTimeDir(searchDir, example, month, sf.format(chosenDay)));
+                }
+                String dayStr = resultMap.get("dayStr").toString();
+                sf = new SimpleDateFormat(dateFormatCfg.getDay());
+                for(String searchDir : monthDirList)
+                {
+                    List<String> dayList = searchForChosenTimeDir(searchDir, example, dayStr, sf.format(day));
+                    saveDirs.addAll(dayList);
+                }
+            }
+        }
+        return saveDirs;
+    }
+
+    private List<String> searchForChosenTimeDir(String searchPath, String srcPath, String srcTime, String dstTime) throws IOException
+    {
+        List<String> dirList = new ArrayList<>();
         int dept = srcPath.split(String.format("/%s/", srcTime))[0].split("/").length + 1;
         String regex = String.format("^%s$", dstTime);
-        scan(searchPath, dept, true, regex, resultList);
+        scan(searchPath, dept, regex, dirList);
+        return dirList;
     }
 
     protected PlatformRecordCheckResultSumVo checkPlatformRecord(Date beginTime, Date endTime) throws Exception
@@ -759,44 +900,33 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     }
 
     /**
-     * 获取某个目录下指定深度的且文件名或是最后一级目录满足正则表达式的所有文件(目录)
+     * 获取某个目录下指定深度的且一级目录名满足正则表达式的目录
      * @param pathName 被扫描的目录
-     * @param dept 深度
-     * @param isDir 目录还是文件
+     * @param dept 深度,例如/home/record的深度为2，/home/record/1.wav是3
      * @param regex 用来匹配最后一级目录或是文件名的正则表达式
      * @param resultList 扫描结果
      */
-    private void scan(String pathName, int dept, boolean isDir, String regex, List<String> resultList) throws IOException
+    private void scan(String pathName, int dept, String regex, List<String> resultList) throws IOException
     {
-        File dirFile = new File(pathName);
-        //判断该文件或目录是否存在，不存在时在控制台输出提醒
-        if (!dirFile.exists()) {
-            logger.error(String.format("%s not exist", pathName));
-            return;
-        }
-        else if(!dirFile.isDirectory() && !dirFile.isFile())
-            return;
         String[] arr = pathName.split("/");
         int currentDept = arr.length;
         if(currentDept > dept)
             return;
         else if(currentDept == dept)
         {
-            if((dirFile.isFile() && !isDir) || (dirFile.isDirectory() && isDir))
-            {
-                if(Pattern.matches(regex, arr[currentDept - 1])) {
-                    System.out.println(pathName);
-                    resultList.add(pathName);
-                }
+            if(Pattern.matches(regex, arr[currentDept - 1])) {
+                logger.debug(String.format("%s is wanted dir for dept=%d and regex=%s", pathName));
+                resultList.add(pathName);
             }
             return;
         }
-        else if(dirFile.isDirectory())
+        else
         {
-            String[] fileList = dirFile.list();
-            for(int i = 0; i < fileList.length; i++)
+            File dirFile = new File(pathName);
+            for(File file : dirFile.listFiles())
             {
-                scan(pathName + "/" + fileList[i], dept, isDir, regex, resultList);
+                if(file.isDirectory())
+                    scan(file.getAbsolutePath(), dept, regex, resultList);
             }
         }
     }
