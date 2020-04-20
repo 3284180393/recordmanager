@@ -34,7 +34,7 @@ import java.util.List;
 @Component(value = "recordDetail2Dao")
 public class RecordDetailDao2Impl implements IRecordDetailDao {
 
-    private final static Logger logger = LoggerFactory.getLogger(RecordDetailDaoImpl.class);
+    private final static Logger logger = LoggerFactory.getLogger(RecordDetailDao2Impl.class);
 
     @Autowired
     JdbcTemplate business2JdbcTemplate;

@@ -46,6 +46,8 @@ public class BigEntWith2BuzDBPlatformRecordServiceImpl extends BigEntPlatformRec
     public void init() throws Exception
     {
         cfgCheck();
+//        Date now = new Date();
+//        recordDetail2Dao.select("0000099999", now, now);
         System.out.println("3333333333333333333333333333333333333333333333333333333333333333333333");
     }
 

@@ -40,7 +40,7 @@ public class GlsAgentDaoImpl implements IGlsAgentDao {
 
     @Override
     public List<GlsAgentVo> select() {
-        String sql = String.format("select * from %s GDAR INNER JOIN %s GEI ON GDAR.ENT_ID=GEI.ENTERPRISEID AND GEI.ISOPEN=1",
+        String sql = String.format("select GDAR.AGENT_ID, GDAR.DB_NAME, GDAR.SCHEME_NAME, GEI.ENTERPRISEID, GEI.ENTERPRISENAME from %s GDAR INNER JOIN %s GEI ON GDAR.ENT_ID=GEI.ENTERPRISEID AND GEI.ISOPEN=1",
                 this.dbAgentRelateTable, this.enterpriseTable);
         logger.debug(String.format("begin to query all gls agent, sql=%s", sql));
         List<GlsAgentVo> list = glsJdbcTemplate.query(sql, new GlsAgentRowMapper());
@@ -54,7 +54,8 @@ public class GlsAgentDaoImpl implements IGlsAgentDao {
         public GlsAgentVo mapRow(ResultSet rs, int i) throws SQLException
         {
             GlsAgentVo po = new GlsAgentVo();
-            po.setEntId(rs.getString("ENT_ID"));
+            po.setEntId(rs.getString("ENTERPRISEID"));
+            po.setEntName(rs.getString("ENTERPRISENAME"));
             po.setAgentId(rs.getString("AGENT_ID"));
             po.setSchemaName(rs.getString("SCHEME_NAME"));
             po.setDbName(rs.getString("DB_NAME"));

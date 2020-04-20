@@ -35,12 +35,20 @@ ccod:
   platformId: shltPA
   platformName: 上海联通平安
   platformType: NORMAL
-  buzDBCount: 1
   recordType: COMBINATION
-  hasBak: true
+  hasBak: false
   enterprise:
-    choseMethod: ALL
+    choseMethod: EXCLUDE
     list:
+      - "112233"
+      - "00001111"
+      - "0000088888"
+      - "0000066666"
+      - "20180905"
+      - "20180914"
+      - "0000000002"
+      - "1234554321"
+      - "2020031701"
     notCheckBakList:
 
 call:
@@ -55,28 +63,6 @@ call:
 record:
   master:
     storeRules[0]:
-      grokPattern: ^D:/mnt/Data/record/(?<entId>\d+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-      example: D:/mnt/Data/record/0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
-      recordIndex: 0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
-      dateFormat:
-        date: yyyyMMdd
-        yearAndMonth: yyyyMM
-        monthAndDay: MMdd
-        year: yyyy
-        month: MM
-        day: dd
-    storeRules[1]:
-      grokPattern: ^/mnt/Date1/(?<entId>\d+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/(?<AgentDn1>\d+)/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<localUrl>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-      example: /mnt/Date1/0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
-      recordIndex: 0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
-      dateFormat:
-        date: yyyyMMdd
-        yearAndMonth: yyyyMM
-        monthAndDay: MMdd
-        year: yyyy
-        month: MM
-        day: dd
-    storeRules[2]:
       grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
       example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
       recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
@@ -89,8 +75,8 @@ record:
         day: dd
   backup:
     storeRules[0]:
-      grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-      example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
+      grokPattern: ^/mnt/record/Data12/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+      example: /mnt/record/Data12/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
       recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
       dateFormat:
         date: yyyyMMdd
@@ -102,14 +88,14 @@ record:
 
 jobs:
   recordCheck:
-    execute: true
+    execute: false
+    cron: 0 0/10 * * * *
     interval: 10
-    cron: 0 0/10 * * * ?
     delay: 10
   backup:
     execute: true
-    startDate: 2020-04-10
-    cron: 0 00 22 * * ?
+    startDate: 2019-04-10
+    cron: 0 0/2 * * * *
     backupRootPath: /mnt/backup
     verify: true
     compareWithDB: true
@@ -143,7 +129,7 @@ notify:
         atAll: true
         atList:
     sysLog:
-      write: true
+      write: false
       tag: "ccod"
 
 env:

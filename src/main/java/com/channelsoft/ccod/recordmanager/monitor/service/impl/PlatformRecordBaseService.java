@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.DigestUtils;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -114,6 +113,10 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
 
     protected int threadPoolSize = 4;
 
+    /**
+     * 检查平台录音配置
+     * @throws Exception 平台录音配置检查失败
+     */
     protected void cfgCheck() throws Exception
     {
         if(!this.isCheck && !this.isBackup)
@@ -524,10 +527,17 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return fileList;
     }
 
+    /**
+     * 检查某天备份完成后应该备份而未备份的所有录音明细
+     * @param backupList 已经备份的录音文件
+     * @param backupDate 备份的哪一天录音文件
+     * @return 检查结果
+     */
     protected List<RecordDetailVo> checkMissBackupRecordDetail(List<StoredRecordFileVo> backupList, Date backupDate)
     {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
+        logger.debug(String.format("begin to check miss backup record details for %s", sf.format(backupDate)));
         List<RecordDetailVo> retList = new ArrayList<>();
-        PlatformRecordCheckResultSumVo checkResultVo;
         Calendar ca = Calendar.getInstance();
         ca.setTime(backupDate);
         ca.set(Calendar.MILLISECOND, 0);
@@ -537,95 +547,76 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         Date beginTime = ca.getTime();
         ca.add(Calendar.DATE, 1);
         Date endTime = ca.getTime();
+        PlatformRecordCheckResultSumVo checkResultVo;
         try
         {
-            checkResultVo = check(beginTime, endTime);
-            if(debug)
-            {
-                generateTestDate(checkResultVo);
-            }
-
+            checkResultVo = checkPlatformRecord(beginTime, endTime);
         }
         catch (Exception ex)
         {
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            logger.error(String.format("query record detail form %s to %s exception",
-                    sf.format(beginTime), sf.format(endTime)), ex);
+            logger.debug(String.format("check platform record from %s to %s exception",
+                    beginTime, endTime), ex);
             checkResultVo = PlatformRecordCheckResultSumVo.fail(this.platformId, this.platformName, ex.getMessage());
             notifyService.notify(checkResultVo);
             return retList;
         }
         Map<String, List<StoredRecordFileVo>> entRecordFileMap = backupList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getEnterpriseId));
         for(EntRecordCheckResultSumVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList()) {
-            if (!entRecordFileMap.containsKey(entRecordCheckResultVo.getEnterpriseId())) {
-                logger.warn(String.format("%s %d record not been backup",
-                        entRecordCheckResultVo.getEnterpriseId(), entRecordCheckResultVo.getSuccessList().size()));
+            String enterpriseId = entRecordCheckResultVo.getEnterpriseId();
+            if(!entRecordCheckResultVo.isResult())
+                logger.debug(String.format("%s check fail, so need not compare miss backup record detail", enterpriseId));
+            else if(entRecordCheckResultVo.getAllRecordCount() == 0)
+                logger.debug(String.format("checked call count of %s is 0, so need not compare miss backup record detail", enterpriseId));
+            else if (!entRecordFileMap.containsKey(enterpriseId)) {
+                logger.error(String.format("%s %d record not been backup",
+                        enterpriseId, entRecordCheckResultVo.getSuccessList().size()));
                 retList.addAll(entRecordCheckResultVo.getSuccessList());
-                continue;
             }
-            Map<String, StoredRecordFileVo> fileMap = entRecordFileMap.get(entRecordCheckResultVo.getEnterpriseId())
-                    .stream().collect(Collectors.toMap(StoredRecordFileVo::getRecordIndex, Function.identity()));
-            for (RecordDetailVo detailVo : entRecordCheckResultVo.getSuccessList()) {
-                if (!fileMap.containsKey(detailVo.getRecordIndex())) {
-                    logger.error(String.format("%s[%s] %s not been backup",
-                            detailVo.getEnterpriseId(), detailVo.getSessionId(), detailVo.getRecordIndex()));
-                    retList.add(detailVo);
+            else
+            {
+                logger.debug(String.format("%s has backup %d record files", enterpriseId, entRecordFileMap.get(enterpriseId).size()));
+                Map<String, StoredRecordFileVo> fileMap = entRecordFileMap.get(enterpriseId)
+                        .stream().collect(Collectors.toMap(StoredRecordFileVo::getRecordIndex, Function.identity()));
+                for (RecordDetailVo detailVo : entRecordCheckResultVo.getSuccessList()) {
+                    if (!fileMap.containsKey(detailVo.getRecordIndex())) {
+                        logger.error(String.format("%s[%s] %s not been backup",
+                                detailVo.getEnterpriseId(), detailVo.getSessionId(), detailVo.getRecordIndex()));
+                        retList.add(detailVo);
+                    }
                 }
             }
+
         }
+        logger.debug(String.format("find %d miss backup record details %s", retList.size(), sf.format(backupDate)));
         return retList;
     }
 
+    /**
+     * 查询录音索引的绝对路径
+     * @param indexSearch 录音索引查询参数
+     * @return 如果查询到将会返回录音索引对应录音文件的绝对路径,否则返回null
+     */
     protected String searchRecordIndexAbsolutePath(RecordIndexSearch indexSearch)
     {
-        logger.debug(String.format("search record save path for index=%s, master=%b", indexSearch.recordIndex, indexSearch.isMaster));
-        RecordStoreRule storeRule = indexSearch.storeRule;
+        logger.debug(String.format("search record absolute path for index=%s, master=%b", indexSearch.recordIndex, indexSearch.isMaster));
+        RecordStoreRule defaultRule = indexSearch.storeRule;
         String recordIndex = indexSearch.recordIndex;
-        String path = null;
-        if(storeRule != null)
+        if(defaultRule != null)
         {
-            path = storeRule.getExample().replace(storeRule.getRecordIndex(), recordIndex);
-            if(GrokParser.match(storeRule.grokPattern, path) != null)
-            {
-                File file = new File(path);
-                if(file.exists() && file.isFile())
-                {
-                    logger.debug(String.format("find %s for index=%s, master=%b", path, recordIndex, indexSearch.isMaster));
-                    return path;
-                }
-                else
-                {
-                    logger.warn(String.format("%s is match for %s, but not exist", path, storeRule.getGrokPattern()));
-                }
-            }
-            else
-            {
-                logger.debug(String.format("index=%s not match for %s", recordIndex, storeRule.getGrokPattern()));
-            }
+            String path = searchRecordFile(recordIndex, defaultRule);
+            if(path != null)
+                return path;
         }
         List<RecordStoreRule> rules = indexSearch.isMaster ? this.recordStoreCfg.getMaster().getStoreRules() : this.recordStoreCfg.getBackup().getStoreRules();
         Map<String, RecordStoreRule> roleMap = rules.stream().collect(Collectors.toMap(RecordStoreRule::getGrokPattern, Function.identity()));
-        if(storeRule != null)
-            roleMap.remove(storeRule.getGrokPattern());
-        for(RecordStoreRule role : roleMap.values())
+        if(defaultRule != null)
+            roleMap.remove(defaultRule.getGrokPattern());
+        for(RecordStoreRule rule : roleMap.values())
         {
-            path = role.getExample().replace(role.getRecordIndex(), recordIndex);
-            if(GrokParser.match(role.grokPattern, path) != null)
-            {
-                File file = new File(path);
-                if(file.exists() && file.isFile())
-                {
-                    logger.debug(String.format("find %s for index=%s, master=%b", path, recordIndex, indexSearch.isMaster));
-                    return path;
-                }
-                else
-                {
-                    logger.warn(String.format("%s is match for %s, but not exist", path, role.getGrokPattern()));
-                }
-            }
-            else
-            {
-                logger.debug(String.format("index=%s not match for %s", recordIndex, role.getGrokPattern()));
+            String path = searchRecordFile(recordIndex, rule);
+            if(path != null) {
+                indexSearch.storeRule = rule;
+                return path;
             }
         }
         logger.error(String.format("can not find record file for index=%s", recordIndex));
@@ -634,30 +625,69 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     }
 
     /**
+     * 检查某个录音文件存储规则下录音索引对应的录音文件是否存在
+     * @param recordIndex 被检查的录音索引
+     * @param storeRule 指定的录音存储规则
+     * @return 如果存在返回录音索引对应的录音文件绝对路径，否则返回null
+     */
+    protected String searchRecordFile(String recordIndex, RecordStoreRule storeRule)
+    {
+        String recordFilePath = null;
+        String path = storeRule.getExample().replaceAll(storeRule.getRecordIndex() + "$", recordIndex);
+        if(GrokParser.match(storeRule.grokPattern, path) != null)
+        {
+            File file = new File(path);
+            if(file.exists() && file.isFile())
+            {
+                logger.debug(String.format("find %s for index=%s", path, recordIndex));
+                recordFilePath = path;
+            }
+            else
+            {
+                logger.warn(String.format("%s is match for %s, but not exist", path, storeRule.getGrokPattern()));
+            }
+        }
+        else
+        {
+            logger.debug(String.format("index=%s not match for %s", recordIndex, storeRule.getGrokPattern()));
+        }
+        return recordFilePath;
+    }
+
+    /**
      * 确认某个企业是否应该检查录音或是备份录音
      * @param enterpriseId 企业id
      * @return 需要检查/备份则返回true否则false
      */
     protected boolean isEnterpriseChosen(String enterpriseId) {
+        boolean chosen = false;
         switch (enterpriseCfg.getChoseMethod())
         {
             case ALL:
-                return true;
+                chosen = true;
+                break;
             case INCLUDE:
-                return new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId);
+                chosen = new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId) ? true : false;
+                break;
             case EXCLUdE:
-                return !(new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId));
+                chosen = !(new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId)) ? true : false;
+                break;
         }
-        return false;
+        logger.debug(String.format("%s is chosen : %b", enterpriseId, chosen));
+        return chosen;
     }
 
+    /**
+     * 扫描指定录音存储规则下的某天录音文件
+     * @param storeRule 录音存储规则
+     * @param chosenDate 指定扫描的时间
+     * @return 该天的录音文件
+     * @throws IOException
+     */
     private List<StoredRecordFileVo> scanMntDir(RecordStoreRule storeRule, Date chosenDate) throws IOException
     {
-        DateFormat dateFormatCfg = storeRule.getDateFormat();
         String example = storeRule.getExample();
         String grokPattern = storeRule.getGrokPattern();
-        String mntDir = storeRule.getMntDir();
-        Map<String, Object> resultMap = GrokParser.match(grokPattern, storeRule.getExample());
         List<String> saveDirs = scanStoreDirForDay(chosenDate, storeRule);
         int indexLen = storeRule.getRecordIndex().split("/").length;
         boolean escape = example.matches("^/") ? true : false;
@@ -803,6 +833,12 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return dirList;
     }
 
+    /**
+     * 检查平台的录音
+     * @param beginTime 录音的通话结束时间不得早于此时间
+     * @param endTime 录音的通话结束时间不得晚于此时间
+     * @return 平台录音检查结果
+     */
     protected PlatformRecordCheckResultSumVo checkPlatformRecord(Date beginTime, Date endTime) throws Exception
     {
         Date startCheckTime = new Date();
@@ -820,6 +856,8 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             {
                 Date checkTime = new Date();
                 List<RecordDetailVo> entRecordList = recordDetailDao.select(enterpriseVo.getEnterpriseId(), beginTime, endTime);
+                for(RecordDetailVo detailVo : entRecordList)
+                    detailVo.setEnterpriseId(enterpriseVo.getEnterpriseId());
                 entRecordCheckResultVo = checkEntRecord(enterpriseVo, checkTime, beginTime, endTime, entRecordList);
             }
             catch (Exception ex)
@@ -835,6 +873,15 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return checkResultVo;
     }
 
+    /**
+     * 检查企业的录音
+     * @param enterpriseVo 被检查的企业
+     * @param checkTime 开始检查时间
+     * @param beginTime 录音的通话结束时间不得早于此时间
+     * @param endTime 录音的通话结束时间不得晚于此时间
+     * @param entRecordList 指定时间段内企业呼叫明细
+     * @return
+     */
     protected EntRecordCheckResultSumVo checkEntRecord(EnterpriseVo enterpriseVo, Date checkTime, Date beginTime, Date endTime, List<RecordDetailVo> entRecordList) {
 
         List<RecordDetailVo> successList = new ArrayList<>();
@@ -848,8 +895,10 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         for(RecordDetailVo detailVo : entRecordList)
         {
             //检查录音索引
+            String tag = String.format("[entId=%s,sessionId=%s, agentId=%s]", detailVo.getEnterpriseId(), detailVo.getSessionId(), detailVo.getAgentId());
             if(StringUtils.isBlank(detailVo.getRecordIndex()))
             {
+                logger.error(String.format("%s can not find record index", tag));
                 notIndexList.add(detailVo);
                 continue;
             }
@@ -861,6 +910,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             String fileSavePath = searchRecordIndexAbsolutePath(indexSearch);
             if(StringUtils.isBlank(fileSavePath))
             {
+                logger.error(String.format("%s can not find record file", tag));
                 notFileList.add(detailVo);
                 continue;
             }
@@ -869,6 +919,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             {
                 if(StringUtils.isBlank(detailVo.getBakRecordIndex()))
                 {
+                    logger.error(String.format("%s can not find bak record index", tag));
                     notBakIndexList.add(detailVo);
                     continue;
                 }
@@ -879,11 +930,13 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 String bkFileSavePath = searchRecordIndexAbsolutePath(bakIndexSearch);
                 if(StringUtils.isBlank(bkFileSavePath))
                 {
+                    logger.error(String.format("%s can not find bak record file", tag));
                     notBakFileList.add(detailVo);
                     continue;
                 }
                 bkStoreRole = bakIndexSearch.storeRule;
             }
+            logger.debug(String.format("%s record is OK", tag));
             successList.add(detailVo);
         }
         if(isCheckBak(enterpriseVo.getEnterpriseId()))
@@ -908,6 +961,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
      */
     private void scan(String pathName, int dept, String regex, List<String> resultList) throws IOException
     {
+        logger.debug(String.format("scan dir=%s for dept=%d and regex=%s directory", pathName, dept, regex));
         String[] arr = pathName.split("/");
         int currentDept = arr.length;
         if(currentDept > dept)
@@ -915,7 +969,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         else if(currentDept == dept)
         {
             if(Pattern.matches(regex, arr[currentDept - 1])) {
-                logger.debug(String.format("%s is wanted dir for dept=%d and regex=%s", pathName));
+                logger.debug(String.format("%s is wanted dir for dept=%d and regex=%s", pathName, dept, regex));
                 resultList.add(pathName);
             }
             return;
@@ -931,7 +985,16 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         }
     }
 
-    protected List<FailBackupRecordFilePo> backupByCopyDirectory(List<StoredRecordFileVo> storedRecordFileList, String backupRootDirectory, boolean isVerify, Date recordDate) throws IOException, Exception
+    /**
+     * 通过目录拷贝的方式备份企业录音文件
+     * @param storedRecordFileList 需要备份的企业录音文件列表
+     * @param backupRootDirectory 用来备份录音文件的目录的路径
+     * @param isVerify 备份完成后是否进行md5校验
+     * @param recordDate 这些被备份的录音文件是哪天的
+     * @return 备份失败的录音明细
+     * @throws Exception
+     */
+    protected List<FailBackupRecordFilePo> backupByCopyDirectory(List<StoredRecordFileVo> storedRecordFileList, String backupRootDirectory, boolean isVerify, Date recordDate) throws Exception
     {
         List<FailBackupRecordFilePo> failList = new ArrayList<>();
         Map<String, List<StoredRecordFileVo>> dirFileMap = storedRecordFileList.stream().collect(Collectors.groupingBy(StoredRecordFileVo::getStoreDir));
@@ -941,7 +1004,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         {
             FutureTask<List<FailBackupRecordFilePo>> task = new FutureTask<>(new Callable<List<FailBackupRecordFilePo>>() {
                 @Override
-                public List<FailBackupRecordFilePo> call() throws Exception {
+                public List<FailBackupRecordFilePo> call() {
                     List<StoredRecordFileVo> fileList =  dirFileMap.get(storeDir);
                     List<FailBackupRecordFilePo> failList;
                     try
@@ -976,6 +1039,16 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return failList;
     }
 
+    /**
+     * 将某个目录连文件带目录结构copy到另外一个目录，copy后的目录为backupRootDirectory+storeDir
+     * @param storeDir 被拷贝的目录
+     * @param recordFileList 被拷贝里的录音文件列表
+     * @param backupRootDirectory 需要将storeDir连目录带文件拷贝的目的目录
+     * @param isVerify 拷贝完成后是否进行md5校验
+     * @param recordDate 被备份的录音文件是哪一天的
+     * @return 备份失败的录音文件列表
+     * @throws IOException
+     */
     private List<FailBackupRecordFilePo> backupDirByCopy(String storeDir, List<StoredRecordFileVo> recordFileList, String backupRootDirectory, boolean isVerify, Date recordDate) throws IOException
     {
         List<FailBackupRecordFilePo> failList = new ArrayList<>();
@@ -1049,18 +1122,33 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return failList;
     }
 
+    /**
+     * 是否检查指定企业的备份录音
+     * @param enterpriseId 指定企业的id
+     * @return true需要检查指定企业的备份录音，false不用检查指定企业的备份录音
+     */
     protected boolean isCheckBak(String enterpriseId)
     {
-        if(!this.hasBak)
-            return false;
-        if(this.enterpriseCfg.getNotCheckBakList() == null || this.enterpriseCfg.getNotCheckBakList().size() == 0)
-            return true;
-        Set<String> entSet = new HashSet<>(this.enterpriseCfg.getNotCheckBakList());
-        if(entSet.contains(enterpriseId))
-            return false;
-        return true;
+        boolean isCheck = false;
+        if(this.hasBak)
+        {
+            isCheck = true;
+            if(this.enterpriseCfg.getNotCheckBakList() != null && this.enterpriseCfg.getNotCheckBakList().size() > 0)
+            {
+                Set<String> entSet = new HashSet<>(this.enterpriseCfg.getNotCheckBakList());
+                if(entSet.contains(enterpriseId))
+                    isCheck = false;
+            }
+        }
+        logger.debug(String.format("%s need check backup record : %b", enterpriseId, isCheck));
+        return isCheck;
     }
 
+    /**
+     * 将平台录音检查结果加到数据库
+     * @param platformRecordCheckResultSumVo 需要添加的平台录音检查结果
+     * @return
+     */
     protected boolean addNewPlatformCheckResult(PlatformRecordCheckResultSumVo platformRecordCheckResultSumVo)
     {
         PlatformRecordCheckResultPo platformRecordCheckResultPo = platformRecordCheckResultSumVo.getCheckResult();
@@ -1094,6 +1182,10 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         return true;
     }
 
+    /**
+     * 将平台录音备份结果添加到数据库
+     * @param platformRecordBackupResultSumVo 需要添加的平台录音备份结果
+     */
     protected void addPlatformRecordBackupResult(PlatformRecordBackupResultSumVo platformRecordBackupResultSumVo)
     {
         PlatformRecordBackupResultPo backupResultPo = platformRecordBackupResultSumVo.getBackupResult();
@@ -1118,6 +1210,10 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         {
             if(!entSumVo.isResult())
                 continue;
+            for(int i = 0; i < entSumVo.getNotIndexList().size(); i ++)
+            {
+                entSumVo.getNotIndexList().get(i).setRecordIndex(String.format("%d/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav", i));
+            }
             entSumVo.getSuccessList().addAll(entSumVo.getNotIndexList());
             entSumVo.getSuccessList().addAll(entSumVo.getNotFileList());
             entSumVo.getSuccessList().addAll(entSumVo.getNotBakIndexList());
@@ -1154,12 +1250,15 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         sumVo.setComment(sumVo.toString());
     }
 
+    /**
+     * 用来封装录音索引检查参数的类
+     */
     protected class RecordIndexSearch
     {
-        public String recordIndex;
+        public String recordIndex;  //需要检查的录音索引
 
-        public RecordStoreRule storeRule;
+        public RecordStoreRule storeRule; //缺省的录音存储规则,优先用此存储规则检查录音文件，如果此规则检查失败才会用其它的存储规则检查
 
-        public boolean isMaster;
+        public boolean isMaster; //需要检查的录音索引是否是主录音索引
     }
 }

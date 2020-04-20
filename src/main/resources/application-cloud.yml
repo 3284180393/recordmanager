@@ -17,18 +17,16 @@ ccod:
   platformId: shltPA
   platformName: 上海联通平安
   platformType: CLOUD
-  buzDBCount: 1
   recordType: MIX
   hasBak: false
   enterprise:
-    choseMethod: INCLUDE
+    choseMethod: EXCLUDE
     list:
-      - "0000099999"
-      - "20190423"
-      - "0000057722"
-      - "0000057733"
-      - "0000057744"
-      - "0000057755"
+      - "20180905"
+      - "20180914"
+      - "0000000002"
+      - "1234554321"
+      - "2020031701"
     notCheckBakList:
 
 call:
@@ -117,7 +115,7 @@ jobs:
   backup:
     execute: false
     startDate: 2020-01-01
-    cron: 0 0/2 * * * ?
+    cron: 0 0/1 * * * ?
     backupRootPath: D:/mnt/backup
     verify: true
     compareWithDB: true

@@ -85,7 +85,12 @@
         <Logger name="org.springframework" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-
+<!--        <Logger name="com.zaxxer.hikari" level="debug" additivity="false">-->
+<!--            <AppenderRef ref="Console"/>-->
+<!--        </Logger>-->
+        <Logger name="org.apache.http" level="debug" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
         <root level="debug">
             <appender-ref ref="Console"/>
             <appender-ref ref="RollingFileInfo"/>

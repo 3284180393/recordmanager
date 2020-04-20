@@ -7,6 +7,7 @@ import com.channelsoft.ccod.recordmanager.monitor.vo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,8 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @Autowired
     IGlsAgentDao glsAgentDao;
 
-    protected String dbName = "db1";
+    @Value("${db.business.db1Name}")
+    protected String dbName;
 
     @PostConstruct
     public void init() throws Exception
@@ -59,16 +61,22 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
     {
         List<GlsAgentVo> glsAgentList = this.glsAgentDao.select();
         Map<String, List<GlsAgentVo>> entAgentMap = glsAgentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
+        List<GlsAgentVo> retList = new ArrayList<>();
         for(String entId : entAgentMap.keySet())
         {
             if(!isEnterpriseChosen(entId))
             {
                 logger.debug(String.format("%s not been chosen, %d agent given up", entId, entAgentMap.get(entId).size()));
-                entAgentMap.remove(entId);
+            }
+            else
+            {
+                logger.debug(String.format("%s has %d agent", entId, entAgentMap.get(entId).size()));
+                retList.addAll(entAgentMap.get(entId));
             }
         }
-        glsAgentList = entAgentMap.values().stream().flatMap(list -> list.stream()).collect(Collectors.toList());
-        return glsAgentList;
+        entAgentMap = retList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
+        logger.debug(String.format("platform has %d enterprise %d agent", entAgentMap.size(), retList.size()));
+        return retList;
     }
 
     protected List<RecordDetailVo> searchPlatformRecord(Date beginTime, Date endTime, List<GlsAgentVo> agentList) throws Exception
@@ -113,7 +121,11 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
                 {
                     for(RecordDetailVo detailVo : agentRecordMap.get(agentId))
                         detailVo.setEnterpriseId(acceptAgentMap.get(agentId).getEntId());
-                    recordList.addAll(agentRecordMap.get(agentId));
+                    {
+                        logger.debug(String.format("%s(%s) has %d record detail",
+                                agentId, acceptAgentMap.get(agentId).getEntId(), agentRecordMap.get(agentId).size()));
+                        recordList.addAll(agentRecordMap.get(agentId));
+                    }
                 }
             }
         }

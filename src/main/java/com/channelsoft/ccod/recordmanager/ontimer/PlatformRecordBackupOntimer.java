@@ -1,5 +1,6 @@
 package com.channelsoft.ccod.recordmanager.ontimer;
 
+import com.channelsoft.ccod.recordmanager.config.RecordBackupCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.INextBackupDateDao;
 import com.channelsoft.ccod.recordmanager.monitor.po.NextBackupDatePo;
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import java.util.Date;
  * @Date: 2020/4/14 15:30
  * @Version: 1.0
  */
+@Conditional(RecordBackupCondition.class)
 @Component
 @EnableScheduling
 public class PlatformRecordBackupOntimer {
@@ -63,11 +66,6 @@ public class PlatformRecordBackupOntimer {
 
     @Scheduled(cron = "${jobs.backup.cron}")
     private void start() throws Exception{
-        if(!isExecute)
-        {
-            logger.info("not need execute platform record backup task");
-            return;
-        }
         Date now = new Date();
         logger.debug("platform record backup task start");
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
@@ -136,6 +134,7 @@ public class PlatformRecordBackupOntimer {
             nextBackupDatePo.setUpdateTime(new Date());
             nextBackupDatePo.setNextBackupDate(backupDate);
             nextBackupDateDao.insert(nextBackupDatePo);
+            Thread.sleep(5000);
             if(debug)
                 break;
         }

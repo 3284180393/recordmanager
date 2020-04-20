@@ -116,7 +116,7 @@ public class NotifyServiceImpl implements INotifyService {
             String msg = String.format("%s %s", group.getTag(), backupResultVo.getComment());
             notifyByDingding(msg, group);
         }
-        if(this.recordBackupNotifyCfg.getSysLog() != null && this.recordCheckNotifyCfg.getSysLog().isWrite())
+        if(this.recordBackupNotifyCfg.getSysLog() != null && this.recordBackupNotifyCfg.getSysLog().isWrite())
             writeToSysLog(backupResultVo.getComment(), recordCheckNotifyCfg.getSysLog().getTag());
     }
 

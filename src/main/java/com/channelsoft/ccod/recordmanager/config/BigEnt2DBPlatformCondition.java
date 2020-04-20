@@ -2,6 +2,7 @@ package com.channelsoft.ccod.recordmanager.config;
 
 import com.channelsoft.ccod.recordmanager.constant.CCODPlatformType;
 import com.channelsoft.ccod.recordmanager.constant.DBType;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
@@ -20,9 +21,15 @@ public class BigEnt2DBPlatformCondition implements Condition {
     @Override
     public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
         Environment environment = conditionContext.getEnvironment();
-        if(!environment.containsProperty("ccod.platformType") || !environment.containsProperty("db.business.count") || !environment.containsProperty("db.business.type"))
+        if(!environment.containsProperty("ccod.platformType") || !environment.containsProperty("db.business.count")
+                || !environment.containsProperty("db.business.type") || !environment.containsProperty("db.business.db1Name")
+                || !environment.containsProperty("db.business.db2Name"))
             return false;
-        else if(CCODPlatformType.BIG_ENT.name.equals(environment.getProperty("ccod.platformType")) && "2".equals(environment.getProperty("db.business.count")) && DBType.ORACLE.name.equals(environment.getProperty("db.business.type")))
+        else if(CCODPlatformType.BIG_ENT.name.equals(environment.getProperty("ccod.platformType"))
+                && "2".equals(environment.getProperty("db.business.count"))
+                && DBType.ORACLE.name.equals(environment.getProperty("db.business.type"))
+                && StringUtils.isNotBlank(environment.getProperty("db.business.db1Name"))
+                && StringUtils.isNotBlank(environment.getProperty("db.business.db2Name")))
             return true;
         return false;
     }
