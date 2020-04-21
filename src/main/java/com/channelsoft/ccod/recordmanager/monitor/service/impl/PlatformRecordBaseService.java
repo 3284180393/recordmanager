@@ -218,8 +218,16 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         }
     }
 
+    /**
+     * 检查某条录音存储规则
+     * @param rule 录音存储规则
+     * @param i 索引
+     * @param isMaster 是否是主录音
+     * @throws Exception 存储规则检查失败
+     */
     protected void checkStoreRule(RecordStoreRule rule, int i, boolean isMaster) throws Exception
     {
+        Calendar ca = Calendar.getInstance();
         DateFormat dateFormatCfg = rule.getDateFormat();
         String tag = String.format("record.%s.storeRules[%d]", isMaster ? "master" : "backup", i);
         if(StringUtils.isBlank(rule.getGrokPattern()))
@@ -284,6 +292,21 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 throw new Exception(String.format("%s is error date format for %s in %s",
                         dateFormatCfg.getDate(), date, tag));
             }
+            if(debug)
+            {
+                for(int j = 0; j < 10000; j++)
+                {
+                    SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getDate());
+                    String testStr = rule.getExample().replaceAll(date, sf.format(ca.getTime()));
+                    if(GrokParser.match(rule.getGrokPattern(), testStr) == null)
+                    {
+                        logger.error(String.format("grok error : %s not match  %s", rule.getGrokPattern(), testStr));
+                        throw new Exception(String.format("grok error : %s not match  %s", rule.getGrokPattern(), testStr));
+                    }
+                    System.out.println(String.format("%s match for %s", testStr, rule.getGrokPattern()));
+                    ca.add(Calendar.DATE, 1);
+                }
+            }
         }
         String yearAndMonth = matchMap.containsKey("yearAndMonth") ? matchMap.get("yearAndMonth").toString() : null;
         if(yearAndMonth != null)
@@ -325,6 +348,23 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                         dateFormatCfg.getMonthAndDay(), monthAndDay, tag));
                 throw new Exception(String.format("%s is error monthAndDay format for %s in %s",
                         dateFormatCfg.getMonthAndDay(), monthAndDay, tag));
+            }
+            if(debug)
+            {
+                SimpleDateFormat sf1 = new SimpleDateFormat("yyyyMM");
+                SimpleDateFormat sf2 = new SimpleDateFormat("MMdd");
+                for(int j = 0; j < 10000; j++)
+                {
+                    String testStr = rule.getExample().replaceAll(yearAndMonth, sf1.format(ca.getTime()));
+                    testStr = testStr.replaceAll(monthAndDay, sf2.format(ca.getTime()));
+                    if(GrokParser.match(rule.getGrokPattern(), testStr) == null)
+                    {
+                        logger.error(String.format("grok error : %s not match  %s", rule.getGrokPattern(), testStr));
+                        throw new Exception(String.format("grok error : %s not match  %s", rule.getGrokPattern(), testStr));
+                    }
+                    System.out.println(String.format("%s match for %s", testStr, rule.getGrokPattern()));
+                    ca.add(Calendar.DATE, 1);
+                }
             }
         }
         String year = matchMap.containsKey("year") ? matchMap.get("year").toString() : null;

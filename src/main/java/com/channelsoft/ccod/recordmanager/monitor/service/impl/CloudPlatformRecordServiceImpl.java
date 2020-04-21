@@ -44,7 +44,7 @@ public class CloudPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @Override
     protected void cfgCheck() throws Exception
     {
-        logger.debug(String.format("begin to check cfg for cloud platform"));
+        logger.info(String.format("platform record service for cloud platform is been created"));
         if(this.isBackup)
         {
             logger.error(String.format("cloud platform not support record backup"));

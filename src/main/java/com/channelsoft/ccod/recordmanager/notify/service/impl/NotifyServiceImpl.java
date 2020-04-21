@@ -72,41 +72,95 @@ public class NotifyServiceImpl implements INotifyService {
     public void notify(PlatformRecordCheckResultSumVo checkResultVo) {
         if(!checkResultVo.isResult())
         {
-            for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
-            {
-                notifyByDingding(checkResultVo.getComment(), group);
-            }
+            logger.debug(String.format("platform record check fail, need notify"));
+            notifyRecordCheckMsg(checkResultVo.getComment());
         }
         else
         {
+
             for(EntRecordCheckResultSumVo entRecordCheckResultVo : checkResultVo.getEntRecordCheckResultList())
             {
                 int recordCount = entRecordCheckResultVo.getAllRecordCount();
-                if(entRecordCheckResultVo.isResult() && recordCount == 0) {
-                    logger.debug(String.format("%s need not notify", entRecordCheckResultVo.getComment()));
-                    continue;
+                boolean needNotify = false;
+                String tag = String.format("%s(%s)", entRecordCheckResultVo.getEnterpriseId(), entRecordCheckResultVo.getEnterpriseName());
+                if(!entRecordCheckResultVo.isResult()) {
+                    logger.debug(String.format("%s record check fail, need notify", tag));
+                    needNotify = true;
                 }
-                if(!entRecordCheckResultVo.isResult()
-                        || entRecordCheckResultVo.getNotIndexList().size() >= this.indexLostCount
-                        || (entRecordCheckResultVo.getNotIndexList().size() * 100 /recordCount) >= this.indexLostRate
-                        || entRecordCheckResultVo.getNotFileList().size() >= this.fileLostCount
-                        || (entRecordCheckResultVo.getNotFileList().size() * 100 /recordCount) >= this.fileLostRate
-                        || entRecordCheckResultVo.getNotBakIndexList().size() >= this.bakIndexLostCount
-                        || (entRecordCheckResultVo.getNotBakIndexList().size() * 100 /recordCount) >= this.bakIndexLostRate
-                        || entRecordCheckResultVo.getNotBakFileList().size() >= this.bakFileLostCount
-                        || (entRecordCheckResultVo.getNotBakFileList().size() * 100 /recordCount) >= this.bakFileLostRate)
+                else if(recordCount > 0)
                 {
-                    for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
+                    if(entRecordCheckResultVo.getNotIndexList().size() >= this.indexLostCount)
                     {
-                        notifyByDingding(entRecordCheckResultVo.getComment(), group);
+                        logger.debug(String.format("%s record index loss count %d beyond threshold %d, need notify",
+                                tag, entRecordCheckResultVo.getNotIndexList().size(), this.indexLostCount));
+                        needNotify = true;
                     }
-                    if(this.recordCheckNotifyCfg.getSysLog() != null && this.recordCheckNotifyCfg.getSysLog().isWrite())
-                        writeToSysLog(entRecordCheckResultVo.getComment(), recordCheckNotifyCfg.getSysLog().getTag());
+                    else if((entRecordCheckResultVo.getNotIndexList().size() * 100 /recordCount) >= this.indexLostRate)
+                    {
+                        logger.debug(String.format("%s record index loss rate %d beyond threshold %d, need notify",
+                                tag, (entRecordCheckResultVo.getNotIndexList().size() * 100 /recordCount), this.indexLostRate));
+                        needNotify = true;
+                    }
+                    else if(entRecordCheckResultVo.getNotFileList().size() >= this.fileLostCount)
+                    {
+                        logger.debug(String.format("%s record file loss count %d beyond threshold %d, need notify",
+                                tag, entRecordCheckResultVo.getNotFileList().size(), this.fileLostCount));
+                        needNotify = true;
+                    }
+                    else if((entRecordCheckResultVo.getNotFileList().size() * 100 /recordCount) >= this.fileLostRate)
+                    {
+                        logger.debug(String.format("%s record file loss rate %d beyond threshold %d, need notify",
+                                tag, (entRecordCheckResultVo.getNotFileList().size() * 100 /recordCount), this.fileLostRate));
+                        needNotify = true;
+                    }
+                    else if(entRecordCheckResultVo.isHasBak())
+                    {
+                        if(entRecordCheckResultVo.getNotBakIndexList().size() >= this.bakIndexLostCount)
+                        {
+                            logger.debug(String.format("%s record bak index loss count %d beyond threshold %d, need notify",
+                                    tag, entRecordCheckResultVo.getNotBakIndexList().size(), this.bakIndexLostCount));
+                            needNotify = true;
+                        }
+                        else if((entRecordCheckResultVo.getNotBakIndexList().size() * 100 /recordCount) >= this.bakIndexLostRate)
+                        {
+                            logger.debug(String.format("%s record bak index loss rate %d beyond threshold %d, need notify",
+                                    tag, (entRecordCheckResultVo.getNotBakIndexList().size() * 100 /recordCount), this.bakIndexLostRate));
+                            needNotify = true;
+                        }
+                        else if(entRecordCheckResultVo.getNotBakFileList().size() >= this.bakFileLostCount)
+                        {
+                            logger.debug(String.format("%s record bak file loss count %d beyond threshold %d, need notify",
+                                    tag, entRecordCheckResultVo.getNotBakFileList().size(), this.bakFileLostCount));
+                            needNotify = true;
+                        }
+                        else if((entRecordCheckResultVo.getNotBakFileList().size() * 100 /recordCount) >= this.bakFileLostRate)
+                        {
+                            logger.debug(String.format("%s record file bak loss rate %d beyond threshold %d, need notify",
+                                    tag, (entRecordCheckResultVo.getNotBakFileList().size() * 100 /recordCount), this.bakFileLostRate));
+                            needNotify = true;
+                        }
+                    }
+                }
+                if(needNotify)
+                {
+                    notifyRecordCheckMsg(entRecordCheckResultVo.getComment());
                 }
                 else
-                    logger.debug(String.format("%s need not notify", entRecordCheckResultVo.getComment()));
+                    logger.debug(String.format("%s record check result need not notify", tag));
+
             }
         }
+    }
+
+    private void notifyRecordCheckMsg(String msg)
+    {
+        logger.debug(String.format("need notify record check msg : %s", msg));
+        for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
+        {
+            notifyByDingding(msg, group);
+        }
+        if(this.recordCheckNotifyCfg.getSysLog() != null && this.recordCheckNotifyCfg.getSysLog().isWrite())
+            writeToSysLog(msg, recordCheckNotifyCfg.getSysLog().getTag());
     }
 
     @Override

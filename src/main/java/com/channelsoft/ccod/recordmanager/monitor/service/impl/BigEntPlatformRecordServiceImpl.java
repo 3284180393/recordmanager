@@ -37,14 +37,14 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @Autowired
     IGlsAgentDao glsAgentDao;
 
-    @Value("${db.business.db1Name}")
+    @Value("${spring.datasource.business.dbName}")
     protected String dbName;
 
     @PostConstruct
     public void init() throws Exception
     {
+        logger.info(String.format("platform record service for big ent with 1 oracle business database is been created"));
         cfgCheck();
-        System.out.println("222222222222222222222222222222222222222222222222222");
     }
 
     protected PlatformRecordCheckResultSumVo checkPlatformRecord(Date beginTime, Date endTime) throws Exception

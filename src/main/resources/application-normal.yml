@@ -7,7 +7,6 @@ spring:
       driver-class-name: oracle.jdbc.OracleDriver
 
     business:
-      dbName: db1
       username: ccod
       password: ccod
       jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
@@ -28,16 +27,16 @@ db:
     enterprise: GLS_ENTERPRISE_INFO
     mix: ENT_RECORD_TABLE
     combination: ENT_RECORD_BX_TABLE
-    bak: ENT_RECORD_BX_TABLE_BX
+    bak: ENT_RECORD_BX_TABLE_BAK
     dbAgentRelate: GLS_DB_AGENT_RELATE
     dbEntRelate: GLS_DB_ENT_RELATE
 
 ccod:
   platformId: shltPA
   platformName: 上海联通平安
-  platformType: BIG_ENT
+  platformType: NORMAL
   recordType: COMBINATION
-  hasBak: true
+  hasBak: false
   enterprise:
     choseMethod: EXCLUDE
     list:
@@ -64,9 +63,9 @@ call:
 record:
   master:
     storeRules[0]:
-      grokPattern: ^/mnt/record/record828/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
-      example: /mnt/record/record828/0000000067/Agent/20200415/TEL-07122583365_1100735_20200415104145.wav
-      recordIndex: 0000000067/Agent/20200415/TEL-07122583365_1100735_20200415104145.wav
+      grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+      example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
+      recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
       dateFormat:
         date: yyyyMMdd
         yearAndMonth: yyyyMM
@@ -137,3 +136,4 @@ env:
   windows: false
 
 debug: false
+

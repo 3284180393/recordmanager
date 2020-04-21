@@ -21,15 +21,21 @@ public class BigEnt2DBPlatformCondition implements Condition {
     @Override
     public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
         Environment environment = conditionContext.getEnvironment();
-        if(!environment.containsProperty("ccod.platformType") || !environment.containsProperty("db.business.count")
-                || !environment.containsProperty("db.business.type") || !environment.containsProperty("db.business.db1Name")
-                || !environment.containsProperty("db.business.db2Name"))
+        if(!environment.containsProperty("ccod.platformType")
+                || !environment.containsProperty("db.business.count")
+                || !environment.containsProperty("db.business.type")
+                || !environment.containsProperty("spring.datasource.business.jdbc-url")
+                || !environment.containsProperty("spring.datasource.business2.jdbc-url")
+                || !environment.containsProperty("spring.datasource.business.dbName")
+                || !environment.containsProperty("spring.datasource.business2.dbName"))
             return false;
         else if(CCODPlatformType.BIG_ENT.name.equals(environment.getProperty("ccod.platformType"))
                 && "2".equals(environment.getProperty("db.business.count"))
                 && DBType.ORACLE.name.equals(environment.getProperty("db.business.type"))
-                && StringUtils.isNotBlank(environment.getProperty("db.business.db1Name"))
-                && StringUtils.isNotBlank(environment.getProperty("db.business.db2Name")))
+                && StringUtils.isNotBlank(environment.getProperty("spring.datasource.business.jdbc-url"))
+                && StringUtils.isNotBlank(environment.getProperty("spring.datasource.business2.jdbc-url"))
+                && StringUtils.isNotBlank(environment.getProperty("spring.datasource.business.dbName"))
+                && StringUtils.isNotBlank(environment.getProperty("spring.datasource.business2.dbName")))
             return true;
         return false;
     }

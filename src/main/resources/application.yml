@@ -3,7 +3,7 @@ server:
 
 spring:
   profiles:
-    active: big
+    active: cloud
 
 #showSql
 logging:

@@ -10,7 +10,7 @@ spring:
       conn-str: 10.130.41.212:30065
 
     sqlite:
-      jdbc-url: jdbc:sqlite:D:/My Work/Java/idea/recordmanager/src/main/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      jdbc-url: jdbc:sqlite:jdbc:sqlite:/home/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
 
 ccod:
@@ -109,18 +109,18 @@ record:
 jobs:
   recordCheck:
     execute: true
-    interval: 20
-    cron: 0 0/1 * * * ?
+    interval: 10
+    cron: 0 0/10 * * * *
     delay: 10
   backup:
     execute: false
-    startDate: 2020-01-01
-    cron: 0 0/1 * * * ?
-    backupRootPath: D:/mnt/backup
-    verify: true
-    compareWithDB: true
-    businessEndTime: "23:00"
-    stopTime: "05:00"
+    startDate:
+    cron:
+    backupRootPath:
+    verify: false
+    compareWithDB: false
+    businessEndTime:
+    stopTime:
 
 notify:
   record-check:

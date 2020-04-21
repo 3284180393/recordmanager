@@ -697,7 +697,7 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
                 if(i < len)
                 {
                     retList.get(i).setRecordIndex(this.testIndexes[i]);
-                    retList.get(i).setBakRecordIndex(this.testIndexes[len-i-1]);
+                    retList.get(i).setBakRecordIndex("0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav");
                 }
             }
         }

@@ -7,6 +7,7 @@ import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -35,9 +36,8 @@ public class BigEntWith2BuzDBPlatformRecordServiceImpl extends BigEntPlatformRec
 
     private final static Logger logger = LoggerFactory.getLogger(BigEntWith2BuzDBPlatformRecordServiceImpl.class);
 
-    private String dbName = "db1";
-
-    private String dbName2 = "db2";
+    @Value("${spring.datasource.business2.dbName}")
+    protected String dbName2;
 
     @Autowired
     protected IRecordDetailDao recordDetail2Dao;
@@ -45,10 +45,13 @@ public class BigEntWith2BuzDBPlatformRecordServiceImpl extends BigEntPlatformRec
     @PostConstruct
     public void init() throws Exception
     {
+        logger.info(String.format("platform record service for big ent with two oracle business database is been created"));
         cfgCheck();
-//        Date now = new Date();
-//        recordDetail2Dao.select("0000099999", now, now);
-        System.out.println("3333333333333333333333333333333333333333333333333333333333333333333333");
+        if(this.dbName2.equals(this.dbName))
+        {
+            logger.error(String.format("db1Name and db2Name is equal to %s", this.dbName));
+            throw new Exception(String.format("db1Name and db2Name is equal to %s", this.dbName));
+        }
     }
 
     protected List<RecordDetailVo> searchPlatformRecord(Date beginTime, Date endTime, List<GlsAgentVo> agentList) throws Exception

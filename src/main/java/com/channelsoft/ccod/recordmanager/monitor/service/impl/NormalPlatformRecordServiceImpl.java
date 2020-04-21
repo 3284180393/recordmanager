@@ -32,7 +32,7 @@ public class NormalPlatformRecordServiceImpl extends PlatformRecordBaseService {
     @PostConstruct
     public void init() throws Exception
     {
+        logger.info(String.format("platform record service for normal platform is been created"));
         cfgCheck();
-       logger.debug("1111111111111111111111111111111111111111111111111111111111111111111111");
     }
 }
