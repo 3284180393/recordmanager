@@ -155,9 +155,9 @@ notify:
       tag: "ccod"
 
 env:
-  windows: true
+  windows: false
 
-debug: true
+debug: false
 
 
 
