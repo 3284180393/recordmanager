@@ -147,6 +147,8 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 logger.error(String.format("%s of jobs.backup.backupRootPath is not directory", this.backupRootPath));
                 throw new Exception(String.format("%s of jobs.backup.backupRootPath is not directory", this.backupRootPath));
             }
+            this.backupRootPath = this.backupRootPath.replaceAll("/$", "");
+            logger.debug(String.format("backupRootPath=%s", backupRootPath));
         }
         if(recordStoreCfg.getMaster() == null || recordStoreCfg.getMaster().getStoreRules() == null
                 || recordStoreCfg.getMaster().getStoreRules().size() == 0)
@@ -294,6 +296,25 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             }
             if(debug)
             {
+                for(int k = 0; k < 500000; k++)
+                {
+                    try
+                    {
+                        String cfg1 = "/home/recordmanager/config/application-big.yml";
+                        String cfg2 = "/home/recordmanager/config/application-cloud.yml";
+                        FileInputStream file1 = new FileInputStream(cfg1);
+                        FileInputStream file2 = new FileInputStream(cfg2);
+                        String md51 = DigestUtils.md5DigestAsHex(file1);
+                        String md52 = DigestUtils.md5DigestAsHex(file2);
+                        System.out.println(String.format("%d cfg1=%s and cfg2=%s : %b", k, md51, md52, md51.equals(md52)));
+                        file1.close();
+                        file2.close();
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.printStackTrace();
+                    }
+                }
                 for(int j = 0; j < 10000; j++)
                 {
                     SimpleDateFormat sf = new SimpleDateFormat(dateFormatCfg.getDate());
@@ -1004,7 +1025,9 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
         logger.debug(String.format("scan dir=%s for dept=%d and regex=%s directory", pathName, dept, regex));
         String[] arr = pathName.split("/");
         int currentDept = arr.length;
-        if(currentDept > dept)
+        if(pathName.matches("/lost\\+found$"))
+            return;
+        else if(currentDept > dept)
             return;
         else if(currentDept == dept)
         {
@@ -1014,14 +1037,14 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             }
             return;
         }
-        else
+        File dirFile = new File(pathName);
+        File[] fileList = dirFile.listFiles();
+        if(fileList == null || fileList.length == 0)
+            return;
+        for(File file : dirFile.listFiles())
         {
-            File dirFile = new File(pathName);
-            for(File file : dirFile.listFiles())
-            {
-                if(file.isDirectory())
-                    scan(file.getAbsolutePath(), dept, regex, resultList);
-            }
+            if(file.isDirectory())
+                scan(file.getAbsolutePath(), dept, regex, resultList);
         }
     }
 
@@ -1054,7 +1077,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                     catch (Exception ex)
                     {
                         failList = new ArrayList<>();
-                        logger.error(String.format("copy files from %s to %s%s exception", storeDir, storeDir, backupRootDirectory), ex);
+                        logger.error(String.format("copy files from %s to %s%s exception", storeDir, backupRootDirectory, storeDir), ex);
                         for(StoredRecordFileVo fileVo : fileList)
                         {
                             FailBackupRecordFilePo failPo = new FailBackupRecordFilePo();
@@ -1132,8 +1155,12 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 }
                 else
                 {
-                    String dstMd5 = DigestUtils.md5DigestAsHex(new FileInputStream(fileVo.getBackupSavePath()));
-                    String srcMd5 = DigestUtils.md5DigestAsHex(new FileInputStream(fileVo.getFileSavePath()));
+                    FileInputStream src = new FileInputStream(fileVo.getBackupSavePath());
+                    FileInputStream dst = new FileInputStream(fileVo.getFileSavePath());
+                    String dstMd5 = DigestUtils.md5DigestAsHex(src);
+                    String srcMd5 = DigestUtils.md5DigestAsHex(dst);
+                    src.close();
+                    dst.close();
                     if(!dstMd5.equals(srcMd5))
                     {
                         logger.error(String.format("backup file verify fail : %s md5=%s but %s md5=%s ", fileVo.getFileSavePath(), srcMd5, fileVo.getBackupSavePath(), dstMd5));

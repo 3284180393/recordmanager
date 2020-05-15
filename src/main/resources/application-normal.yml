@@ -63,9 +63,9 @@ call:
 record:
   master:
     storeRules[0]:
-      grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-      example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
-      recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
+      grokPattern: ^/Data/Record/(?<entId>[a-zA-z0-9]+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/[^/]+/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /Data/Record/0000050863/202005/03122192012/0511/20200511145037_66__03122192012.wav
+      recordIndex: Record/0000050863/202005/03122192012/0511/20200511145037_66__03122192012.wav
       dateFormat:
         date: yyyyMMdd
         yearAndMonth: yyyyMM
