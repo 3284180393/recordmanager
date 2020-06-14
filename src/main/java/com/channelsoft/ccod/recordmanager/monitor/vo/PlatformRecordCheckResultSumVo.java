@@ -34,6 +34,8 @@ public class PlatformRecordCheckResultSumVo {
 
     private String comment;
 
+    private boolean isNotify;
+
     public PlatformRecordCheckResultSumVo(String platformId, String platformName, Date checkTime, Date startTime, Date endTime, List<EntRecordCheckResultSumVo> entRecordCheckResultList)
     {
         this.platformId = platformId;
@@ -46,6 +48,7 @@ public class PlatformRecordCheckResultSumVo {
         Date now = new Date();
         this.timeUsage = (int)(now.getTime() - checkTime.getTime())/1000;
         this.comment = toString();
+        this.isNotify = !this.result;
     }
 
     protected PlatformRecordCheckResultSumVo(String platformId, String platformName, boolean result, String comment)
@@ -55,6 +58,7 @@ public class PlatformRecordCheckResultSumVo {
         this.result = result;
         this.comment = comment;
         this.entRecordCheckResultList = new ArrayList<>();
+        this.isNotify = !this.result;
     }
 
     public static PlatformRecordCheckResultSumVo fail(String platformId, String platformName, String errorMsg)
@@ -135,6 +139,14 @@ public class PlatformRecordCheckResultSumVo {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public boolean isNotify() {
+        return isNotify;
+    }
+
+    public void setNotify(boolean notify) {
+        isNotify = notify;
     }
 
     @Override

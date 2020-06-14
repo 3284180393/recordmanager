@@ -10,13 +10,21 @@ import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import com.channelsoft.ccod.recordmanager.notify.vo.RobotClient;
 import com.channelsoft.ccod.recordmanager.notify.vo.SendResult;
 import com.channelsoft.ccod.recordmanager.notify.vo.TextMessage;
+import com.dingtalk.api.DefaultDingTalkClient;
+import com.dingtalk.api.DingTalkClient;
+import com.dingtalk.api.request.OapiRobotSendRequest;
+import com.dingtalk.api.response.OapiRobotSendResponse;
+import com.taobao.api.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 
 /**
  * @ClassName: NotifyServiceImpl
@@ -35,6 +43,9 @@ public class NotifyServiceImpl implements INotifyService {
 
     @Autowired
     RecordBackupNotifyCfg recordBackupNotifyCfg;
+
+    @Autowired
+    private Environment env;
 
     @Value("${notify.record-check.indexLostCount}")
     private int indexLostCount;
@@ -60,10 +71,23 @@ public class NotifyServiceImpl implements INotifyService {
     @Value("${notify.record-check.bakFileLostRate}")
     private int bakFileLostRate;
 
+    private boolean isReportNormalCheckResult = false;
+
+    private boolean reportDingdingByScript = false;
+
+    private String reportDingdingScriptPath = null;
+
     @PostConstruct
     public void init()
     {
         System.out.println("$$$$$$$$$$$$$$$$$$$$");
+        if(env.containsProperty("notify.record-check.report-normal-result") && "true".equals(env.getProperty("notify.record-check.report-normal-result")))
+            this.isReportNormalCheckResult = true;
+        if(env.containsProperty("notify.record-check.dingding.by-script") && "true".equals(env.getProperty("notify.record-check.dingding.by-script")))
+        {
+            this.reportDingdingByScript = true;
+            this.reportDingdingScriptPath = env.getProperty("notify.record-check.dingding.script-path");
+        }
 //        PlatformRecordCheckResultVo resultVo = PlatformRecordCheckResultVo.fail("shltPA", "上海联通平安", "无法连接数据库");
 //        notify(resultVo);
     }
@@ -73,7 +97,7 @@ public class NotifyServiceImpl implements INotifyService {
         if(!checkResultVo.isResult())
         {
             logger.debug(String.format("platform record check fail, need notify"));
-            notifyRecordCheckMsg(checkResultVo.getComment());
+            notifyRecordCheckMsg(checkResultVo.getComment(), false);
         }
         else
         {
@@ -143,23 +167,37 @@ public class NotifyServiceImpl implements INotifyService {
                 }
                 if(needNotify)
                 {
-                    notifyRecordCheckMsg(entRecordCheckResultVo.getComment());
+                    notifyRecordCheckMsg(entRecordCheckResultVo.getComment(), checkResultVo.isResult());
                 }
                 else
                     logger.debug(String.format("%s record check result need not notify", tag));
 
             }
+            if(this.isReportNormalCheckResult)
+            {
+                logger.debug("notify sum of platform record check result to dingding");
+                String msg = getPlatformCheckResultSum(checkResultVo);
+                for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
+                    notifyByDingding(msg, group);
+            }
         }
     }
 
-    private void notifyRecordCheckMsg(String msg)
+    private void notifyRecordCheckMsg(String msg, boolean isCheckResultOk)
     {
         logger.debug(String.format("need notify record check msg : %s", msg));
-        for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
+        if(this.reportDingdingByScript)
         {
-            notifyByDingding(msg, group);
+            notifyByScript(msg);
         }
-        if(this.recordCheckNotifyCfg.getSysLog() != null && this.recordCheckNotifyCfg.getSysLog().isWrite())
+        else
+        {
+            for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
+            {
+                notifyByDingding(msg, group);
+            }
+        }
+        if(!isCheckResultOk && this.recordCheckNotifyCfg.getSysLog() != null && this.recordCheckNotifyCfg.getSysLog().isWrite())
             writeToSysLog(msg, recordCheckNotifyCfg.getSysLog().getTag());
     }
 
@@ -179,19 +217,7 @@ public class NotifyServiceImpl implements INotifyService {
         String msg = String.format("%s %s", group.getTag(), noticeMsg);
         logger.debug(String.format("send message[%s] to %s", msg, group.getWebHookToken() ));
         TextMessage message = new TextMessage(msg, group.isAtAll(), group.getAtList());
-        try
-        {
-            SendResult sendResult = RobotClient.send(group.getWebHookToken(), message);
-            if(!sendResult.isSuccess())
-            {
-                logger.error(String.format("send [%s] to %s fail : errorCode=%s and errorMsg=%s",
-                        noticeMsg, group.getWebHookToken(), sendResult.getErrorCode(), sendResult.getErrorMsg()));
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.error(String.format("send [%s] to %s exception", noticeMsg, group.getWebHookToken()), ex);
-        }
+        sendTextMsgToDingding(group.getWebHookToken(), message);
     }
 
     private void writeToSysLog(String msg, String tag)
@@ -208,6 +234,61 @@ public class NotifyServiceImpl implements INotifyService {
         catch (Exception ex)
         {
             logger.error(String.format("write %s to sysLog exception", msg), ex);
+        }
+    }
+
+    private void notifyByScript(String msg)
+    {
+        String notifyMsg = String.format("[录音检查]%s", msg);
+        logger.debug(String.format("notify %s to by script %s", notifyMsg, this.reportDingdingScriptPath));
+        try
+        {
+            Runtime runtime = Runtime.getRuntime();
+            String command = String.format("%s %s", this.reportDingdingScriptPath, notifyMsg);
+            logger.debug(String.format("begin to exec %s", command));
+            runtime.exec(command);
+            logger.debug("notify success");
+        }
+        catch (Exception ex)
+        {
+            logger.error(String.format("write %s to sysLog exception", msg), ex);
+        }
+    }
+
+    private String getPlatformCheckResultSum(PlatformRecordCheckResultSumVo sumVo)
+    {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        String msg = String.format("%s(%s)平台(%s--%s)录音检查结果\n", sumVo.getPlatformName(), sumVo.getPlatformId(), sf.format(sumVo.getStartTime()), sf.format(sumVo.getEndTime()));
+        for(EntRecordCheckResultSumVo entResultVo : sumVo.getEntRecordCheckResultList())
+            msg = String.format("%s%s\n", msg, entResultVo.getCheckDesc());
+        return msg;
+    }
+
+    private void sendTextMsgToDingding(String webhook, TextMessage message)
+    {
+        logger.debug(String.format("send %s to %s,  atMobiles=%s and atAll=%b", message.getText(), webhook, String.join(",", message.getAtMobiles()), message.isAtAll()));
+        DingTalkClient client = new DefaultDingTalkClient(webhook);
+        OapiRobotSendRequest request = new OapiRobotSendRequest();
+        request.setMsgtype("text");
+        OapiRobotSendRequest.Text text = new OapiRobotSendRequest.Text();
+        text.setContent(message.getText());
+        request.setText(text);
+        OapiRobotSendRequest.At at = new OapiRobotSendRequest.At();
+        at.setAtMobiles(message.getAtMobiles());
+        at.setIsAtAll(message.isAtAll());
+        request.setAt(at);
+        try
+        {
+            OapiRobotSendResponse response = client.execute(request);
+            if(response.isSuccess())
+                logger.info(String.format("send text message to dingding success"));
+            else
+                logger.error(String.format("send text message to dingding fail : errorCode=%d and errorMsg=%s[%s]",
+                        response.getErrcode(), response.getErrmsg()));
+        }
+        catch (Exception ex)
+        {
+            logger.error(String.format("send text message to dingding exception : %s", ex.getMessage()), ex);
         }
     }
 }

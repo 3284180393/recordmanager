@@ -3,13 +3,13 @@ spring:
     gls:
       username: ccod
       password: ccod
-      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      jdbc-url: jdbc:oracle:thin:@172.16.0.94:1521:saas
       driver-class-name: oracle.jdbc.OracleDriver
 
     business:
       username: ccod
       password: ccod
-      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      jdbc-url: jdbc:oracle:thin:@172.16.0.94:1521:saas
       driver-class-name: oracle.jdbc.OracleDriver
 
     sqlite:
@@ -32,23 +32,26 @@ db:
     dbEntRelate: GLS_DB_ENT_RELATE
 
 ccod:
-  platformId: shltPA
-  platformName: 上海联通平安
+  platformId: ltPA
+  platformName: 联通大数据
   platformType: NORMAL
   recordType: COMBINATION
-  hasBak: false
+  hasBak: true
   enterprise:
-    choseMethod: EXCLUDE
+    choseMethod: INCLUDE
     list:
-      - "112233"
-      - "00001111"
-      - "0000088888"
-      - "0000066666"
-      - "20180905"
-      - "20180914"
-      - "0000000002"
-      - "1234554321"
-      - "2020031701"
+      # - "112233"
+      # - "00001111"
+      # - "0000088888"
+      # - "0000066666"
+      # - "20180905"
+      # - "20180914"
+      # - "0000000002"
+      # - "1234554321"
+      # - "2020031701"
+      # - "LTBD2019080201"
+      - "TESTYU2"
+
     notCheckBakList:
 
 call:
@@ -63,9 +66,20 @@ call:
 record:
   master:
     storeRules[0]:
-      grokPattern: ^/Data/Record/(?<entId>[a-zA-z0-9]+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/[^/]+/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
-      example: /Data/Record/0000050863/202005/03122192012/0511/20200511145037_66__03122192012.wav
-      recordIndex: Record/0000050863/202005/03122192012/0511/20200511145037_66__03122192012.wav
+      grokPattern: ^/mnt/record/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /mnt/record/TESTYU2/Agent/20200526/SIP-10000001_2222222_20200526081051.wav
+      recordIndex: record/TESTYU2/Agent/20200526/SIP-10000001_2222222_20200526081051.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+    storeRules[1]:
+      grokPattern: ^/mnt/record/(?<entId>[a-zA-z0-9]+)/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /mnt/record/TESTYU2/20200526/18610020350_MTMyOTE5NzYzMTY=_057456881482_057456881482_20200526091955.wav
+      recordIndex: record/TESTYU2/20200526/18610020350_MTMyOTE5NzYzMTY=_057456881482_057456881482_20200526091955.wav
       dateFormat:
         date: yyyyMMdd
         yearAndMonth: yyyyMM
@@ -75,9 +89,9 @@ record:
         day: dd
   backup:
     storeRules[0]:
-      grokPattern: ^/mnt/record/record410/(?<entId>[a-zA-z0-9]+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/[^/]+/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
-      example: /mnt/record/record410/0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav
-      recordIndex: 0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav
+      grokPattern: ^/mnt/record/(?<entId>[a-zA-z0-9]+)/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /mnt/record/TESTYU2/20200526/18610020350_MTMyOTE5NzYzMTY=_057456881482_057456881482_20200526091955.wav
+      recordIndex: record/TESTYU2/20200526/18610020350_MTMyOTE5NzYzMTY=_057456881482_057456881482_20200526091955.wav
       dateFormat:
         date: yyyyMMdd
         yearAndMonth: yyyyMM
@@ -94,10 +108,10 @@ jobs:
     delay: 10
   backup:
     execute: true
-    startDate: 2020-04-10
-    cron: 0 0 22 * * *
-    backupRootPath: /mnt/backup
-    verify: true
+    startDate: 2020-05-25
+    cron: 0 23 10 * * *
+    backupRootPath: /Data1/recordbak/cs/
+    verify: false
     compareWithDB: true
     businessEndTime: "21:00"
     stopTime: "05:00"
@@ -112,19 +126,22 @@ notify:
     bakIndexLostRate: 8
     bakFileLostCount: 6
     bakFileLostRate: 7
+    report-normal-result: true
     dingding:
       group[0]:
-        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=3647e0dec9cbfbaa6f0d62d2abc4fa64fde96d8993aa3448b25d85c7990565c9
         tag: "[录音报警]"
         atAll: true
         atList:
+      by-script: true
+      script-path: /home/recordmanager/logs/report.sh
     sysLog:
       write: true
       tag: "ccod"
   record-backup:
     dingding:
       group[0]:
-        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=3647e0dec9cbfbaa6f0d62d2abc4fa64fde96d8993aa3448b25d85c7990565c9
         tag: "[录音备份]"
         atAll: true
         atList:

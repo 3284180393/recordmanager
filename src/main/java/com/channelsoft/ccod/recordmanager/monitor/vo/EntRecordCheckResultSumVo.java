@@ -32,6 +32,8 @@ public class EntRecordCheckResultSumVo {
 
     private String comment; //如果检查发生异常,异常原因
 
+    private boolean isNotify; //是否通知
+
     private List<RecordDetailVo> successList; //索引以及录音文件检查成功列表
 
     private List<RecordDetailVo> notIndexList; //没有录音索引列表
@@ -60,6 +62,7 @@ public class EntRecordCheckResultSumVo {
         this.notBakIndexList = new ArrayList<>();
         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
         this.comment = toString();
+        this.isNotify = !this.result;
     }
 
     public EntRecordCheckResultSumVo(EnterpriseVo enterpriseVo, Date checkTime, Date startTime, Date endTime,
@@ -81,6 +84,7 @@ public class EntRecordCheckResultSumVo {
         this.notBakFileList = notBakFileList;
         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
         this.comment = toString();
+        this.isNotify = !this.result;
     }
 
     protected EntRecordCheckResultSumVo(EnterpriseVo enterpriseVo, Date startTime, Date endTime, String erorrMsg)
@@ -96,6 +100,8 @@ public class EntRecordCheckResultSumVo {
         this.notFileList = new ArrayList<>();
         this.notBakIndexList = new ArrayList<>();
         this.notBakFileList = new ArrayList<>();
+        this.result = false;
+        this.isNotify = true;
     }
 
     public static EntRecordCheckResultSumVo fail(EnterpriseVo enterpriseVo, Date startTime, Date endTime, Exception e)
@@ -207,10 +213,37 @@ public class EntRecordCheckResultSumVo {
         this.notBakFileList = notBakFileList;
     }
 
+    public boolean isNotify() {
+        return isNotify;
+    }
+
+    public void setNotify(boolean notify) {
+        isNotify = notify;
+    }
+
     public int getAllRecordCount()
     {
         return this.successList.size() + this.notIndexList.size() + this.notFileList.size()
                 + this.notBakIndexList.size() + this.notBakFileList.size();
+    }
+
+    public String getCheckDesc()
+    {
+        if(result)
+        {
+            String msg = String.format("%s[%s]一共%d通呼叫,%d通正常",	enterpriseName, enterpriseId,
+                    getAllRecordCount(), successList.size());
+            if(this.notIndexList.size() > 0)
+                msg = String.format("%s,%d通没有录音索引", msg, this.notIndexList.size());
+            if(this.notFileList.size() > 0)
+                msg = String.format("%s,%d通没有录音文件", msg, this.notFileList.size());
+            if(this.notBakIndexList.size() > 0)
+                msg = String.format("%s,%d没有备份录音索引", msg, this.notBakIndexList.size());
+            if(this.notBakFileList.size() > 0)
+                msg = String.format("%s,%d没有备份录音文件", msg, this.notBakFileList.size());
+            return msg;
+        }
+        return this.comment;
     }
 
     @Override

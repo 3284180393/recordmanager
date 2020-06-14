@@ -20,8 +20,6 @@ import java.io.IOException;
  */
 public class RobotClient {
 
-
-
     public static SendResult send(String webhook, TextMessage message) throws IOException {
         HttpClient httpclient = HttpClients.createDefault();
         HttpPost httppost = new HttpPost(webhook);

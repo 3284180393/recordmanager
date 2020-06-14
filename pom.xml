@@ -109,6 +109,13 @@
             <artifactId>mongo-java-driver</artifactId>
             <version>3.0.4</version>
         </dependency>
+        <dependency>
+            <groupId>com.taobao.top</groupId>
+            <artifactId>top-api-sdk-dev</artifactId>
+            <version>ding-open-mc-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${pom.basedir}/src/lib/taobao-sdk-java-auto_1479188381469-20200601.jar</systemPath>
+        </dependency>
     </dependencies>
 
     <build>
@@ -116,6 +123,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <includeSystemScope>true</includeSystemScope>
+                </configuration>
             </plugin>
         </plugins>
     </build>
