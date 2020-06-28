@@ -134,7 +134,7 @@ notify:
         atAll: true
         atList:
       by-script: true
-      script-path: /home/recordmanager/logs/report.sh
+      script-path: /home/recordmanager/sendMsg.sh
     sysLog:
       write: true
       tag: "ccod"

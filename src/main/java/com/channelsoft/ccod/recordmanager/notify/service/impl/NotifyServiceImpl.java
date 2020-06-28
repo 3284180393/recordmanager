@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Base64;
 
 /**
  * @ClassName: NotifyServiceImpl
@@ -177,8 +178,7 @@ public class NotifyServiceImpl implements INotifyService {
             {
                 logger.debug("notify sum of platform record check result to dingding");
                 String msg = getPlatformCheckResultSum(checkResultVo);
-                for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
-                    notifyByDingding(msg, group);
+                notifyRecordCheckMsg(msg, true);
             }
         }
     }
@@ -187,16 +187,10 @@ public class NotifyServiceImpl implements INotifyService {
     {
         logger.debug(String.format("need notify record check msg : %s", msg));
         if(this.reportDingdingByScript)
-        {
             notifyByScript(msg);
-        }
         else
-        {
             for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
-            {
                 notifyByDingding(msg, group);
-            }
-        }
         if(!isCheckResultOk && this.recordCheckNotifyCfg.getSysLog() != null && this.recordCheckNotifyCfg.getSysLog().isWrite())
             writeToSysLog(msg, recordCheckNotifyCfg.getSysLog().getTag());
     }
@@ -239,12 +233,12 @@ public class NotifyServiceImpl implements INotifyService {
 
     private void notifyByScript(String msg)
     {
-        String notifyMsg = String.format("[录音检查]%s", msg);
-        logger.debug(String.format("notify %s to by script %s", notifyMsg, this.reportDingdingScriptPath));
+        logger.debug(String.format("notify %s to by script %s", msg, this.reportDingdingScriptPath));
         try
         {
             Runtime runtime = Runtime.getRuntime();
-            String command = String.format("%s %s", this.reportDingdingScriptPath, notifyMsg);
+            String notifyMsg = Base64.getEncoder().encodeToString(msg.getBytes("utf-8"));
+            String command = String.format("python %s \"%s\"", this.reportDingdingScriptPath, notifyMsg);
             logger.debug(String.format("begin to exec %s", command));
             runtime.exec(command);
             logger.debug("notify success");
@@ -258,9 +252,9 @@ public class NotifyServiceImpl implements INotifyService {
     private String getPlatformCheckResultSum(PlatformRecordCheckResultSumVo sumVo)
     {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        String msg = String.format("%s(%s)平台(%s--%s)录音检查结果\n", sumVo.getPlatformName(), sumVo.getPlatformId(), sf.format(sumVo.getStartTime()), sf.format(sumVo.getEndTime()));
+        String msg = String.format("%s(%s)平台(%s--%s)录音检查结果:", sumVo.getPlatformName(), sumVo.getPlatformId(), sf.format(sumVo.getStartTime()), sf.format(sumVo.getEndTime()));
         for(EntRecordCheckResultSumVo entResultVo : sumVo.getEntRecordCheckResultList())
-            msg = String.format("%s%s\n", msg, entResultVo.getCheckDesc());
+            msg = String.format("%s%s", msg, entResultVo.getCheckDesc());
         return msg;
     }
 
