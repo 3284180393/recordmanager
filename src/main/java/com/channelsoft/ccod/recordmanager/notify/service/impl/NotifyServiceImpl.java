@@ -277,7 +277,7 @@ public class NotifyServiceImpl implements INotifyService {
             if(response.isSuccess())
                 logger.info(String.format("send text message to dingding success"));
             else
-                logger.error(String.format("send text message to dingding fail : errorCode=%d and errorMsg=%s[%s]",
+                logger.error(String.format("send text message to dingding fail : errorCode=%d and errorMsg=%s",
                         response.getErrcode(), response.getErrmsg()));
         }
         catch (Exception ex)

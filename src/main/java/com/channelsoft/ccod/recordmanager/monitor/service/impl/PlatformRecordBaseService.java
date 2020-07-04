@@ -760,7 +760,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             {
                 if(!file.isFile())
                     continue;
-                String filePath = file.getAbsolutePath();
+                String filePath = file.getAbsolutePath().replaceAll("\\\\", "/");
                 Map<String, Object> parseResultMap = GrokParser.match(grokPattern, filePath);
                 if(parseResultMap != null)
                 {
@@ -789,6 +789,44 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             }
         }
         return retList;
+    }
+
+
+    /**
+     * 获取path下面深度为depth的目录/文件
+     * @param path 搜索的更露露
+     * @param depth 目录/文件深度
+     * @param isDir 是目录还是文件
+     * @param resultList 用来保存结果的数组
+     */
+    private void getDepthFile(String path, int depth, boolean isDir, List<String> resultList)
+    {
+        int currentDepth = path.replaceAll("\\\\", "/").replaceAll("^/", "").split("/").length;
+        if(currentDepth > depth)
+            return;
+        File file = new File(path);
+        if(!file.isDirectory() && !file.isFile())
+            return;
+        if(currentDepth == depth)
+        {
+            if(file.isDirectory() && isDir)
+                resultList.add(path);
+            else if(file.isFile() && !isDir)
+                resultList.add(path);
+            return;
+        }
+        else
+        {
+            if(!file.isDirectory())
+                return;
+            File[] fileList = file.listFiles();
+            if(fileList == null || fileList.length == 0)
+                return;
+            for(File theFile : fileList) {
+                if(theFile.isDirectory() || (theFile.isFile() && !isDir))
+                    getDepthFile(theFile.getAbsolutePath(), depth, isDir, resultList);
+            }
+        }
     }
 
 
@@ -882,15 +920,23 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 }
             }
         }
-        return saveDirs;
+        int wantDepth = storeRule.getExample().replaceAll("^/", "").split("/").length - 1;
+        List<String> scannedDirs = new ArrayList<>();
+        for(String dir : saveDirs)
+            getDepthFile(dir, wantDepth, true, scannedDirs);
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
+        logger.info(String.format("%s has %d record directory for %s", storeRule.getMntDir(), scannedDirs.size(), sf.format(chosenDay)));
+        return scannedDirs;
     }
 
     private List<String> searchForChosenTimeDir(String searchPath, String srcPath, String srcTime, String dstTime) throws IOException
     {
         List<String> dirList = new ArrayList<>();
-        int dept = srcPath.split(String.format("/%s/", srcTime))[0].split("/").length + 1;
+        int dept = srcPath.replaceAll("\\\\", "/").replaceAll("^/", "").replaceAll("/$", "").split(String.format("/%s/", srcTime))[0].split("/").length + 1;
         String regex = String.format("^%s$", dstTime);
+        logger.debug(String.format("search %s depth=%d and dirPathEnd=/%s sub directory", searchPath, dept, dstTime));
         scan(searchPath, dept, regex, dirList);
+        logger.info(String.format("%s has %d depth=%d and dirPathEnd=/%s sub directory", searchPath, dirList.size(), dept, dstTime));
         return dirList;
     }
 
@@ -1023,7 +1069,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     private void scan(String pathName, int dept, String regex, List<String> resultList) throws IOException
     {
         logger.debug(String.format("scan dir=%s for dept=%d and regex=%s directory", pathName, dept, regex));
-        String[] arr = pathName.split("/");
+        String[] arr = pathName.replaceAll("\\\\", "/").replaceAll("^/", "").replaceAll("/$", "").split("/");
         int currentDept = arr.length;
         if(pathName.matches("/lost\\+found$"))
             return;
