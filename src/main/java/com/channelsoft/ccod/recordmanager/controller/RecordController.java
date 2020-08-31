@@ -39,6 +39,40 @@ public class RecordController {
     @Value("${ccod.platformName}")
     protected String platformName;
 
+    @RequestMapping(value = "/bakRecordIndex/{day}", method = RequestMethod.GET)
+    public AjaxResultPo queryPlatformBakRecordIndex(@PathVariable String day) {
+        String uri = String.format("GET %s/bakRecordIndex/%s", this.apiBasePath, day);
+        logger.debug(String.format("enter %s controller", uri));
+        Date beginTime;
+        Date endTime;
+        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMddHHmmss");
+        try
+        {
+            beginTime = sf.parse(String.format("%s000000", day));
+            endTime = sf.parse(String.format("%s235959", day));
+        }
+        catch (Exception ex)
+        {
+            logger.error(String.format("%s is error day string", day), ex);
+            return new AjaxResultPo(false, String.format("%s is error day string, for example 20200831", day));
+        }
+        AjaxResultPo resultPo;
+        try
+        {
+            List<BakRecordIndex> list = platformRecordService.queryPlatformBakRecordIndex(beginTime, endTime);
+            logger.debug(String.format("query %d platform has bak not master record index from %s to %s",
+                    list.size(), sf.format(beginTime), sf.format(endTime)));
+            resultPo = new AjaxResultPo(true, "query platform has bak not master record index success", list.size(), list);
+        }
+        catch (Exception ex)
+        {
+            logger.error(String.format("query platform has bak not master record index exception"), ex);
+            resultPo = new AjaxResultPo(false, String.format("query  exception : %s", ex.getMessage()));
+        }
+        logger.debug(String.format("quit %s controller with result %b", uri, resultPo.isSuccess()));
+        return resultPo;
+    }
+
     @RequestMapping(value = "/checkResult/{yearAndMonth}", method = RequestMethod.GET)
     public AjaxResultPo queryPlatformRecordMonthCheckResult(@PathVariable String yearAndMonth) {
         String uri = String.format("GET %s/checkResult/%s", this.apiBasePath, yearAndMonth);

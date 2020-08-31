@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.channelsoft.ccod.recordmanager.config.CallCheckRule;
 import com.channelsoft.ccod.recordmanager.config.MongoBuzCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
+import com.channelsoft.ccod.recordmanager.monitor.po.BakRecordIndex;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
 import com.mongodb.*;
 import org.slf4j.Logger;
@@ -173,6 +174,11 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
             }
         }
         return recordList;
+    }
+
+    @Override
+    public List<BakRecordIndex> select(String entId, List<String> sessionIds) {
+        return new ArrayList<>();
     }
 
     public void mongoTest()

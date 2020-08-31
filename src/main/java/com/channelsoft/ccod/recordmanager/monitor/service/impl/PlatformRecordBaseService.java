@@ -78,6 +78,9 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     @Autowired
     IRecordDetailDao recordDetailDao;
 
+    @Autowired
+    BakRecordIndexDao bakRecordIndexDao;
+
     @Value("${env.windows}")
     private boolean isWin;
 
@@ -567,6 +570,11 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     @Override
     public List<FailBackupRecordFilePo> queryPlatformFailBackupFile(Date beginTime, Date endTime) throws Exception {
         return this.failBackupRecordFileDao.select(beginTime, endTime);
+    }
+
+    @Override
+    public List<BakRecordIndex> queryPlatformBakRecordIndex(Date beginTime, Date endTime) {
+        return this.bakRecordIndexDao.select(beginTime, endTime);
     }
 
     /**
@@ -1291,6 +1299,9 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 CheckFailRecordDetailPo po = new CheckFailRecordDetailPo(entSumVo.getEnterpriseName(), detailVo, RecordCheckResult.BAK_FILE_NOT_EXIST);
                 checkFailRecordDetailDao.insert(platformCheckId, entCheckId, po);
             }
+        }
+        if(hasBak && platformRecordCheckResultSumVo.getHasBakNotMasterList() != null && platformRecordCheckResultSumVo.getHasBakNotMasterList().size() > 0) {
+            platformRecordCheckResultSumVo.getHasBakNotMasterList().forEach(index->this.bakRecordIndexDao.insert(index));
         }
         return true;
     }

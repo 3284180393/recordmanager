@@ -1,5 +1,6 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao;
 
+import com.channelsoft.ccod.recordmanager.monitor.po.BakRecordIndex;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
 
 import java.util.Date;
@@ -22,4 +23,12 @@ public interface IRecordDetailDao {
      * @return 查询结果
      */
     List<RecordDetailVo> select(String schemaName, Date beginTime, Date endTime);
+
+    /**
+     * 查询指定企业指定session id的备份录音索引明细
+     * @param entId 企业id
+     * @param sessionIds session id
+     * @return 备份录音索引明细
+     */
+    List<BakRecordIndex> select(String entId, List<String> sessionIds);
 }

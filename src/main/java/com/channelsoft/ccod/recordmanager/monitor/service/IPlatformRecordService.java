@@ -85,4 +85,12 @@ public interface IPlatformRecordService {
      * @throws Exception
      */
     List<FailBackupRecordFilePo> queryPlatformFailBackupFile(Date beginTime, Date endTime) throws Exception;
+
+    /**
+     * 查询指定时间段的有备索引没有主索引的备索引记录
+     * @param beginTime 开始时间
+     * @param endTime 结束时间
+     * @return 查询结果
+     */
+    List<BakRecordIndex> queryPlatformBakRecordIndex(Date beginTime, Date endTime);
 }

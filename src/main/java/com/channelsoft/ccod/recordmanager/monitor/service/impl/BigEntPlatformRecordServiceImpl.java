@@ -1,9 +1,12 @@
 package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
 import com.channelsoft.ccod.recordmanager.config.BigEntPlatformCondition;
+import com.channelsoft.ccod.recordmanager.monitor.dao.BakRecordIndexDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IGlsAgentDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
+import com.channelsoft.ccod.recordmanager.monitor.po.BakRecordIndex;
 import com.channelsoft.ccod.recordmanager.monitor.vo.*;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,14 +98,14 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
                 logger.error(String.format("db %s is unknown, %d agent given up", name, dbAgentMap.get(name).size()));
             }
         }
-        List<RecordDetailVo> recordList = getRecordDetailFromDB(this.recordDetailDao, beginTime, endTime, dbAgentList);;
+        List<BakRecordIndex> hasBakAndNotMasters = new ArrayList<>();
+        List<RecordDetailVo> recordList = getRecordDetailFromDB(this.recordDetailDao, beginTime, endTime, dbAgentList, hasBakAndNotMasters);;
         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
         logger.debug(String.format("%s(%s) find %s record from %s to %s", this.platformName, this.platformId, recordList.size(), sf.format(beginTime), sf.format(endTime)));
         return recordList;
     }
 
-    protected List<RecordDetailVo> getRecordDetailFromDB(IRecordDetailDao dao, Date beginTime, Date endTime, List<GlsAgentVo> agentList) throws Exception
-    {
+    protected List<RecordDetailVo> getRecordDetailFromDB(IRecordDetailDao dao, Date beginTime, Date endTime, List<GlsAgentVo> agentList, List<BakRecordIndex> hasBakNotMasterList)    {
         Map<String, List<GlsAgentVo>> schemaAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getSchemaName));
         List<RecordDetailVo> recordList = new ArrayList<>();
         for(String schemaName : schemaAgentMap.keySet())
@@ -110,22 +113,34 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
             List<RecordDetailVo> schemaRecordList = dao.select(schemaName, beginTime, endTime);
             Map<String, List<RecordDetailVo>> agentRecordMap = schemaRecordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getAgentId));
             Map<String, GlsAgentVo> acceptAgentMap = schemaAgentMap.get(schemaName).stream().collect(Collectors.toMap(GlsAgentVo::getAgentId, Function.identity()));
+            List<RecordDetailVo> validRecords = new ArrayList<>();
             for(String agentId : agentRecordMap.keySet())
             {
-                if(!acceptAgentMap.containsKey(agentId))
-                {
+                if(!acceptAgentMap.containsKey(agentId)) {
                     logger.warn(String.format("agent %s is not wanted agent for schema %s, so %d record given up",
                             agentId, schemaName, agentRecordMap.get(agentId).size()));
                 }
                 else
                 {
-                    for(RecordDetailVo detailVo : agentRecordMap.get(agentId))
-                        detailVo.setEnterpriseId(acceptAgentMap.get(agentId).getEntId());
-                    {
-                        logger.debug(String.format("%s(%s) has %d record detail",
-                                agentId, acceptAgentMap.get(agentId).getEntId(), agentRecordMap.get(agentId).size()));
-                        recordList.addAll(agentRecordMap.get(agentId));
-                    }
+                    List<RecordDetailVo> agentRecords = agentRecordMap.get(agentId);
+                    agentRecords.forEach(r->r.setEnterpriseId(acceptAgentMap.get(agentId).getEntId()));
+                    logger.debug(String.format("%s(%s) has %d record detail",
+                            agentId, acceptAgentMap.get(agentId).getEntId(), agentRecords));
+                    recordList.addAll(agentRecords);
+                    validRecords.addAll(agentRecords);
+                }
+            }
+            if(hasBak)
+            {
+                List<String> sessionIds = validRecords.stream()
+                        .filter(r-> StringUtils.isBlank(r.getRecordIndex()) && StringUtils.isNotBlank(r.getBakRecordIndex()))
+                        .map(r->r.getSessionId()).collect(Collectors.toList());
+                if(sessionIds.size() > 0)
+                {
+                    logger.warn(String.format("%d sessions[%s] of schema %s has bak index but not master index",
+                            sessionIds.size(), String.join(",", sessionIds), schemaName));
+                    List<BakRecordIndex> bakIndexes = dao.select(schemaName, sessionIds);
+                    hasBakNotMasterList.addAll(bakIndexes);
                 }
             }
         }

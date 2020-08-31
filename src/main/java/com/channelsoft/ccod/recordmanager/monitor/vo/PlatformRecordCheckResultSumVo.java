@@ -1,5 +1,6 @@
 package com.channelsoft.ccod.recordmanager.monitor.vo;
 
+import com.channelsoft.ccod.recordmanager.monitor.po.BakRecordIndex;
 import com.channelsoft.ccod.recordmanager.monitor.po.PlatformRecordCheckResultPo;
 
 import java.text.SimpleDateFormat;
@@ -31,6 +32,8 @@ public class PlatformRecordCheckResultSumVo {
     private boolean result;
 
     private List<EntRecordCheckResultSumVo> entRecordCheckResultList;
+
+    private List<BakRecordIndex> hasBakNotMasterList; //有备索引没有主索引的备索引明细
 
     private String comment;
 
@@ -147,6 +150,15 @@ public class PlatformRecordCheckResultSumVo {
 
     public void setNotify(boolean notify) {
         isNotify = notify;
+    }
+
+
+    public List<BakRecordIndex> getHasBakNotMasterList() {
+        return hasBakNotMasterList;
+    }
+
+    public void setHasBakNotMasterList(List<BakRecordIndex> hasBakNotMasterList) {
+        this.hasBakNotMasterList = hasBakNotMasterList;
     }
 
     @Override

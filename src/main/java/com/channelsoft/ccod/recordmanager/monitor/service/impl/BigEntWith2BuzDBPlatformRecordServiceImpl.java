@@ -1,7 +1,9 @@
 package com.channelsoft.ccod.recordmanager.monitor.service.impl;
 
 import com.channelsoft.ccod.recordmanager.config.BigEnt2DBPlatformCondition;
+import com.channelsoft.ccod.recordmanager.monitor.dao.BakRecordIndexDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
+import com.channelsoft.ccod.recordmanager.monitor.po.BakRecordIndex;
 import com.channelsoft.ccod.recordmanager.monitor.vo.*;
 import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
 import org.slf4j.Logger;
@@ -60,12 +62,13 @@ public class BigEntWith2BuzDBPlatformRecordServiceImpl extends BigEntPlatformRec
         List<RecordDetailVo> recordList = new ArrayList<>();
         final ExecutorService executor = Executors.newFixedThreadPool(2);
         List<FutureTask<List<RecordDetailVo>>> taskList = new ArrayList<>();
+        List<BakRecordIndex> hasBakAndNotMasters = new ArrayList<>();
         for(String dbName : dbAgentMap.keySet())
         {
             if(this.dbName.equals(dbName))
             {
                 FutureTask<List<RecordDetailVo>> task = new FutureTask<>(() -> {
-                    List<RecordDetailVo> queryList = getRecordDetailFromDB(recordDetailDao, beginTime, endTime, dbAgentMap.get(dbName));
+                    List<RecordDetailVo> queryList = getRecordDetailFromDB(recordDetailDao, beginTime, endTime, dbAgentMap.get(dbName), hasBakAndNotMasters);
                     return queryList;
                 });
                 taskList.add(task);
@@ -74,7 +77,7 @@ public class BigEntWith2BuzDBPlatformRecordServiceImpl extends BigEntPlatformRec
             else if(this.dbName2.equals(dbName))
             {
                 FutureTask<List<RecordDetailVo>> task = new FutureTask<>(() -> {
-                    List<RecordDetailVo> queryList = getRecordDetailFromDB(recordDetail2Dao, beginTime, endTime, dbAgentMap.get(dbName2));
+                    List<RecordDetailVo> queryList = getRecordDetailFromDB(recordDetail2Dao, beginTime, endTime, dbAgentMap.get(dbName2), hasBakAndNotMasters);
                     return queryList;
                 });
                 taskList.add(task);

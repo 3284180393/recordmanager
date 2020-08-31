@@ -14,7 +14,7 @@ spring:
       driver-class-name: oracle.jdbc.OracleDriver
 
     sqlite:
-      jdbc-url: jdbc:sqlite:/home/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      jdbc-url: jdbc:sqlite:/temp/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
 
 db:

@@ -4,9 +4,9 @@ import com.channelsoft.ccod.recordmanager.config.BuzOracleCondition;
 import com.channelsoft.ccod.recordmanager.config.CallCheckRule;
 import com.channelsoft.ccod.recordmanager.constant.RecordType;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
+import com.channelsoft.ccod.recordmanager.monitor.po.BakRecordIndex;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName: RecordDetailDaoImpl
@@ -704,6 +705,8 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
         return retList;
     }
 
+
+
     private String generateSql(String schemaName, Date beginTime, Date endTime)
     {
         StringBuffer sql = new StringBuffer();
@@ -791,6 +794,16 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
         return sql.toString();
     }
 
+    @Override
+    public List<BakRecordIndex> select(String entId, List<String> sessionIds) {
+        String sql = String.format("select * from \"%s\".%s where SESSION_ID IN(%s)",
+                entId, this.bakTable, sessionIds.stream().map(id->String.format("'%s'",id)).collect(Collectors.joining(",")));
+        logger.debug(String.format("begin to query bak record index, sql=%s", sql));
+        List<BakRecordIndex> list = this.businessJdbcTemplate.query(sql, new BakRecordIndexRowMap(entId));
+        logger.debug(String.format("find %d bak record index record", list.size()));
+        return list;
+    }
+
     private class MapRow implements RowMapper<RecordDetailVo>
     {
 
@@ -815,18 +828,15 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
                 case MIX_AND_COMBINATION:
                     String mixIndex = rs.getString("MIX_RECORD_INDEX");
                     String combinationIndex = rs.getString("COMBINATION_RECORD_INDEX");
-                    if(StringUtils.isNotBlank(mixIndex))
-                    {
+                    if(StringUtils.isNotBlank(mixIndex)) {
                         detailVo.setRecordType(RecordType.MIX);
                         detailVo.setRecordIndex(mixIndex);
                     }
-                    else if(StringUtils.isNotBlank(combinationIndex))
-                    {
+                    else if(StringUtils.isNotBlank(combinationIndex)) {
                         detailVo.setRecordType(RecordType.COMBINATION);
                         detailVo.setRecordIndex(combinationIndex);
                     }
-                    else
-                    {
+                    else {
                         logger.warn("MIX_RECORD_INDEX and COMBINATION_RECORD_INDEX of %s is blank");
                     }
                     break;
@@ -837,6 +847,41 @@ public class RecordDetailDaoImpl implements IRecordDetailDao {
                 detailVo.setBakRecordIndex(rs.getString("RECORD_INDEX_BAK"));
             }
             return detailVo;
+        }
+    }
+
+    class BakRecordIndexRowMap implements RowMapper<BakRecordIndex> {
+        String entId;
+        BakRecordIndexRowMap(String entId) {
+            this.entId = entId;
+        }
+        @Override
+        public BakRecordIndex mapRow(ResultSet rs, int i) throws SQLException {
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            BakRecordIndex po = new BakRecordIndex();
+            po.setRecordName(rs.getString("RECORD_NAME"));
+            po.setEntId(entId);
+            po.setSessionId(rs.getString("SESSION_ID"));
+            po.setRemoteUri(rs.getString("REMOTE_URI"));
+            po.setLocalUri(rs.getString("LOCAL_URI"));
+            po.setAgentId(rs.getString("AGENT_ID"));
+            po.setCmsName(rs.getString("CMS_NAME"));
+            po.setCallType(rs.getInt("CALL_TYPE"));
+            po.setDeviceNumber(rs.getString("DEVICE_NUMBER"));
+            try {
+                po.setStartTime(sf.parse(rs.getString("START_TIME")));
+                po.setEndTime(sf.parse(rs.getString("END_TIME")));
+            } catch (Exception ex) {
+                logger.error("parse start or end time error", ex);
+            }
+            try {
+                po.setCtiStartTime(sf.parse(rs.getString("CTI_START_TIME")));
+                po.setCtiEndTime(sf.parse(rs.getString("CTI_END_TIME")));
+            } catch (Exception ex) {
+                logger.error("parse cti start or end time error", ex);
+            }
+            po.setSkillName(rs.getString("SKILL_NAME"));
+            return po;
         }
     }
 }
