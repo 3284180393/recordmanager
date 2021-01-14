@@ -250,7 +250,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
             logger.error(String.format("recordIndex of %s is blank", tag));
             throw new Exception(String.format("recordIndex of %s is blank", tag));
         }
-        if(rule.getExample().matches(String.format("/%s$", rule.getRecordIndex().replaceAll("^/", ""))))
+        if(!rule.getExample().matches(String.format(".*/%s$", rule.getRecordIndex().replaceAll("^/", ""))))
         {
             logger.debug(String.format("%s is not legal recordIndex of %s in %s",
                     rule.getRecordIndex(), rule.getExample(), tag));

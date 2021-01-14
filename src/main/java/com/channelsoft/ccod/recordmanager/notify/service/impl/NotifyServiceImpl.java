@@ -15,6 +15,7 @@ import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiRobotSendRequest;
 import com.dingtalk.api.response.OapiRobotSendResponse;
 import com.taobao.api.ApiException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
@@ -78,6 +80,16 @@ public class NotifyServiceImpl implements INotifyService {
 
     private String reportDingdingScriptPath = null;
 
+    private boolean reportWechat = false;
+
+    private String reportWechatScriptPath = null;
+
+    private String wechatScriptFileName = null;
+
+    private String wechatLogFileName = null;
+
+    private String wechatTag = null;
+
     @PostConstruct
     public void init()
     {
@@ -88,6 +100,31 @@ public class NotifyServiceImpl implements INotifyService {
         {
             this.reportDingdingByScript = true;
             this.reportDingdingScriptPath = env.getProperty("notify.record-check.dingding.script-path");
+            logger.debug(String.format("need to notify to dingding by script %s", reportDingdingScriptPath));
+        }
+        else{
+            logger.debug("not need to notify to dingding by script");
+        }
+        System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+        System.out.println(env.containsProperty("notify.record-check.wechat.script-path"));
+        if(env.containsProperty("notify.record-check.wechat.script-path"))
+        {
+            this.reportWechat = true;
+            this.reportWechatScriptPath = env.getProperty("notify.record-check.wechat.script-path");
+            this.wechatScriptFileName =  env.getProperty("notify.record-check.wechat.script-name");
+            this.wechatLogFileName = env.getProperty("notify.record-check.wechat.log-file");
+            this.wechatTag = env.getProperty("notify.record-check.wechat.wechat-tag");
+            logger.debug(String.format("need to notify to wechat by %s/%s, log=%s and tag=%s",
+                    reportWechatScriptPath, wechatLogFileName, wechatLogFileName, wechatTag));
+        }
+        else{
+            logger.debug("not need notify to wechat");
+        }
+        if(reportWechat){
+            //            notifyToWechat("这是录音检查结果微信推送测试，\"\"\"\"请勿处理");
+            String testMsg = "监控 这是录音检查结果微信推送测试，请勿处理 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog]\" target=\"_blank\">root: \"ccod:[20200731 17:31:11]检查shltPA(上海联通平安)录音异常:org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [SELECT RD.SESSION_ID AS SESSION_ID,RD.START_TIME AS START_TIME,RD.END_TIME AS END_TIME,RD.AGENT_ID AS AGENT_ID,RD.TALK_DURATION AS TALK_DURATION,RD.END_TYPE AS END_TYPE,RD.CALLTYPE AS CALLTYPE,ERBT.RECORD_NAME AS RECORD_INDEX,BRT.RECORD_NAME AS RECORD_INDEX_BAK FROM \"0000050360\".R_DETAIL RD LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE ERBT ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE_BAK BRT ON RD.SESSION_ID = BRT.SESSION_ID AND RD.AGENT_ID = BRT.AGENT_ID WHERE 1=1 AND RD.TALK_DURATION > 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog] ";
+//            String testMsg = "这是录音检查结果微信推送测试，请勿处理";
+            notifyToWechat(testMsg);
         }
 //        PlatformRecordCheckResultVo resultVo = PlatformRecordCheckResultVo.fail("shltPA", "上海联通平安", "无法连接数据库");
 //        notify(resultVo);
@@ -186,6 +223,9 @@ public class NotifyServiceImpl implements INotifyService {
     private void notifyRecordCheckMsg(String msg, boolean isCheckResultOk)
     {
         logger.debug(String.format("need notify record check msg : %s", msg));
+        if(this.reportWechat){
+            notifyToWechat(msg);
+        }
         if(this.reportDingdingByScript)
             notifyByScript(msg);
         else
@@ -228,6 +268,40 @@ public class NotifyServiceImpl implements INotifyService {
         catch (Exception ex)
         {
             logger.error(String.format("write %s to sysLog exception", msg), ex);
+        }
+    }
+
+    private void notifyToWechat(String msg){
+        logger.debug(String.format("notify %s to wechat by script %s/%s", msg, this.reportWechatScriptPath, this.wechatScriptFileName));
+        try
+        {
+            String sendMsg = msg.replace("\"", "\\\"");
+            sendMsg = String.format("%s %s", wechatTag, sendMsg);
+            File file = new File(String.format("%s/%s", reportWechatScriptPath, wechatLogFileName));
+            file.createNewFile();
+            FileWriter writer = new FileWriter(file);
+            BufferedWriter out = new BufferedWriter(writer);
+            out.write(sendMsg);
+            out.close();
+            writer.close();
+            Thread.sleep(1000);
+            Runtime runtime = Runtime.getRuntime();
+            String[] cmd = new String[]{"/bin/sh", "-c", String.format(" cd %s && ./%s", reportWechatScriptPath, wechatScriptFileName)};
+            logger.debug(String.format("begin to exec %s", String.join(",", cmd)));
+            Process process = runtime.exec(cmd);
+            InputStream is = process.getErrorStream();
+            InputStreamReader isr = new InputStreamReader(is, "GBK");
+            BufferedReader br = new BufferedReader(isr);
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+                logger.debug(line);
+            }
+            logger.debug("notify to wechat by secript success");
+        }
+        catch (Exception ex)
+        {
+            logger.error(String.format("notify %s to wechat  exception", msg), ex);
         }
     }
 
