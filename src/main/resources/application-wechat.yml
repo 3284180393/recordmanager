@@ -3,24 +3,21 @@ spring:
     gls:
       username: ccod
       password: ccod
-      jdbc-url: jdbc:oracle:thin:@10.130.41.218:32602:xe
+      jdbc-url: jdbc:oracle:thin:@10.130.41.218:32602:ccod
       driver-class-name: oracle.jdbc.OracleDriver
-      maximumPoolSize: 1
-      min-minimumIdle: 1
 
     business:
       username: ccod
       password: ccod
-      jdbc-url: jdbc:oracle:thin:@10.130.41.218:32602:xe
+      jdbc-url: jdbc:oracle:thin:@10.130.41.218:32602:ccod
       driver-class-name: oracle.jdbc.OracleDriver
-      maximumPoolSize: 1
-      min-minimumIdle: 1
+      initial-size: 2
+      max-active: 2
+      min-idle: 2
 
     sqlite:
       jdbc-url: jdbc:sqlite:/temp/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
-      maximumPoolSize: 1
-      min-minimumIdle: 1
 
 db:
   gls:
@@ -87,7 +84,7 @@ record:
 jobs:
   recordCheck:
     execute: true
-    cron: 0 0/1 * * * *
+    cron: 0 0/5 * * * *
     interval: 10
     delay: 10
   backup:
@@ -117,8 +114,13 @@ notify:
         atAll: true
         atList:
     sysLog:
-      write: false
+      write: true
       tag: "ccod"
+    wechat:
+      script-path: /home/recordmanager/config
+      script-name: weixin.sh
+      log-file: check_record.log
+      wechat-tag: 异常
   record-backup:
     dingding:
       group[0]:

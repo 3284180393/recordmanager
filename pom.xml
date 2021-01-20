@@ -110,6 +110,10 @@
             <version>3.0.4</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jdbc</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.taobao.top</groupId>
             <artifactId>top-api-sdk-dev</artifactId>
             <version>ding-open-mc-SNAPSHOT</version>

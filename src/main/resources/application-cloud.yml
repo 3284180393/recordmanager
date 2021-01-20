@@ -3,14 +3,17 @@ spring:
     ucds:
       username: ucds
       password: ucds
-      jdbc-url: jdbc:mysql://10.130.41.12:3306/ucds
+      jdbc-url: jdbc:mysql://10.130.41.218:31950/ucds
       driver-class-name: com.mysql.jdbc.Driver
+      initial-size: 2
+      max-active: 2
+      min-idle: 2
 
     business:
       conn-str: 10.130.41.212:30065
 
     sqlite:
-      jdbc-url: jdbc:sqlite:jdbc:sqlite:/home/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      jdbc-url: jdbc:sqlite:jdbc:sqlite:/temp/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
 
 ccod:
@@ -20,13 +23,9 @@ ccod:
   recordType: MIX
   hasBak: false
   enterprise:
-    choseMethod: EXCLUDE
+    choseMethod: INCLUDE
     list:
       - "20180905"
-      - "20180914"
-      - "0000000002"
-      - "1234554321"
-      - "2020031701"
     notCheckBakList:
 
 call:
@@ -68,49 +67,12 @@ record:
         year: yyyy
         month: MM
         day: dd
-    storeRoles[1]:
-      mntDir: "/mnt"
-      grokPattern: ^/mnt/Date1/(?<entId>\d+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/(?<AgentDn1>\d+)/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<localUrl>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-      example: /mnt/Date1/0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
-      recordIndex: 0000050111/202003/60750230/0301/SIP-400603_5860042292_20200317123441.wav
-      dateFormat:
-        date: yyyyMMdd
-        yearAndMonth: yyyyMM
-        monthAndDay: MMdd
-        year: yyyy
-        month: MM
-        day: dd
-    storeRoles[2]:
-      mntDir: "/mnt"
-      grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-      example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
-      recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
-      dateFormat:
-        date: yyyyMMdd
-        yearAndMonth: yyyyMM
-        monthAndDay: MMdd
-        year: yyyy
-        month: MM
-        day: dd
-  backup:
-    storeRoles[0]:
-      mntDir: "/mnt"
-      grokPattern: ^/mnt/record/Data11/save/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
-      example: /mnt/record/Data11/save/JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
-      recordIndex: JT04/Agent/20200401/TEL-1169190304_100004_20200401081955.wav
-      dateFormat:
-        date: yyyyMMdd
-        yearAndMonth: yyyyMM
-        monthAndDay: MMdd
-        year: yyyy
-        month: MM
-        day: dd
 
 jobs:
   recordCheck:
     execute: true
     interval: 10
-    cron: 0 0/10 * * * *
+    cron: 0 0/2 * * * *
     delay: 10
   backup:
     execute: false
