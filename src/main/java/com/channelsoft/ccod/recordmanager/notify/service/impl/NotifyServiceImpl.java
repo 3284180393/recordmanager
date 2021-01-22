@@ -7,15 +7,11 @@ import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultSumVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordBackupResultSumVo;
 import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
 import com.channelsoft.ccod.recordmanager.notify.service.INotifyService;
-import com.channelsoft.ccod.recordmanager.notify.vo.RobotClient;
-import com.channelsoft.ccod.recordmanager.notify.vo.SendResult;
 import com.channelsoft.ccod.recordmanager.notify.vo.TextMessage;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiRobotSendRequest;
 import com.dingtalk.api.response.OapiRobotSendResponse;
-import com.taobao.api.ApiException;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +22,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Base64;
 
 /**

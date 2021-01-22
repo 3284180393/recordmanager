@@ -173,6 +173,7 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
                 detailVo.setRecordFileFastDfsUrl(fastDfsUrl);
             }
         }
+        client.close();
         return recordList;
     }
 
