@@ -111,6 +111,8 @@ notify:
     bakFileLostCount: 6
     bakFileLostRate: 7
     dingding:
+      by-script: true
+      script-path: /home/script/test
       group[0]:
         webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
         tag: "[录音报警]"

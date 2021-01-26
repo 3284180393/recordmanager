@@ -3,6 +3,7 @@ package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 import com.channelsoft.ccod.recordmanager.config.GLSCondition;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IGlsAgentDao;
 import com.channelsoft.ccod.recordmanager.monitor.vo.GlsAgentVo;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName: GlsAgentDaoImpl
@@ -45,6 +47,9 @@ public class GlsAgentDaoImpl implements IGlsAgentDao {
         logger.debug(String.format("begin to query all gls agent, sql=%s", sql));
         List<GlsAgentVo> list = glsJdbcTemplate.query(sql, new GlsAgentRowMapper());
         logger.debug(String.format("find %d gls agent", list.size()));
+        list = list.stream().filter(a-> StringUtils.isNotBlank(a.getDbName()) && StringUtils.isNotBlank(a.getSchemaName()) && StringUtils.isNotBlank(a.getEntId()) && StringUtils.isNotBlank(a.getAgentId()))
+                .collect(Collectors.toList());
+        logger.debug(String.format("%d gls agent is valid", list.size()));
         return list;
     }
 

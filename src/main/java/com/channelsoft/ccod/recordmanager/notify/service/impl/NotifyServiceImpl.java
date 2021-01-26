@@ -71,6 +71,8 @@ public class NotifyServiceImpl implements INotifyService {
 
     private boolean isReportNormalCheckResult = false;
 
+    private boolean reportCheckResultToDingding = false;
+
     private boolean reportDingdingByScript = false;
 
     private String reportDingdingScriptPath = null;
@@ -88,9 +90,12 @@ public class NotifyServiceImpl implements INotifyService {
     @PostConstruct
     public void init()
     {
-        System.out.println("$$$$$$$$$$$$$$$$$$$$");
         if(env.containsProperty("notify.record-check.report-normal-result") && "true".equals(env.getProperty("notify.record-check.report-normal-result")))
             this.isReportNormalCheckResult = true;
+        if(this.recordCheckNotifyCfg.getDingding() != null && this.recordCheckNotifyCfg.getDingding().getGroup() != null && this.recordCheckNotifyCfg.getDingding().getGroup().size() > 0){
+            logger.debug(String.format("need report record check result to dingding"));
+            this.reportCheckResultToDingding = true;
+        }
         if(env.containsProperty("notify.record-check.dingding.by-script") && "true".equals(env.getProperty("notify.record-check.dingding.by-script")))
         {
             this.reportDingdingByScript = true;
@@ -100,8 +105,6 @@ public class NotifyServiceImpl implements INotifyService {
         else{
             logger.debug("not need to notify to dingding by script");
         }
-        System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-        System.out.println(env.containsProperty("notify.record-check.wechat.script-path"));
         if(env.containsProperty("notify.record-check.wechat.script-path"))
         {
             this.reportWechat = true;
@@ -117,7 +120,7 @@ public class NotifyServiceImpl implements INotifyService {
         }
         if(reportWechat){
             //            notifyToWechat("这是录音检查结果微信推送测试，\"\"\"\"请勿处理");
-            String testMsg = "监控 这是录音检查结果微信推送测试，请勿处理 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog]\" target=\"_blank\">root: \"ccod:[20200731 17:31:11]检查shltPA(上海联通平安)录音异常:org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [SELECT RD.SESSION_ID AS SESSION_ID,RD.START_TIME AS START_TIME,RD.END_TIME AS END_TIME,RD.AGENT_ID AS AGENT_ID,RD.TALK_DURATION AS TALK_DURATION,RD.END_TYPE AS END_TYPE,RD.CALLTYPE AS CALLTYPE,ERBT.RECORD_NAME AS RECORD_INDEX,BRT.RECORD_NAME AS RECORD_INDEX_BAK FROM \"0000050360\".R_DETAIL RD LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE ERBT ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE_BAK BRT ON RD.SESSION_ID = BRT.SESSION_ID AND RD.AGENT_ID = BRT.AGENT_ID WHERE 1=1 AND RD.TALK_DURATION > 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog] ";
+            String testMsg = "监控 这是录音检查结果微信推送测试，请勿处理 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog]\" target=\"_blank\">root: \"ccod:[20200731 17:31:11]检查testPlatform(测试平台)录音异常:org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [SELECT RD.SESSION_ID AS SESSION_ID,RD.START_TIME AS START_TIME,RD.END_TIME AS END_TIME,RD.AGENT_ID AS AGENT_ID,RD.TALK_DURATION AS TALK_DURATION,RD.END_TYPE AS END_TYPE,RD.CALLTYPE AS CALLTYPE,ERBT.RECORD_NAME AS RECORD_INDEX,BRT.RECORD_NAME AS RECORD_INDEX_BAK FROM \"0000050360\".R_DETAIL RD LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE ERBT ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE_BAK BRT ON RD.SESSION_ID = BRT.SESSION_ID AND RD.AGENT_ID = BRT.AGENT_ID WHERE 1=1 AND RD.TALK_DURATION > 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog] ";
 //            String testMsg = "这是录音检查结果微信推送测试，请勿处理";
             notifyToWechat(testMsg);
         }

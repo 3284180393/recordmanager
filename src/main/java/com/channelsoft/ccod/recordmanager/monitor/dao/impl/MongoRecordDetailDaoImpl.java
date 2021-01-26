@@ -112,7 +112,7 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
             recordVo.setCallType(jsonObject.getIntValue("call_type"));
             recordVo.setEndTime(new Date(Long.parseLong(jsonObject
                     .getString("end_time"))));
-            recordVo.setEndType(jsonObject.getInteger("end_reason"));
+            recordVo.setEndType(jsonObject.getInteger("end_type"));
             recordVo.setEnterpriseId(schemaName);
             String sessionId = jsonObject.getString("session_id");
             recordVo.setSessionId(sessionId);

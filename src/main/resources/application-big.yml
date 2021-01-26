@@ -3,18 +3,24 @@ spring:
     gls:
       username: ccod
       password: ccod
-      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      jdbc-url: jdbc:oracle:thin:@192.168.1.62:1521:ccod
       driver-class-name: oracle.jdbc.OracleDriver
+      maximumPoolSize: 2
+      min-minimumIdle: 2
+
 
     business:
       dbName: db1
       username: ccod
       password: ccod
-      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      jdbc-url: jdbc:oracle:thin:@192.168.1.61:1521:ccod
       driver-class-name: oracle.jdbc.OracleDriver
+      maximumPoolSize: 2
+      min-minimumIdle: 2
+
 
     sqlite:
-      jdbc-url: jdbc:sqlite:/temp/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      jdbc-url: jdbc:sqlite:/home/recordmanager/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
 
 db:
@@ -26,15 +32,15 @@ db:
   table:
     detail: R_DETAIL
     enterprise: GLS_ENTERPRISE_INFO
-    mix: ENT_RECORD_TABLE
+    mix: ENT_RECORD_BX_TABLE
     combination: ENT_RECORD_BX_TABLE
-    bak: ENT_RECORD_BX_TABLE_BX
+    bak: ENT_RECORD_BX_TABLE_BAK
     dbAgentRelate: GLS_DB_AGENT_RELATE
     dbEntRelate: GLS_DB_ENT_RELATE
 
 ccod:
-  platformId: shltPA
-  platformName: 上海联通平安
+  platformId: SCLTPA
+  platformName: 四川联通平安
   platformType: BIG_ENT
   recordType: COMBINATION
   hasBak: true
@@ -64,9 +70,9 @@ call:
 record:
   master:
     storeRules[0]:
-      grokPattern: ^/mnt/record/record828/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
-      example: /mnt/record/record828/0000000067/Agent/20200415/TEL-07122583365_1100735_20200415104145.wav
-      recordIndex: 0000000067/Agent/20200415/TEL-07122583365_1100735_20200415104145.wav
+      grokPattern: ^/mnt1/record2/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /mnt1/record2/0000070002/Agent/20210117/TEL-000012_20210117114105.wav
+      recordIndex: record2/0000070002/Agent/20210117/TEL-000012_20210117114105.wav
       dateFormat:
         date: yyyyMMdd
         yearAndMonth: yyyyMM
@@ -76,9 +82,10 @@ record:
         day: dd
   backup:
     storeRules[0]:
-      grokPattern: ^/mnt/record/record410/(?<entId>[a-zA-z0-9]+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/[^/]+/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
-      example: /mnt/record/record410/0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav
-      recordIndex: 0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav
+      grokPattern: ^/mnt1/backup/record2/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      #      grokPattern: ^/mnt1/backup/record2/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /mnt1/backup/record2/0000070002/Agent/20210117/TEL-000012_20210117114105.wav
+      recordIndex: record2/0000070002/Agent/20210117/TEL-000012_20210117114105.wav
       dateFormat:
         date: yyyyMMdd
         yearAndMonth: yyyyMM
@@ -97,7 +104,7 @@ jobs:
     execute: true
     startDate: 2020-04-10
     cron: 0 0 22 * * *
-    backupRootPath: /mnt/backup
+    backupRootPath: /mnt1/backup
     verify: true
     compareWithDB: true
     businessEndTime: "21:00"
@@ -105,14 +112,21 @@ jobs:
 
 notify:
   record-check:
-    indexLostCount: 9
-    indexLostRate: 10
-    fileLostCount: 8
-    fileLostRate: 9
-    bakIndexLostCount: 7
-    bakIndexLostRate: 8
-    bakFileLostCount: 6
-    bakFileLostRate: 7
+    indexLostCount: 5
+    indexLostRate: 1
+    fileLostCount: 5
+    fileLostRate: 1
+    bakIndexLostCount: 5
+    bakIndexLostRate: 1
+    bakFileLostCount: 5
+    bakFileLostRate: 1
+
+    wechat:
+      script-path: /home/recordmanager/recordmanager/config
+      script-name: weixin.sh
+      log-file: check_record.log
+      wechat-tag: 异常
+
     dingding:
       group[0]:
         webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54

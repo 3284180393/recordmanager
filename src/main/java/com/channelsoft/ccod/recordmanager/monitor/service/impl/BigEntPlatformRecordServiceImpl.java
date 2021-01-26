@@ -125,7 +125,7 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
                     List<RecordDetailVo> agentRecords = agentRecordMap.get(agentId);
                     agentRecords.forEach(r->r.setEnterpriseId(acceptAgentMap.get(agentId).getEntId()));
                     logger.debug(String.format("%s(%s) has %d record detail",
-                            agentId, acceptAgentMap.get(agentId).getEntId(), agentRecords));
+                            agentId, acceptAgentMap.get(agentId).getEntId(), agentRecords.size()));
                     recordList.addAll(agentRecords);
                     validRecords.addAll(agentRecords);
                 }

@@ -20,4 +20,24 @@ public class DingDing {
     public void setGroup(List<DingDingGroup> group) {
         this.group = group;
     }
+
+    public boolean byScript;
+
+    public String scriptPath;
+
+    public boolean isByScript() {
+        return byScript;
+    }
+
+    public void setByScript(boolean byScript) {
+        this.byScript = byScript;
+    }
+
+    public String getScriptPath() {
+        return scriptPath;
+    }
+
+    public void setScriptPath(String scriptPath) {
+        this.scriptPath = scriptPath;
+    }
 }
