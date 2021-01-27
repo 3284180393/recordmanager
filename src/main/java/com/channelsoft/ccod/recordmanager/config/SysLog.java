@@ -1,5 +1,8 @@
 package com.channelsoft.ccod.recordmanager.config;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.Assert;
+
 /**
  * @ClassName: SysLog
  * @Author: lanhb
@@ -8,9 +11,16 @@ package com.channelsoft.ccod.recordmanager.config;
  * @Version: 1.0
  */
 public class SysLog {
-    private boolean write;
+    public boolean write;
 
-    private String tag;
+    public String tag;
+
+    public boolean isReportBySysLog(){
+        if(write){
+            Assert.isTrue(StringUtils.isNotBlank(tag), "sysLog.tag can not be blank");
+        }
+        return write;
+    }
 
     public boolean isWrite() {
         return write;

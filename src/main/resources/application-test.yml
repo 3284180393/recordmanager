@@ -1,0 +1,167 @@
+spring:
+  datasource:
+    gls:
+      username: ccod01
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@172.16.0.19:1521:ccpbs
+      driver-class-name: oracle.jdbc.OracleDriver
+      maximumPoolSize: 2
+      min-minimumIdle: 2
+
+    business:
+      username: ccod01
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@172.16.0.19:1521:ccpbs
+      driver-class-name: oracle.jdbc.OracleDriver
+      maximumPoolSize: 2
+      min-minimumIdle: 2
+
+    sqlite:
+      jdbc-url: jdbc:sqlite:/home/recordmanager/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      driver-class-name: org.sqlite.JDBC
+
+db:
+  gls:
+    type: GLS
+  business:
+    type: ORACLE
+    count: 1
+  table:
+    detail: R_DETAIL
+    enterprise: GLS_ENTERPRISE_INFO
+    mix: ENT_RECORD_TABLE
+    combination: ENT_RECORD_BX_TABLE
+    bak: ENT_RECORD_BX_TABLE_BAK
+    dbAgentRelate: GLS_DB_AGENT_RELATE
+    dbEntRelate: GLS_DB_ENT_RELATE
+
+ccod:
+  platformId: GDLT
+  platformName: 广东联通平台
+  platformType: NORMAL
+  recordType: MIX
+  hasBak: false
+  enterprise:
+    choseMethod: INCLUDE
+    list:
+      - "0000004855"
+      - "0000054112"
+      - "0000066861"
+      - "0000066348"
+      - "0000059681"
+      - "0000056469"
+      - "0000060601"
+      - "0000051290"
+      - "0000058368"
+      - "0000062316"
+      - "0000061058"
+      - "0000060228"
+      - "0000062826"
+      - "0000061580"
+      - "0000062684"
+      - "0000059921"
+      - "0000060314"
+      - "0000060847"
+      - "2076187175"
+      - "0000054640"
+      - "0000060914"
+      - "0000061298"
+      - "0000053227"
+    notCheckBakList:
+
+call:
+  callTypes:
+  endTypes:
+  minTalkDuration: 1
+
+record:
+  master:
+    storeRules[0]:
+      mntDir: "/nfs_server/data"
+      grokPattern: ^/record/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /record/0000009998/Agent/20191218/tel-018913519783_80977_20191218144159.wav
+      recordIndex: 0000009998/Agent/20191218/tel-018913519783_80977_20191218144159.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+  backup:
+    storeRules[0]:
+      grokPattern: ^/jiami/record/record/(?<entId>[a-zA-z0-9]+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/[^/]+/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /mnt/record/record410/0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav
+      recordIndex: 0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+
+jobs:
+  recordCheck:
+    execute: true
+    cron: 0 0/10 * * * *
+    interval: 10
+    delay: 10
+  backup:
+    execute: false
+    startDate: 2020-01-12
+    cron: 0 0 1 * * *
+    backupRootPath: /jiami
+    verify: true
+    compareWithDB: false
+    businessEndTime: "00:01"
+    stopTime: "23:59"
+
+notify:
+  record-check:
+    indexLostCount: 1
+    indexLostRate: 1
+    fileLostCount: 1
+    fileLostRate: 1
+    bakIndexLostCount: 7
+    bakIndexLostRate: 8
+    bakFileLostCount: 6
+    bakFileLostRate: 7
+    dingding:
+      by-script: false
+      script-path: /home/script/test
+      group[0]:
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        tag: "[录音报警]"
+        atAll: true
+        atList:
+    sysLog:
+      write: true
+      tag: "ccod"
+
+    wechat:
+      script-path: /home/recordmanager/config
+      script-name: weixin.sh
+      log-file: check_record.log
+      wechat-tag: 异常
+  record-backup:
+    dingding:
+      group[0]:
+        webHookToken: https://
+        tag: "[录音备份]"
+        atAll: true
+        atList:
+    sysLog:
+      write: true
+      tag: "ccod"
+    wechat:
+      script-path: /home/recordmanager/config
+      script-name: weixin.sh
+      log-file: check_record.log
+      wechat-tag: 异常
+
+env:
+  windows: false
+
+debug: false
+

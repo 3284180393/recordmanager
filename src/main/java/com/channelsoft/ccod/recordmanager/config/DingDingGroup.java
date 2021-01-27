@@ -11,13 +11,13 @@ import java.util.List;
  */
 public class DingDingGroup {
 
-    private String webHookToken;  //用来定义接受消息的钉钉群智能机器人的webHookToken
+    public String webHookToken;  //用来定义接受消息的钉钉群智能机器人的webHookToken
 
-    private String tag; //向群发送消息时自动添加的标签
+    public String tag; //向群发送消息时自动添加的标签
 
-    private boolean atAll; //在发送消息时是否需要@所有群的成员
+    public boolean atAll; //在发送消息时是否需要@所有群的成员
 
-    private List<String> atList; //如果不需要@所有的成员，需要单个@的群成员的手机号
+    public List<String> atList; //如果不需要@所有的成员，需要单个@的群成员的手机号
 
     public String getWebHookToken() {
         return webHookToken;

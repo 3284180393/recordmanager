@@ -14,9 +14,11 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "notify.record-backup")
 public class RecordBackupNotifyCfg {
 
-    private DingDing dingding;  //用来定义接受报警消息的钉钉配置
+    public DingDing dingding;  //用来定义接受报警消息的钉钉配置
 
-    private SysLog sysLog; //用来定义消息是否写到sysLog以及怎么写到sysLog
+    public SysLog sysLog; //用来定义消息是否写到sysLog以及怎么写到sysLog
+
+    public Wechat wechat; //用来定义微信相关配置
 
     public DingDing getDingding() {
         return dingding;
@@ -32,5 +34,13 @@ public class RecordBackupNotifyCfg {
 
     public void setSysLog(SysLog sysLog) {
         this.sysLog = sysLog;
+    }
+
+    public Wechat getWechat() {
+        return wechat;
+    }
+
+    public void setWechat(Wechat wechat) {
+        this.wechat = wechat;
     }
 }

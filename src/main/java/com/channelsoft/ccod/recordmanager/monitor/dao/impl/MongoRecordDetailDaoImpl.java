@@ -99,6 +99,7 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
             queryObject.append("call_type", new BasicDBObject(
                     QueryOperators.IN, arr));
         }
+        logger.debug(String.format("mongo query call detail condition is : %s", JSONObject.toJSONString(queryObject)));
         Cursor cursor = collection.find(queryObject);
         Date firstStartTime = new Date();
         List<RecordDetailVo> recordList = new ArrayList<>();
@@ -139,6 +140,7 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
                     QueryOperators.IN, callTypes));
         }
         List<RecordDetailVo> hasIndexRecordList = new ArrayList<>();
+        logger.debug(String.format("mongo query record index condition is : %s", JSONObject.toJSONString(queryObject)));
         cursor = collection.find(queryObject);
         while (cursor.hasNext())
         {
@@ -161,6 +163,7 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
         queryObject = new BasicDBObject().append(
                 "record_name", new BasicDBObject(
                         QueryOperators.IN, indexRecordMap.keySet()));
+        logger.debug(String.format("mongo query record file fastdfs condition is : %s", JSONObject.toJSONString(queryObject)));
         cursor = collection.find(queryObject);
         while (cursor.hasNext())
         {

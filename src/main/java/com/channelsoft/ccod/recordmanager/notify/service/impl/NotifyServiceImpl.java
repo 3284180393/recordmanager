@@ -1,5 +1,6 @@
 package com.channelsoft.ccod.recordmanager.notify.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.channelsoft.ccod.recordmanager.config.DingDingGroup;
 import com.channelsoft.ccod.recordmanager.config.RecordBackupNotifyCfg;
 import com.channelsoft.ccod.recordmanager.config.RecordCheckNotifyCfg;
@@ -12,12 +13,14 @@ import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiRobotSendRequest;
 import com.dingtalk.api.response.OapiRobotSendResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
@@ -42,90 +45,32 @@ public class NotifyServiceImpl implements INotifyService {
     @Autowired
     RecordBackupNotifyCfg recordBackupNotifyCfg;
 
-    @Autowired
-    private Environment env;
-
-    @Value("${notify.record-check.indexLostCount}")
-    private int indexLostCount;
-
-    @Value("${notify.record-check.indexLostRate}")
-    private int indexLostRate;
-
-    @Value("${notify.record-check.fileLostCount}")
-    private int fileLostCount;
-
-    @Value("${notify.record-check.fileLostRate}")
-    private int fileLostRate;
-
-    @Value("${notify.record-check.bakIndexLostCount}")
-    private int bakIndexLostCount;
-
-    @Value("${notify.record-check.bakIndexLostRate}")
-    private int bakIndexLostRate;
-
-    @Value("${notify.record-check.bakFileLostCount}")
-    private int bakFileLostCount;
-
-    @Value("${notify.record-check.bakFileLostRate}")
-    private int bakFileLostRate;
-
-    private boolean isReportNormalCheckResult = false;
-
-    private boolean reportCheckResultToDingding = false;
-
-    private boolean reportDingdingByScript = false;
-
-    private String reportDingdingScriptPath = null;
-
-    private boolean reportWechat = false;
-
-    private String reportWechatScriptPath = null;
-
-    private String wechatScriptFileName = null;
-
-    private String wechatLogFileName = null;
-
-    private String wechatTag = null;
-
     @PostConstruct
     public void init()
     {
-        if(env.containsProperty("notify.record-check.report-normal-result") && "true".equals(env.getProperty("notify.record-check.report-normal-result")))
-            this.isReportNormalCheckResult = true;
-        if(this.recordCheckNotifyCfg.getDingding() != null && this.recordCheckNotifyCfg.getDingding().getGroup() != null && this.recordCheckNotifyCfg.getDingding().getGroup().size() > 0){
-            logger.debug(String.format("need report record check result to dingding"));
-            this.reportCheckResultToDingding = true;
-        }
-        if(env.containsProperty("notify.record-check.dingding.by-script") && "true".equals(env.getProperty("notify.record-check.dingding.by-script")))
-        {
-            this.reportDingdingByScript = true;
-            this.reportDingdingScriptPath = env.getProperty("notify.record-check.dingding.script-path");
-            logger.debug(String.format("need to notify to dingding by script %s", reportDingdingScriptPath));
-        }
-        else{
-            logger.debug("not need to notify to dingding by script");
-        }
-        if(env.containsProperty("notify.record-check.wechat.script-path"))
-        {
-            this.reportWechat = true;
-            this.reportWechatScriptPath = env.getProperty("notify.record-check.wechat.script-path");
-            this.wechatScriptFileName =  env.getProperty("notify.record-check.wechat.script-name");
-            this.wechatLogFileName = env.getProperty("notify.record-check.wechat.log-file");
-            this.wechatTag = env.getProperty("notify.record-check.wechat.wechat-tag");
-            logger.debug(String.format("need to notify to wechat by %s/%s, log=%s and tag=%s",
-                    reportWechatScriptPath, wechatLogFileName, wechatLogFileName, wechatTag));
-        }
-        else{
-            logger.debug("not need notify to wechat");
-        }
-        if(reportWechat){
-            //            notifyToWechat("这是录音检查结果微信推送测试，\"\"\"\"请勿处理");
-            String testMsg = "监控 这是录音检查结果微信推送测试，请勿处理 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog]\" target=\"_blank\">root: \"ccod:[20200731 17:31:11]检查testPlatform(测试平台)录音异常:org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [SELECT RD.SESSION_ID AS SESSION_ID,RD.START_TIME AS START_TIME,RD.END_TIME AS END_TIME,RD.AGENT_ID AS AGENT_ID,RD.TALK_DURATION AS TALK_DURATION,RD.END_TYPE AS END_TYPE,RD.CALLTYPE AS CALLTYPE,ERBT.RECORD_NAME AS RECORD_INDEX,BRT.RECORD_NAME AS RECORD_INDEX_BAK FROM \"0000050360\".R_DETAIL RD LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE ERBT ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE_BAK BRT ON RD.SESSION_ID = BRT.SESSION_ID AND RD.AGENT_ID = BRT.AGENT_ID WHERE 1=1 AND RD.TALK_DURATION > 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog] ";
-//            String testMsg = "这是录音检查结果微信推送测试，请勿处理";
-            notifyToWechat(testMsg);
-        }
-//        PlatformRecordCheckResultVo resultVo = PlatformRecordCheckResultVo.fail("shltPA", "上海联通平安", "无法连接数据库");
-//        notify(resultVo);
+        logger.info(String.format("indexLostCount=%d", recordCheckNotifyCfg.indexLostCount));
+        logger.info(String.format("indexLostRate=%d", recordCheckNotifyCfg.indexLostRate));
+        logger.info(String.format("fileLostCount=%d", recordCheckNotifyCfg.fileLostCount));
+        logger.info(String.format("fileLostRate=%d", recordCheckNotifyCfg.fileLostRate));
+        logger.info(String.format("bakIndexLostCount=%d", recordCheckNotifyCfg.bakIndexLostCount));
+        logger.info(String.format("bakIndexLostRate=%d", recordCheckNotifyCfg.bakIndexLostRate));
+        logger.info(String.format("bakFileLostCount=%d", recordCheckNotifyCfg.bakFileLostCount));
+        logger.info(String.format("bakFileLostRate=%d", recordCheckNotifyCfg.bakFileLostRate));
+        logger.info(String.format("record-check.wechat=%s", JSONObject.toJSONString(recordCheckNotifyCfg.wechat)));
+        logger.info(String.format("report check result to wechat : %b", recordCheckNotifyCfg.wechat == null ? false:recordCheckNotifyCfg.wechat.isReportByWechat()));
+        logger.info(String.format("record-check.dingding=%s", JSONObject.toJSONString(recordCheckNotifyCfg.dingding)));
+        logger.info(String.format("report check result to dingding : %b", recordCheckNotifyCfg.dingding == null ? false:recordCheckNotifyCfg.dingding.isReportByDingDing()));
+        logger.info(String.format("record-check.sysLog=%s", JSONObject.toJSONString(recordCheckNotifyCfg.sysLog)));
+        logger.info(String.format("report check result to sysLog : %b", recordCheckNotifyCfg.sysLog == null ? false:recordCheckNotifyCfg.sysLog.isReportBySysLog()));
+        logger.info(String.format("record-backup.wechat=%s", JSONObject.toJSONString(recordBackupNotifyCfg.wechat)));
+        logger.info(String.format("report backup result to wechat : %b", recordBackupNotifyCfg.wechat == null ? false:recordBackupNotifyCfg.wechat.isReportByWechat()));
+        logger.info(String.format("record-backup.dingding=%s", JSONObject.toJSONString(recordBackupNotifyCfg.dingding)));
+        logger.info(String.format("report backup result to dingding : %b", recordBackupNotifyCfg.dingding == null ? false:recordBackupNotifyCfg.dingding.isReportByDingDing()));
+        logger.info(String.format("record-backup.sysLog=%s", JSONObject.toJSONString(recordBackupNotifyCfg.sysLog)));
+        logger.info(String.format("report backup result to sysLog : %b", recordBackupNotifyCfg.sysLog == null ? false:recordBackupNotifyCfg.sysLog.isReportBySysLog()));
+//        String testMsg = "此消息只会在程序重启时用于测试是否可以接收消息，请勿处理 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog]\" target=\"_blank\">root: \"ccod:[20200731 17:31:11]检查testPlatform(测试平台)录音异常:org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [SELECT RD.SESSION_ID AS SESSION_ID,RD.START_TIME AS START_TIME,RD.END_TIME AS END_TIME,RD.AGENT_ID AS AGENT_ID,RD.TALK_DURATION AS TALK_DURATION,RD.END_TYPE AS END_TYPE,RD.CALLTYPE AS CALLTYPE,ERBT.RECORD_NAME AS RECORD_INDEX,BRT.RECORD_NAME AS RECORD_INDEX_BAK FROM \"0000050360\".R_DETAIL RD LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE ERBT ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID LEFT JOIN \"0000050360\".ENT_RECORD_BX_TABLE_BAK BRT ON RD.SESSION_ID = BRT.SESSION_ID AND RD.AGENT_ID = BRT.AGENT_ID WHERE 1=1 AND RD.TALK_DURATION > 1 AND RD.END_TIME >= to_date('2020-07-31 17:10:00','yyyy-MM-dd HH24:mi:ss') AND RD.END_TIME < to_date('2020-07-31 17:20:00','yyyy-MM-dd HH24:mi:ss') AND (RD.CALLTYPE=1 OR RD.CALLTYPE=6) AND (RD.END_TYPE=254 OR RD.END_TYPE=255)]; nested exception is java.sql.SQLSyntaxErrorException: ORA-00942:[Syslog]";
+//        notifyRecordCheckMsg("监控 这是录音检查结果测试消息," + testMsg, false);
+//        notifyRecordBackupMsg("监控 这是录音备份结果测试消息," + testMsg);
     }
 
     @Override
@@ -149,54 +94,54 @@ public class NotifyServiceImpl implements INotifyService {
                 }
                 else if(recordCount > 0)
                 {
-                    if(entRecordCheckResultVo.getNotIndexList().size() >= this.indexLostCount)
+                    if(entRecordCheckResultVo.getNotIndexList().size() >= recordCheckNotifyCfg.indexLostCount)
                     {
                         logger.debug(String.format("%s record index loss count %d beyond threshold %d, need notify",
-                                tag, entRecordCheckResultVo.getNotIndexList().size(), this.indexLostCount));
+                                tag, entRecordCheckResultVo.getNotIndexList().size(), recordCheckNotifyCfg.indexLostCount));
                         needNotify = true;
                     }
-                    else if((entRecordCheckResultVo.getNotIndexList().size() * 100 /recordCount) >= this.indexLostRate)
+                    else if((entRecordCheckResultVo.getNotIndexList().size() * 100 /recordCount) >= recordCheckNotifyCfg.indexLostRate)
                     {
                         logger.debug(String.format("%s record index loss rate %d beyond threshold %d, need notify",
-                                tag, (entRecordCheckResultVo.getNotIndexList().size() * 100 /recordCount), this.indexLostRate));
+                                tag, (entRecordCheckResultVo.getNotIndexList().size() * 100 /recordCount), recordCheckNotifyCfg.indexLostRate));
                         needNotify = true;
                     }
-                    else if(entRecordCheckResultVo.getNotFileList().size() >= this.fileLostCount)
+                    else if(entRecordCheckResultVo.getNotFileList().size() >= recordCheckNotifyCfg.fileLostCount)
                     {
                         logger.debug(String.format("%s record file loss count %d beyond threshold %d, need notify",
-                                tag, entRecordCheckResultVo.getNotFileList().size(), this.fileLostCount));
+                                tag, entRecordCheckResultVo.getNotFileList().size(), recordCheckNotifyCfg.fileLostCount));
                         needNotify = true;
                     }
-                    else if((entRecordCheckResultVo.getNotFileList().size() * 100 /recordCount) >= this.fileLostRate)
+                    else if((entRecordCheckResultVo.getNotFileList().size() * 100 /recordCount) >= recordCheckNotifyCfg.fileLostRate)
                     {
                         logger.debug(String.format("%s record file loss rate %d beyond threshold %d, need notify",
-                                tag, (entRecordCheckResultVo.getNotFileList().size() * 100 /recordCount), this.fileLostRate));
+                                tag, (entRecordCheckResultVo.getNotFileList().size() * 100 /recordCount), recordCheckNotifyCfg.fileLostRate));
                         needNotify = true;
                     }
                     else if(entRecordCheckResultVo.isHasBak())
                     {
-                        if(entRecordCheckResultVo.getNotBakIndexList().size() >= this.bakIndexLostCount)
+                        if(entRecordCheckResultVo.getNotBakIndexList().size() >= recordCheckNotifyCfg.bakIndexLostCount)
                         {
                             logger.debug(String.format("%s record bak index loss count %d beyond threshold %d, need notify",
-                                    tag, entRecordCheckResultVo.getNotBakIndexList().size(), this.bakIndexLostCount));
+                                    tag, entRecordCheckResultVo.getNotBakIndexList().size(), recordCheckNotifyCfg.bakIndexLostCount));
                             needNotify = true;
                         }
-                        else if((entRecordCheckResultVo.getNotBakIndexList().size() * 100 /recordCount) >= this.bakIndexLostRate)
+                        else if((entRecordCheckResultVo.getNotBakIndexList().size() * 100 /recordCount) >= recordCheckNotifyCfg.bakIndexLostRate)
                         {
                             logger.debug(String.format("%s record bak index loss rate %d beyond threshold %d, need notify",
-                                    tag, (entRecordCheckResultVo.getNotBakIndexList().size() * 100 /recordCount), this.bakIndexLostRate));
+                                    tag, (entRecordCheckResultVo.getNotBakIndexList().size() * 100 /recordCount), recordCheckNotifyCfg.bakIndexLostRate));
                             needNotify = true;
                         }
-                        else if(entRecordCheckResultVo.getNotBakFileList().size() >= this.bakFileLostCount)
+                        else if(entRecordCheckResultVo.getNotBakFileList().size() >= recordCheckNotifyCfg.bakFileLostCount)
                         {
                             logger.debug(String.format("%s record bak file loss count %d beyond threshold %d, need notify",
-                                    tag, entRecordCheckResultVo.getNotBakFileList().size(), this.bakFileLostCount));
+                                    tag, entRecordCheckResultVo.getNotBakFileList().size(), recordCheckNotifyCfg.bakFileLostCount));
                             needNotify = true;
                         }
-                        else if((entRecordCheckResultVo.getNotBakFileList().size() * 100 /recordCount) >= this.bakFileLostRate)
+                        else if((entRecordCheckResultVo.getNotBakFileList().size() * 100 /recordCount) >= recordCheckNotifyCfg.bakFileLostRate)
                         {
                             logger.debug(String.format("%s record file bak loss rate %d beyond threshold %d, need notify",
-                                    tag, (entRecordCheckResultVo.getNotBakFileList().size() * 100 /recordCount), this.bakFileLostRate));
+                                    tag, (entRecordCheckResultVo.getNotBakFileList().size() * 100 /recordCount), recordCheckNotifyCfg.bakFileLostRate));
                             needNotify = true;
                         }
                     }
@@ -209,9 +154,9 @@ public class NotifyServiceImpl implements INotifyService {
                     logger.debug(String.format("%s record check result need not notify", tag));
 
             }
-            if(this.isReportNormalCheckResult)
+            if(recordCheckNotifyCfg.reportNormalResult)
             {
-                logger.debug("notify sum of platform record check result to dingding");
+                logger.debug("need notify sum of platform record check result");
                 String msg = getPlatformCheckResultSum(checkResultVo);
                 notifyRecordCheckMsg(msg, true);
             }
@@ -221,27 +166,55 @@ public class NotifyServiceImpl implements INotifyService {
     private void notifyRecordCheckMsg(String msg, boolean isCheckResultOk)
     {
         logger.debug(String.format("need notify record check msg : %s", msg));
-        if(this.reportWechat){
+        if(recordCheckNotifyCfg.wechat != null && recordCheckNotifyCfg.wechat.isReportByWechat()){
             notifyToWechat(msg);
         }
-        if(this.reportDingdingByScript)
-            notifyByScript(msg);
-        else
-            for(DingDingGroup group : this.recordCheckNotifyCfg.getDingding().getGroup())
-                notifyByDingding(msg, group);
-        if(!isCheckResultOk && this.recordCheckNotifyCfg.getSysLog() != null && this.recordCheckNotifyCfg.getSysLog().isWrite())
-            writeToSysLog(msg, recordCheckNotifyCfg.getSysLog().getTag());
+        if(recordCheckNotifyCfg.dingding != null && recordCheckNotifyCfg.dingding.isReportByDingDing()){
+            if(recordCheckNotifyCfg.dingding.byScript){
+                notifyByScript(msg);
+            }
+            else {
+                for(DingDingGroup group : this.recordCheckNotifyCfg.dingding.group)
+                    notifyByDingding(msg, group);
+            }
+        }
+        if(!isCheckResultOk && this.recordCheckNotifyCfg.sysLog != null && this.recordCheckNotifyCfg.sysLog.isReportBySysLog())
+        {
+            writeToSysLog(msg, recordCheckNotifyCfg.sysLog.tag);
+        }
+    }
+
+    private void notifyRecordBackupMsg(String msg)
+    {
+        logger.debug(String.format("need notify record backup msg : %s", msg));
+        if(recordBackupNotifyCfg.wechat != null && recordBackupNotifyCfg.wechat.isReportByWechat()){
+            notifyToWechat(msg);
+        }
+        if(recordBackupNotifyCfg.dingding != null && recordBackupNotifyCfg.dingding.isReportByDingDing()){
+            if(recordBackupNotifyCfg.dingding.byScript){
+                notifyByScript(msg);
+            }
+            else {
+                for(DingDingGroup group : this.recordBackupNotifyCfg.dingding.group)
+                    notifyByDingding(msg, group);
+            }
+        }
+        if(this.recordBackupNotifyCfg.sysLog != null && this.recordBackupNotifyCfg.sysLog.isReportBySysLog())
+        {
+            writeToSysLog(msg, recordBackupNotifyCfg.sysLog.tag);
+        }
     }
 
     @Override
     public void notify(PlatformRecordBackupResultSumVo backupResultVo) {
-        for(DingDingGroup group : this.recordBackupNotifyCfg.getDingding().getGroup())
-        {
-            String msg = String.format("%s %s", group.getTag(), backupResultVo.getComment());
-            notifyByDingding(msg, group);
-        }
-        if(this.recordBackupNotifyCfg.getSysLog() != null && this.recordBackupNotifyCfg.getSysLog().isWrite())
-            writeToSysLog(backupResultVo.getComment(), recordCheckNotifyCfg.getSysLog().getTag());
+//        for(DingDingGroup group : this.recordBackupNotifyCfg.dingding.group)
+//        {
+//            String msg = String.format("%s %s", group.getTag(), backupResultVo.getComment());
+//            notifyByDingding(msg, group);
+//        }
+//        if(this.recordBackupNotifyCfg.sysLog != null && this.recordBackupNotifyCfg.sysLog.isReportBySysLog())
+//            writeToSysLog(backupResultVo.getComment(), recordCheckNotifyCfg.sysLog.tag);
+        notifyRecordBackupMsg(backupResultVo.getComment());
     }
 
     private void notifyByDingding(String noticeMsg, DingDingGroup group)
@@ -270,12 +243,12 @@ public class NotifyServiceImpl implements INotifyService {
     }
 
     private void notifyToWechat(String msg){
-        logger.debug(String.format("notify %s to wechat by script %s/%s", msg, this.reportWechatScriptPath, this.wechatScriptFileName));
+        logger.debug(String.format("notify %s to wechat by script %s/%s", msg, recordCheckNotifyCfg.wechat.scriptPath, recordCheckNotifyCfg.wechat.scriptName));
         try
         {
             String sendMsg = msg.replace("\"", "\\\"");
-            sendMsg = String.format("%s %s", wechatTag, sendMsg);
-            File file = new File(String.format("%s/%s", reportWechatScriptPath, wechatLogFileName));
+            sendMsg = String.format("%s %s", recordCheckNotifyCfg.wechat.wechatTag, sendMsg);
+            File file = new File(String.format("%s/%s", recordCheckNotifyCfg.wechat.scriptPath, recordCheckNotifyCfg.wechat.logFile));
             file.createNewFile();
             FileWriter writer = new FileWriter(file);
             BufferedWriter out = new BufferedWriter(writer);
@@ -284,7 +257,7 @@ public class NotifyServiceImpl implements INotifyService {
             writer.close();
             Thread.sleep(1000);
             Runtime runtime = Runtime.getRuntime();
-            String[] cmd = new String[]{"/bin/sh", "-c", String.format(" cd %s && ./%s", reportWechatScriptPath, wechatScriptFileName)};
+            String[] cmd = new String[]{"/bin/sh", "-c", String.format(" cd %s && ./%s", recordCheckNotifyCfg.wechat.scriptPath, recordCheckNotifyCfg.wechat.scriptName)};
             logger.debug(String.format("begin to exec %s", String.join(",", cmd)));
             Process process = runtime.exec(cmd);
             InputStream is = process.getErrorStream();
@@ -305,12 +278,12 @@ public class NotifyServiceImpl implements INotifyService {
 
     private void notifyByScript(String msg)
     {
-        logger.debug(String.format("notify %s to by script %s", msg, this.reportDingdingScriptPath));
+        logger.debug(String.format("notify %s to by script %s", msg, recordCheckNotifyCfg.dingding.scriptPath));
         try
         {
             Runtime runtime = Runtime.getRuntime();
             String notifyMsg = Base64.getEncoder().encodeToString(msg.getBytes("utf-8"));
-            String command = String.format("python %s \"%s\"", this.reportDingdingScriptPath, notifyMsg);
+            String command = String.format("python %s \"%s\"", recordCheckNotifyCfg.dingding.scriptPath, notifyMsg);
             logger.debug(String.format("begin to exec %s", command));
             runtime.exec(command);
             logger.debug("notify success");
