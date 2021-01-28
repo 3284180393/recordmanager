@@ -70,10 +70,13 @@ public class CloudPlatformRecordServiceImpl extends PlatformRecordBaseService {
             }
             else if(StringUtils.isBlank(detailVo.getRecordIndex()))
             {
+                logger.error(String.format("[entId=%s, sessionId=%s] not find record index", detailVo.getEnterpriseId(), detailVo.getSessionId()));
                 notIndexList.add(detailVo);
             }
-            else
+            else {
+                logger.error(String.format("[entId=%s, sessionId=%s] not find record file", detailVo.getEnterpriseId(), detailVo.getSessionId()));
                 notFileList.add(detailVo);
+            }
 
         }
         EntRecordCheckResultSumVo sumVo = new EntRecordCheckResultSumVo(enterpriseVo, checkTime, beginTime, endTime, successList, notIndexList, notFileList);

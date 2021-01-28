@@ -17,11 +17,11 @@ import java.util.List;
 @ConfigurationProperties(prefix = "ccod.enterprise")
 public class EnterpriseCfg {
 
-    private EnterpriseChoseMethod choseMethod; //企业选择方式
+    public EnterpriseChoseMethod choseMethod; //企业选择方式
 
-    private List<String> list; //企业列表
+    public List<String> list; //企业列表
 
-    private List<String> notCheckBakList; //忽略备份录音企业列表
+    public List<String> notCheckBakList; //忽略备份录音企业列表
 
     public EnterpriseChoseMethod getChoseMethod() {
         return choseMethod;
@@ -46,4 +46,5 @@ public class EnterpriseCfg {
     public void setNotCheckBakList(List<String> notCheckBakList) {
         this.notCheckBakList = notCheckBakList;
     }
+
 }

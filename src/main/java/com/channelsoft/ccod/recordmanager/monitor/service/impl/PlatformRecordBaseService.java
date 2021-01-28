@@ -123,14 +123,7 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
     protected void cfgCheck() throws Exception
     {
         {
-            String path = "/mnt1/backup/record2/0000070002/Agent/20210117/TEL-000012_20210117114105.wav";
-            String grok = "^/mnt1/backup/record2/(?<entId>[a-zA-z0-9]+)/Agent/(?<yearAndMonth>20\\d{2}(0[1-9]|1[0-2]))/[^/]+/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$";
-//            path = "/mnt1/backup/record2/0000070002/Agent/20210117/TEL-000012_20210117114105.wav";
-            grok = "^/mnt1/backup/record2/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$";
-            Map<String, Object> matcher = GrokParser.match(grok, path);
-            if(matcher == null || matcher.size() == 0){
-                throw new Exception("error match");
-            }
+            System.out.println(isEnterpriseChosen("1112345678"));
         }
         if(!this.isCheck && !this.isBackup)
         {
@@ -746,14 +739,23 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
                 chosen = true;
                 break;
             case INCLUDE:
-                chosen = new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId) ? true : false;
+                chosen = isMatched(enterpriseId, enterpriseCfg.list);
                 break;
-            case EXCLUdE:
-                chosen = !(new HashSet<String>(enterpriseCfg.getList()).contains(enterpriseId)) ? true : false;
+            case EXCLUDE:
+                chosen = !isMatched(enterpriseId, enterpriseCfg.list);
                 break;
         }
         logger.debug(String.format("%s is chosen : %b", enterpriseId, chosen));
         return chosen;
+    }
+
+    protected boolean isMatched(String id, List<String> ids){
+        for(String str : ids){
+            if( id.matches(str)){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1282,6 +1284,12 @@ public abstract  class PlatformRecordBaseService implements IPlatformRecordServi
      */
     protected boolean addNewPlatformCheckResult(PlatformRecordCheckResultSumVo platformRecordCheckResultSumVo)
     {
+        if(platformRecordCheckResultSumVo.isResult()){
+            platformRecordCheckResultSumVo.getEntRecordCheckResultList().forEach(r->logger.info(r.getCheckDesc()));
+        }
+        else{
+            logger.error(platformRecordCheckResultSumVo.getComment());
+        }
         PlatformRecordCheckResultPo platformRecordCheckResultPo = platformRecordCheckResultSumVo.getCheckResult();
         int platformCheckId = this.platformRecordCheckResultDao.insert(platformRecordCheckResultPo);
         for(EntRecordCheckResultSumVo entSumVo : platformRecordCheckResultSumVo.getEntRecordCheckResultList())

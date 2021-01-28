@@ -113,20 +113,20 @@ public class RecordDetailDao2Impl implements IRecordDetailDao {
             case MIX:
                 sql.append(" LEFT JOIN \"").append(schemaName).append("\".")
                         .append(this.mixTable).append(" ERT");
-                sql.append(" ON RD.SESSION_ID = ERT.SESSION_ID AND RD.AGENT_ID = ERT.AGENT_ID");
+                sql.append(" ON RD.SESSION_ID = ERT.SESSION_ID AND ((RD.AGENT_ID = ERT.AGENT_ID) OR (RD.AGENT_ID IS NULL and ERT.AGENT_ID IS NULL))");
                 break;
             case COMBINATION:
                 sql.append(" LEFT JOIN \"").append(schemaName).append("\".")
                         .append(this.combinationTable).append(" ERBT");
-                sql.append(" ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID");
+                sql.append(" ON RD.SESSION_ID = ERBT.SESSION_ID AND ((RD.AGENT_ID = ERBT.AGENT_ID) OR (RD.AGENT_ID IS NULL and ERBT.AGENT_ID IS NULL))");
                 break;
             case MIX_AND_COMBINATION:
                 sql.append(" LEFT JOIN \"").append(schemaName).append("\".")
                         .append(this.mixTable).append(" ERT");
-                sql.append(" ON RD.SESSION_ID = ERT.SESSION_ID AND RD.AGENT_ID = ERT.AGENT_ID");
+                sql.append(" ON RD.SESSION_ID = ERT.SESSION_ID AND ((RD.AGENT_ID = ERT.AGENT_ID) OR (RD.AGENT_ID IS NULL and ERT.AGENT_ID IS NULL))");
                 sql.append(" LEFT JOIN \"").append(schemaName).append("\".")
                         .append(this.combinationTable).append(" ERBT");
-                sql.append(" ON RD.SESSION_ID = ERBT.SESSION_ID AND RD.AGENT_ID = ERBT.AGENT_ID");
+                sql.append(" ON RD.SESSION_ID = ERBT.SESSION_ID AND ((RD.AGENT_ID = ERBT.AGENT_ID) OR (RD.AGENT_ID IS NULL and ERBT.AGENT_ID IS NULL))");
                 break;
         }
         if (this.hasBak)

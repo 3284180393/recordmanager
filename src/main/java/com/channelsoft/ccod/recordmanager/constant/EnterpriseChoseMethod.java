@@ -13,7 +13,7 @@ public enum EnterpriseChoseMethod {
 
     INCLUDE(2, "INCLUDE", "只检查/备份包含在列表里面的企业"),
 
-    EXCLUdE(3, "EXCLUdE", "不检查/备份包含在列表里面的企业"),;
+    EXCLUDE(3, "EXCLUDE", "不检查/备份包含在列表里面的企业"),;
 
     public int id;
 

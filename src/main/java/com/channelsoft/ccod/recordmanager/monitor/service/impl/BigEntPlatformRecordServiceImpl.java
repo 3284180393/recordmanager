@@ -17,10 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -105,34 +102,43 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         return recordList;
     }
 
+    protected List<RecordDetailVo> filterSchemaRecordDetail(String schemaName, List<RecordDetailVo> schemaRecordList, List<GlsAgentVo> agents){
+        logger.debug(String.format("begin to filter %d record detail of schema %s", schemaRecordList.size(), schemaName));
+        Map<String, List<RecordDetailVo>> agentRecordMap = schemaRecordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getAgentId));
+        Map<String, GlsAgentVo> acceptAgentMap = agents.stream().collect(Collectors.toMap(GlsAgentVo::getAgentId, Function.identity()));
+        List<RecordDetailVo> validRecords = new ArrayList<>();
+        List<RecordDetailVo> recordList = new ArrayList<>();
+        for(String agentId : agentRecordMap.keySet())
+        {
+            if(!acceptAgentMap.containsKey(agentId)) {
+                logger.warn(String.format("agent %s is not wanted agent for schema %s, so %d record given up",
+                        agentId, schemaName, agentRecordMap.get(agentId).size()));
+            }
+            else
+            {
+                List<RecordDetailVo> agentRecords = agentRecordMap.get(agentId);
+                agentRecords.forEach(r->r.setEnterpriseId(acceptAgentMap.get(agentId).getEntId()));
+                logger.debug(String.format("%s(%s) has %d record detail",
+                        agentId, acceptAgentMap.get(agentId).getEntId(), agentRecords.size()));
+                recordList.addAll(agentRecords);
+                validRecords.addAll(agentRecords);
+            }
+        }
+        logger.debug(String.format("%d record detail filtered of %s", recordList.size(), schemaName));
+        return recordList;
+    }
+
     protected List<RecordDetailVo> getRecordDetailFromDB(IRecordDetailDao dao, Date beginTime, Date endTime, List<GlsAgentVo> agentList, List<BakRecordIndex> hasBakNotMasterList)    {
         Map<String, List<GlsAgentVo>> schemaAgentMap = agentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getSchemaName));
         List<RecordDetailVo> recordList = new ArrayList<>();
         for(String schemaName : schemaAgentMap.keySet())
         {
             List<RecordDetailVo> schemaRecordList = dao.select(schemaName, beginTime, endTime);
-            Map<String, List<RecordDetailVo>> agentRecordMap = schemaRecordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getAgentId));
-            Map<String, GlsAgentVo> acceptAgentMap = schemaAgentMap.get(schemaName).stream().collect(Collectors.toMap(GlsAgentVo::getAgentId, Function.identity()));
-            List<RecordDetailVo> validRecords = new ArrayList<>();
-            for(String agentId : agentRecordMap.keySet())
+            List<RecordDetailVo> filters = filterSchemaRecordDetail(schemaName, schemaRecordList, schemaAgentMap.get(schemaName));
+            recordList.addAll(filters);
+            if(filters.size() > 0 && hasBak)
             {
-                if(!acceptAgentMap.containsKey(agentId)) {
-                    logger.warn(String.format("agent %s is not wanted agent for schema %s, so %d record given up",
-                            agentId, schemaName, agentRecordMap.get(agentId).size()));
-                }
-                else
-                {
-                    List<RecordDetailVo> agentRecords = agentRecordMap.get(agentId);
-                    agentRecords.forEach(r->r.setEnterpriseId(acceptAgentMap.get(agentId).getEntId()));
-                    logger.debug(String.format("%s(%s) has %d record detail",
-                            agentId, acceptAgentMap.get(agentId).getEntId(), agentRecords.size()));
-                    recordList.addAll(agentRecords);
-                    validRecords.addAll(agentRecords);
-                }
-            }
-            if(hasBak)
-            {
-                List<String> sessionIds = validRecords.stream()
+                List<String> sessionIds = filters.stream()
                         .filter(r-> StringUtils.isBlank(r.getRecordIndex()) && StringUtils.isNotBlank(r.getBakRecordIndex()))
                         .map(r->r.getSessionId()).collect(Collectors.toList());
                 if(sessionIds.size() > 0)

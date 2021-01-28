@@ -15,7 +15,9 @@ public enum CCODPlatformType {
 
     BIG_ENT_WITH2BIZ(3, "BIG_ENT_WITH2BIZ", "拥有两个业务库大域平台"),
 
-    CLOUD(4, "CLOUD", "云平台"),;
+    CLOUD(4, "CLOUD", "云平台"),
+
+    EX_BIG_ENT(5, "EX_BIG_ENT", "该类大域平台只有一个业务库，但座席不能从gls库的GLS_DB_AGENT_RELATE表获取只能从ucds中获取"),;
 
     public int id;
 
