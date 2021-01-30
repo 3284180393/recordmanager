@@ -57,9 +57,14 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         return resultVo;
     }
 
+    protected List<GlsAgentVo> getValidGlsAgent(){
+        List<GlsAgentVo> glsAgentList = this.glsAgentDao.select();
+        return glsAgentList;
+    }
+
     protected List<GlsAgentVo> queryGLSAgent()
     {
-        List<GlsAgentVo> glsAgentList = this.glsAgentDao.select();
+        List<GlsAgentVo> glsAgentList = getValidGlsAgent();
         Map<String, List<GlsAgentVo>> entAgentMap = glsAgentList.stream().collect(Collectors.groupingBy(GlsAgentVo::getEntId));
         List<GlsAgentVo> retList = new ArrayList<>();
         for(String entId : entAgentMap.keySet())

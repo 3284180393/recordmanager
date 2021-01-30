@@ -1,16 +1,29 @@
 spring:
   datasource:
+    ucds:
+      username: ucds
+      password: ucds
+      jdbc-url: jdbc:mysql://10.130.41.218:32319/ucds
+      driver-class-name: com.mysql.jdbc.Driver
+      maximumPoolSize: 2
+      min-minimumIdle: 2
+
     gls:
       username: ccod
       password: ccod
-      jdbc-url: jdbc:oracle:thin:@172.16.0.10:1521:ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
       driver-class-name: oracle.jdbc.OracleDriver
+      maximumPoolSize: 1
+      min-minimumIdle: 1
 
     business:
+      dbName: db1
       username: ccod
       password: ccod
-      jdbc-url: jdbc:oracle:thin:@172.16.0.10:1521:ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
       driver-class-name: oracle.jdbc.OracleDriver
+      maximumPoolSize: 1
+      min-minimumIdle: 1
 
     sqlite:
       jdbc-url: jdbc:sqlite:/home/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
@@ -25,6 +38,7 @@ db:
   table:
     detail: R_DETAIL
     enterprise: GLS_ENTERPRISE_INFO
+    agent: T_A_SKILL
     mix: ENT_RECORD_TABLE
     combination: ENT_RECORD_BX_TABLE
     bak: ENT_RECORD_BX_TABLE_BAK
@@ -34,7 +48,7 @@ db:
 ccod:
   platformId: hblt
   platformName: 河北联通
-  platformType: NORMAL
+  platformType: EX_BIG_ENT
   recordType: COMBINATION
   hasBak: false
   enterprise:
@@ -81,7 +95,7 @@ record:
 jobs:
   recordCheck:
     execute: true
-    cron: 0 0/10 * * * *
+    cron: 0 0/2 * * * *
     interval: 10
     delay: 10
   backup:

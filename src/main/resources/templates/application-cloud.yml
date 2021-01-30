@@ -5,15 +5,17 @@ spring:
       password: ucds
       jdbc-url: jdbc:mysql://10.130.41.218:31950/ucds
       driver-class-name: com.mysql.jdbc.Driver
-      initial-size: 2
-      max-active: 2
-      min-idle: 2
+      maximumPoolSize: 2
+      min-minimumIdle: 2
 
     business:
       conn-str: 10.130.41.212:30065
+      user: user
+      password: password
+      source: source
 
     sqlite:
-      jdbc-url: jdbc:sqlite:jdbc:sqlite:/temp/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      jdbc-url: jdbc:sqlite:/temp/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
 
 ccod:
