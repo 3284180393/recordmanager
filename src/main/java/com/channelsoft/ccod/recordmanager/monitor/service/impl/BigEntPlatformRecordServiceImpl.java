@@ -57,6 +57,10 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         return resultVo;
     }
 
+    /**
+     * 查询座席
+     * @return 平台所有座席
+     */
     protected List<GlsAgentVo> getValidGlsAgent(){
         List<GlsAgentVo> glsAgentList = this.glsAgentDao.select();
         return glsAgentList;
@@ -69,12 +73,10 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         List<GlsAgentVo> retList = new ArrayList<>();
         for(String entId : entAgentMap.keySet())
         {
-            if(!isEnterpriseChosen(entId))
-            {
+            if(!isEnterpriseChosen(entId)) {
                 logger.debug(String.format("%s not been chosen, %d agent given up", entId, entAgentMap.get(entId).size()));
             }
-            else
-            {
+            else {
                 logger.debug(String.format("%s has %d agent", entId, entAgentMap.get(entId).size()));
                 retList.addAll(entAgentMap.get(entId));
             }
@@ -90,13 +92,11 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         List<GlsAgentVo> dbAgentList = new ArrayList<>();
         for(String name : dbAgentMap.keySet())
         {
-            if(dbName.equals(name))
-            {
+            if(dbName.equals(name)) {
                 logger.debug(String.format("%d agent on db %s", dbAgentMap.get(name).size(), name));
                 dbAgentList.addAll(dbAgentMap.get(name));
             }
-            else
-            {
+            else {
                 logger.error(String.format("db %s is unknown, %d agent given up", name, dbAgentMap.get(name).size()));
             }
         }
@@ -107,7 +107,14 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         return recordList;
     }
 
-    protected List<RecordDetailVo> filterSchemaRecordDetail(String schemaName, List<RecordDetailVo> schemaRecordList, List<GlsAgentVo> agents){
+    /**
+     * 过滤schema中无效的呼叫明细，并为有效的呼叫明细设置企业id
+     * @param schemaName schema名
+     * @param schemaRecordList schema下的录音
+     * @param agents schema关联座席
+     * @return 设置了企业id的有效录音
+     */
+    protected List<RecordDetailVo> filterAndSetEntIdForSchemaRecord(String schemaName, List<RecordDetailVo> schemaRecordList, List<GlsAgentVo> agents){
         logger.debug(String.format("begin to filter %d record detail of schema %s", schemaRecordList.size(), schemaName));
         Map<String, List<RecordDetailVo>> agentRecordMap = schemaRecordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getAgentId));
         Map<String, GlsAgentVo> acceptAgentMap = agents.stream().collect(Collectors.toMap(GlsAgentVo::getAgentId, Function.identity()));
@@ -139,7 +146,7 @@ public class BigEntPlatformRecordServiceImpl extends PlatformRecordBaseService {
         for(String schemaName : schemaAgentMap.keySet())
         {
             List<RecordDetailVo> schemaRecordList = dao.select(schemaName, beginTime, endTime);
-            List<RecordDetailVo> filters = filterSchemaRecordDetail(schemaName, schemaRecordList, schemaAgentMap.get(schemaName));
+            List<RecordDetailVo> filters = filterAndSetEntIdForSchemaRecord(schemaName, schemaRecordList, schemaAgentMap.get(schemaName));
             recordList.addAll(filters);
             if(filters.size() > 0 && hasBak)
             {
