@@ -44,9 +44,6 @@ public class GlsEnterpriseDaoImpl implements IEnterpriseDao {
     @Value("${db.table.enterprise}")
     private String enterpriseTable;
 
-    @Value("${db.table.dbEntRelate}")
-    private String dbEntRelate;
-
     @Override
     public List<EnterpriseVo> select() {
         String sql = String.format("SELECT GEI.ENTERPRISEID AS ENT_ID,GEI.ENTERPRISENAME AS ENT_NAME FROM %s GEI WHERE GEI.ISOPEN=1",

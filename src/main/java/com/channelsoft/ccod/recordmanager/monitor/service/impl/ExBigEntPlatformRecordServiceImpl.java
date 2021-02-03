@@ -5,14 +5,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.channelsoft.ccod.recordmanager.config.BigEntPlatformCondition;
 import com.channelsoft.ccod.recordmanager.config.BigExEntPlatformCondition;
 import com.channelsoft.ccod.recordmanager.config.RecordStoreRule;
+import com.channelsoft.ccod.recordmanager.monitor.dao.IDBSchemaDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IGlsAgentDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IUcdsAgentDao;
 import com.channelsoft.ccod.recordmanager.monitor.po.BakRecordIndex;
-import com.channelsoft.ccod.recordmanager.monitor.vo.EntRecordCheckResultSumVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.GlsAgentVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.PlatformRecordCheckResultSumVo;
-import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
+import com.channelsoft.ccod.recordmanager.monitor.vo.*;
 import com.channelsoft.ccod.recordmanager.utils.GrokParser;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -43,18 +41,36 @@ public class ExBigEntPlatformRecordServiceImpl extends BigEntPlatformRecordServi
     @Autowired
     IUcdsAgentDao ucdsAgentDao;
 
+    @Autowired
+    IDBSchemaDao dbSchemaDao;
+
     @PostConstruct
     public void init() throws Exception
     {
         System.out.println("^^^^^^^^^^^^^^^^^^^ex big ent");
     }
 
-//    protected List<GlsAgentVo> getValidGlsAgent(){
-//        List<GlsAgentVo> list = ucdsAgentDao.select();
-//        logger.info(String.format("find %d agent from ucds", list.size()));
-//        list.forEach(a->a.setDbName(dbName));
-//        return list;
-//    }
+    protected List<GlsAgentVo> getValidGlsAgent(){
+        List<GlsAgentVo> list = ucdsAgentDao.select();
+        logger.info(String.format("find %d agent from ucds", list.size()));
+        return list;
+    }
+
+    protected List<RecordDetailVo> searchPlatformRecord(Date beginTime, Date endTime, List<GlsAgentVo> agentList) throws Exception
+    {
+        List<DBSchemaVo> dbSchemas = dbSchemaDao.select();
+        List<BakRecordIndex> hasBakAndNotMasters = new ArrayList<>();
+        List<RecordDetailVo> recordList = new ArrayList<>();
+        for(DBSchemaVo schema : dbSchemas)
+        {
+            List<RecordDetailVo> schemaRecordList = recordDetailDao.select(schema.getSchemaName(), beginTime, endTime);
+            List<RecordDetailVo> filters = filterAndSetEntIdForSchemaRecord(schema.getSchemaName(), schemaRecordList, agentList);
+            recordList.addAll(filters);
+        }
+        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+        logger.debug(String.format("%s(%s) find %s record from %s to %s", this.platformName, this.platformId, recordList.size(), sf.format(beginTime), sf.format(endTime)));
+        return recordList;
+    }
 
     protected List<RecordDetailVo> filterAndSetEntIdForSchemaRecord(String schemaName, List<RecordDetailVo> schemaRecordList, List<GlsAgentVo> agents){
         logger.debug(String.format("begin to filter %d record detail of schema %s with platformType=EX_BIG_ENT", schemaRecordList.size(), schemaName));
@@ -151,18 +167,18 @@ public class ExBigEntPlatformRecordServiceImpl extends BigEntPlatformRecordServi
         return retList;
     }
 
-//    protected List<RecordDetailVo> getRecordDetailFromDB(IRecordDetailDao dao, Date beginTime, Date endTime, List<GlsAgentVo> agentList, List<BakRecordIndex> hasBakNotMasterList)
-//    {
-//        Set<String> schemaSet = glsAgentDao.select().stream().filter(a->a.getDbName().equals(dbName)).map(a->a.getSchemaName())
-//                .collect(Collectors.toSet());
-//        logger.debug(String.format("find %d schema at Database %s", schemaSet.size(), dbName));
-//        List<RecordDetailVo> recordList = new ArrayList<>();
-//        for(String schemaName : schemaSet)
-//        {
-//            List<RecordDetailVo> schemaRecordList = dao.select(schemaName, beginTime, endTime);
-//            List<RecordDetailVo> filters = filterAndSetEntIdForSchemaRecord(schemaName, schemaRecordList, agentList);
-//            recordList.addAll(filters);
-//        }
-//        return recordList;
-//    }
+    protected List<RecordDetailVo> getRecordDetailFromDB(IRecordDetailDao dao, Date beginTime, Date endTime, List<GlsAgentVo> agentList, List<BakRecordIndex> hasBakNotMasterList)
+    {
+        Set<String> schemaSet = glsAgentDao.select().stream().filter(a->a.getDbName().equals(dbName)).map(a->a.getSchemaName())
+                .collect(Collectors.toSet());
+        logger.debug(String.format("find %d schema at Database %s", schemaSet.size(), dbName));
+        List<RecordDetailVo> recordList = new ArrayList<>();
+        for(String schemaName : schemaSet)
+        {
+            List<RecordDetailVo> schemaRecordList = dao.select(schemaName, beginTime, endTime);
+            List<RecordDetailVo> filters = filterAndSetEntIdForSchemaRecord(schemaName, schemaRecordList, agentList);
+            recordList.addAll(filters);
+        }
+        return recordList;
+    }
 }

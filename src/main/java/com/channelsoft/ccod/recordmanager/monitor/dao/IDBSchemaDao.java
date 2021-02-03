@@ -18,5 +18,4 @@ public interface IDBSchemaDao {
      * @return 查询结果
      */
     List<DBSchemaVo> select();
-
 }
