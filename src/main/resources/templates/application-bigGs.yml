@@ -1,0 +1,152 @@
+spring:
+  datasource:
+    ucds:
+      username: ucds
+      password: ucds
+      jdbc-url: jdbc:mysql://10.130.41.218:32319/ucds
+      driver-class-name: com.mysql.jdbc.Driver
+      maximumPoolSize: 2
+      min-minimumIdle: 2
+
+    gls:
+      username: ccod
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      driver-class-name: oracle.jdbc.OracleDriver
+      maximumPoolSize: 1
+      min-minimumIdle: 1
+
+    business:
+      dbName: db1
+      username: ccod
+      password: ccod
+      jdbc-url: jdbc:oracle:thin:@10.130.41.12:1521:ccdev
+      driver-class-name: oracle.jdbc.OracleDriver
+      maximumPoolSize: 1
+      min-minimumIdle: 1
+
+    sqlite:
+      jdbc-url: jdbc:sqlite:/home/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      driver-class-name: org.sqlite.JDBC
+
+db:
+  gls:
+    type: GLS
+  business:
+    type: ORACLE
+    count: 1
+  table:
+    detail: R_DETAIL
+    enterprise: GLS_ENTERPRISE_INFO
+    agent: T_A_SKILL
+    mix: ENT_RECORD_TABLE
+    combination: ENT_RECORD_BX_TABLE
+    bak: ENT_RECORD_BX_TABLE_BAK
+    dbAgentRelate: GLS_DB_AGENT_RELATE
+    dbEntRelate: GLS_DB_ENT_RELATE
+
+ccod:
+  platformId: hblt
+  platformName: 河北联通
+  platformType: EX_BIG_ENT
+  recordType: COMBINATION
+  hasBak: false
+  enterprise:
+    choseMethod: EXCLUDE
+    list:
+      - "1112345678"
+    notCheckBakList:
+    ignoreSchemaList:
+      - "0000060111"
+
+call:
+  callTypes:
+    - 0
+    - 1
+  endTypes:
+    - 254
+    - 255
+  minTalkDuration: 1
+
+record:
+  master:
+    storeRules[0]:
+      grokPattern: ^/record/record/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /record/record/0311002/Agent/20210122/TEL-10086_6602_20210122074618.wav
+      recordIndex: record/0311002/Agent/20210122/TEL-10086_6602_20210122074618.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+  backup:
+    storeRules[0]:
+      grokPattern: ^/Data/Record/(?<entId>[a-zA-z0-9]+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/[^/]+/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /Data/Record/0000050863/202005/03122198316/0507/20200507162432_20__03122198316.wav
+      recordIndex: Record/0000050863/202005/03122198316/0507/20200507162432_20__03122198316.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+
+jobs:
+  recordCheck:
+    execute: true
+    cron: 0 0/1 * * * *
+    interval: 10
+    delay: 10
+  backup:
+    execute: true
+    startDate: 2021-01-20
+    cron: 0 10 21 * * *
+    backupRootPath: /Data/
+    verify: true
+    compareWithDB: true
+    businessEndTime: "21:00"
+    stopTime: "05:00"
+
+notify:
+  record-check:
+    indexLostCount: 3
+    indexLostRate: 3
+    fileLostCount: 1
+    fileLostRate: 1
+    bakIndexLostCount: 3
+    bakIndexLostRate: 3
+    bakFileLostCount: 3
+    bakFileLostRate: 3
+    dingding:
+      group[0]:
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        tag: "[录音报警]"
+        atAll: true
+        atList:
+    sysLog:
+      write: true
+      tag: "ccod"
+    wechat:
+      script-path: /home/recordmanager/config
+      script-name: weixin.sh
+      log-file: check_record.log
+      wechat-tag: 异常
+  record-backup:
+    dingding:
+      group[0]:
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        tag: "[录音备份]"
+        atAll: true
+        atList:
+    sysLog:
+      write: false
+      tag: "ccod"
+
+env:
+  windows: false
+
+debug: false
+

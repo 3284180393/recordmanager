@@ -46,8 +46,8 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
     private String user = null;
 
     private String password = null;
-//
-//    private String source = null;
+
+    private String source = null;
 
     @Value("${debug}")
     private boolean debug;
@@ -68,21 +68,21 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
             this.password = env.getProperty("spring.datasource.business.password");
             logger.info(String.format("mongo password=%s", password));
         }
-//        if(env.containsProperty("spring.datasource.business.source")){
-//            this.source = env.getProperty("spring.datasource.business.source");
-//            logger.info(String.format("mongo source=%s", source));
-//        }
+        if(env.containsProperty("spring.datasource.business.source")){
+            this.source = env.getProperty("spring.datasource.business.source");
+            logger.info(String.format("mongo source=%s", source));
+        }
     }
 
     @Override
     public List<RecordDetailVo> select(String schemaName, Date beginTime, Date endTime) {
         MongoClient client;
-//        if(StringUtils.isNotBlank(user) && StringUtils.isNotBlank(password) && StringUtils.isNotBlank(source)){
-        if(StringUtils.isNotBlank(user) && StringUtils.isNotBlank(password)){
+        if(StringUtils.isNotBlank(user) && StringUtils.isNotBlank(password) && StringUtils.isNotBlank(source)){
+//        if(StringUtils.isNotBlank(user) && StringUtils.isNotBlank(password)){
             logger.debug(String.format("connect to %s with user=%s and password=%s, source=%s",
                     connStr, user, password, schemaName));
-//            MongoCredential credential = MongoCredential.createScramSha1Credential(user, source, password.toCharArray());
-            MongoCredential credential = MongoCredential.createCredential(user, schemaName, password.toCharArray());
+            MongoCredential credential = MongoCredential.createScramSha1Credential(user, source, password.toCharArray());
+//            MongoCredential credential = MongoCredential.createCredential(user, schemaName, password.toCharArray());
             List credentials = new ArrayList();
             credentials.add(credential);
             String[] arr = connStr.split("\\:");
@@ -96,6 +96,7 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
              client = new MongoClient(connStr);
         }
         try{
+//            schemaName = "1002021109";
             DB db = client.getDB(schemaName);
             DBCollection collection = db.getCollection("session_detail");
             List<Integer> callTypes = callCheckRule.getCallTypes();

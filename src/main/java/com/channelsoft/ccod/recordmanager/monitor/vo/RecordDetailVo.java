@@ -39,6 +39,8 @@ public class RecordDetailVo {
 
     private String bakRecordIndex;    //备份录音索引
 
+    private String schemaName; //呼叫明细归属的schema，通常只对大域企业有效
+
     public String getEnterpriseId() {
         return enterpriseId;
     }
@@ -141,5 +143,13 @@ public class RecordDetailVo {
 
     public void setRecordFileFastDfsUrl(String recordFileFastDfsUrl) {
         this.recordFileFastDfsUrl = recordFileFastDfsUrl;
+    }
+
+    public String getSchemaName() {
+        return schemaName;
+    }
+
+    public void setSchemaName(String schemaName) {
+        this.schemaName = schemaName;
     }
 }

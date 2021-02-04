@@ -70,6 +70,9 @@ public class PlatformRecordCheckResultDaoImpl implements IPlatformRecordCheckRes
     public int insert(PlatformRecordCheckResultPo checkResultVo) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        if(checkResultVo.getCheckTime() == null){
+            checkResultVo.setCheckTime(new Date());
+        }
         String sql = "insert into platform_record_check_result (platformId, platformName, checkTime, timeUsage, beginTime, endTime, result, comment, checkEntCount, failEntCount, checkCount, successCount, notIndexCount, notFileCount, notBakIndexCount, notBakFileCount) " +
                 "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         PreparedStatementCreator preparedStatementCreator = con -> {

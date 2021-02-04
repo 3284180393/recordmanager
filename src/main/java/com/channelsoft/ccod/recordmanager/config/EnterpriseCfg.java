@@ -23,6 +23,8 @@ public class EnterpriseCfg {
 
     public List<String> notCheckBakList; //忽略备份录音企业列表
 
+    public List<String> ignoreSchemaList; //忽略检查的schema列表，目前只对大域企业有效
+
     public EnterpriseChoseMethod getChoseMethod() {
         return choseMethod;
     }
@@ -47,4 +49,11 @@ public class EnterpriseCfg {
         this.notCheckBakList = notCheckBakList;
     }
 
+    public List<String> getIgnoreSchemaList() {
+        return ignoreSchemaList;
+    }
+
+    public void setIgnoreSchemaList(List<String> ignoreSchemaList) {
+        this.ignoreSchemaList = ignoreSchemaList;
+    }
 }

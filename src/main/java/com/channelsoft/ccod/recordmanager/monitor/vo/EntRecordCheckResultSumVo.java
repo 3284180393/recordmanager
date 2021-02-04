@@ -231,7 +231,7 @@ public class EntRecordCheckResultSumVo {
     {
         if(result)
         {
-            String msg = String.format("%s[%s]一共%d通呼叫,%d通正常", enterpriseName, enterpriseId,
+            String msg = String.format("%s一共%d通呼叫,%d通正常", enterpriseId,
                     getAllRecordCount(), successList.size());
             if(this.notIndexList.size() > 0)
                 msg = String.format("%s,%d通没有录音索引", msg, this.notIndexList.size());

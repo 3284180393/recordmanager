@@ -87,7 +87,7 @@ public class NotifyServiceImpl implements INotifyService {
             {
                 int recordCount = entRecordCheckResultVo.getAllRecordCount();
                 boolean needNotify = false;
-                String tag = String.format("%s(%s)", entRecordCheckResultVo.getEnterpriseId(), entRecordCheckResultVo.getEnterpriseName());
+                String tag = entRecordCheckResultVo.getEnterpriseId();
                 if(!entRecordCheckResultVo.isResult()) {
                     logger.debug(String.format("%s record check fail, need notify", tag));
                     needNotify = true;

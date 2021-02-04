@@ -9,9 +9,9 @@ spring:
       min-minimumIdle: 2
 
     business:
-      conn-str: 10.130.77.153:27017
+      conn-str: 10.130.41.218:30693
       user: root
-      password: root
+      password: 5b5KKcMVVP
       source: admin
 
     sqlite:
