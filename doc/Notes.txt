@@ -1,0 +1,24 @@
+2021-02-04
+国寿大域新版本配置
+1、在spring.datasource下添加ucds配置，例如
+spring:
+  datasource:
+    ucds:
+      username: ucds
+      password: ucds
+      jdbc-url: jdbc:mysql://10.130.41.218:32319/ucds
+      driver-class-name: com.mysql.jdbc.Driver
+      maximumPoolSize: 2
+      min-minimumIdle: 2
+2、如果报schema不存在请在ccod.enterprise下添加ignoreSchemaList配置，例如
+ccod:
+  enterprise:
+    ignoreSchemaList:
+      - "0000060111"
+
+2021-02-22
+4.5平台新增了无工号坐席录音索引的支持（之前会误报为录音索引丢失）
+将call.agentIdCanBeNull设置为true将支持无坐席工号
+将call.agentIdCanBeNull设置为false或是不定义该字段将不支持无坐席工号
+call:
+  agentIdCanBeNull: true

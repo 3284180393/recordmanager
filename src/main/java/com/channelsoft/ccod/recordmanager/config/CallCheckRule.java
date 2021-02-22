@@ -26,6 +26,8 @@ public class CallCheckRule {
 
     private List<String> notCheckBakEnts; //该数组里面的企业不会检查备份录音
 
+    private boolean agentIdCanBeNull; //是否支持无工号坐席
+
     public List<Integer> getCallTypes() {
         return callTypes;
     }
@@ -64,5 +66,13 @@ public class CallCheckRule {
 
     public void setNotCheckBakEnts(List<String> notCheckBakEnts) {
         this.notCheckBakEnts = notCheckBakEnts;
+    }
+
+    public boolean isAgentIdCanBeNull() {
+        return agentIdCanBeNull;
+    }
+
+    public void setAgentIdCanBeNull(boolean agentIdCanBeNull) {
+        this.agentIdCanBeNull = agentIdCanBeNull;
     }
 }

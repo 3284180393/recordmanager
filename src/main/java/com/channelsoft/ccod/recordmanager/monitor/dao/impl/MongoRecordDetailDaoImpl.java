@@ -182,15 +182,22 @@ public class MongoRecordDetailDaoImpl implements IRecordDetailDao {
             {
                 JSONObject jsonObject = JSONObject.parseObject(cursor
                         .next().toString());
-                String agentId = jsonObject.getString("agent_id1");
+
                 String sessionId = jsonObject.getString("session_id");
                 for(RecordDetailVo detailVo : sessionRecordMap.get(sessionId))
                 {
-                    if(agentId.equals(detailVo.getAgentId()))
-                    {
-                        detailVo.setRecordIndex(jsonObject.getString("record_name"));
-                        hasIndexRecordList.add(detailVo);
+                    if(!callCheckRule.isAgentIdCanBeNull()){
+                        String agentId = jsonObject.getString("agent_id1");
+                        if(StringUtils.isBlank(agentId)){
+                            logger.warn(String.format("[%s] agentId is blank", JSONObject.toJSON(jsonObject)));
+                            continue;
+                        }
+                        else if(!agentId.equals(detailVo.getAgentId())) {
+                            continue;
+                        }
                     }
+                    detailVo.setRecordIndex(jsonObject.getString("record_name"));
+                    hasIndexRecordList.add(detailVo);
                 }
             }
             Map<String, List<RecordDetailVo>> indexRecordMap = hasIndexRecordList.stream().collect(Collectors.groupingBy(RecordDetailVo::getRecordIndex));
