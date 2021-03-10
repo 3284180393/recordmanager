@@ -17,7 +17,9 @@ public enum CCODPlatformType {
 
     CLOUD(4, "CLOUD", "云平台"),
 
-    EX_BIG_ENT(5, "EX_BIG_ENT", "该类大域平台只有一个业务库，但座席不能从gls库的GLS_DB_AGENT_RELATE表获取只能从ucds中获取"),;
+    EX_BIG_ENT(5, "EX_BIG_ENT", "该类大域平台只有一个业务库，但座席不能从gls库的GLS_DB_AGENT_RELATE表获取只能从ucds中获取"),
+
+    CLOUD_NEW(6, "CLOUD_NEW", "新一代云平台，用msql取代mongo作为业务库，录音文件在盘阵和fastdfs存储双份"),;
 
     public int id;
 

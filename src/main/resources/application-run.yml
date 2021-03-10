@@ -1,0 +1,219 @@
+spring:
+  datasource:
+    # 配置ucds库
+    ucds:
+      username: ucds
+      password: ucds
+      jdbc-url: jdbc:mysql://10.130.41.218:30581/ucds
+      driver-class-name: com.mysql.jdbc.Driver
+      maximumPoolSize: 2
+      min-minimumIdle: 2
+
+    # 配置自带sqlite库位置
+    sqlite:
+      jdbc-url: jdbc:sqlite:/home/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      driver-class-name: org.sqlite.JDBC
+
+ccod:
+  # 定义平台id
+  platformId: newbcm
+  # 定义平台名
+  platformName: 交行新一代
+  platformType: CLOUD_NEW
+  # 定义录音类型，支持值MIX：混音，COMBINATION：并线，MIX_AND_COMBINATION：既有混音也有并线
+  recordType: COMBINATION
+  # 是否有备录音
+  hasBak: false
+  enterprise:
+    # 企业选择方式，可支持值ALL：检查ucds查询出的所有企业，INCLUDE：只检查列表中的企业，EXCLUDE：ucds查询出的在列表中的企业将不被检查
+    choseMethod: INCLUDE
+    list:
+      - "0002"
+    # 如果录音有备录音，则列表中的企业将不会被检查备录音
+    notCheckBakList:
+
+call:
+  # 需要检查的呼叫类型，如果不设置将检查所有类型的呼叫
+  callTypes:
+    - 0
+    - 1
+  # 需要检查的呼叫结束类型，如果不设置将检查所有结束类型的呼叫
+  endTypes:
+    - 254
+    - 255
+  # 只有当通话时常大于该值的呼叫才会被检查
+  minTalkDuration: 1
+  notCheckeEnts:
+  notCheckBakEnts:
+  # 平台是否有无终端坐席（在呼叫明细中的坐席工号为空）
+  agentIdCanBeNull: true
+
+db:
+  gls:
+    type: UCDS
+  business:
+    type: MYSQL
+  table:
+    # 在数据库中，呼叫明细对应的表名
+    detail: session_detail
+    # 在数据库中企业表信息对应的表名
+    enterprise: UCD_ENTERPRISE_INFO
+    agent: UCD_ENTERPRISE_AGENT_INFO
+    # 在数据库中，混音录音对应表名
+    mix: ENT_RECORD_TABLE
+    # 在数据库中，并线录音对应表名
+    combination: ent_record_bx_table
+    fastdfs: ent_record_fastdfs_url
+    bak: ENT_RECORD_BX_TABLE
+    dbAgentRelate: GLS_DB_AGENT_RELATE
+    dbEntRelate: GLS_DB_ENT_RELATE
+
+record:
+  # 配置录音在盘阵的存放规则，可支持多种存放方式
+  master:
+    storeRules[0]:
+      # 盘阵中录音文件绝对路径满足的grok表达式
+      grokPattern: ^/mnt/Data/record/(?<entId>\d+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+      # 一条真实的录音文件绝对路径
+      example: /mnt/Data/record/0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
+      # 上面定义的录音文件对应的录音索引
+      recordIndex: 0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
+      # 录音文件绝对路径中的各种时间格式
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+  # 备录音的存放规则，字段含义同master定义，如果没有被录音可将该字段完全删除
+  backup:
+    storeRules[0]:
+      grokPattern: ^/mnt/record/record410/(?<entId>[a-zA-z0-9]+)/(?<yearAndMonth>20\d{2}(0[1-9]|1[0-2]))/[^/]+/(?<monthAndDay>(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.wav$
+      example: /mnt/record/record410/0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav
+      recordIndex: 0000000018/202004/10086/0415/20200415075510_1271_8025016844987477774_10086.wav
+      dateFormat:
+        date: yyyyMMdd
+        yearAndMonth: yyyyMM
+        monthAndDay: MMdd
+        year: yyyy
+        month: MM
+        day: dd
+
+jobs:
+  recordCheck:
+    # 是否检查录音索引以及录音文件
+    execute: true
+    # 每次检查的时间间隔
+    interval: 10
+    # 录音检查定时任务cron表达式，需要注意cron定义的间隔必须同interval相同
+    cron: 0 0/10 * * * *
+    # 录音延迟，每次定时任务将会将会检查 now-delay-interval到now-delay时间段的录音
+    delay: 10
+  backup:
+    # 是否启动企业录音定时备份
+    execute: true
+    # 第一次备份的备份开始时间
+    startDate: 2020-04-10
+    # 备份任务定时器cron表达式
+    cron: 0 0 22 * * *
+    # 录音将会被备份到哪个目录，注意不要和源录音的目录重合
+    backupRootPath: /mnt1/backup
+    # 录音备份完成后是否对每条备份录音和原录音进行md5校验
+    verify: true
+    # 备份完录音后是否和当天的录音明细进行对比，找出应该备份而未备份的录音
+    compareWithDB: true
+    # 平台的业务结束时间，如果执行备份任务的时间早于该值则任务平台还会有新录音添加，所以将不会备份当天的企业录音
+    businessEndTime: "21:00"
+    # 如果晚于改时间将不会启动新的备份任务，
+    # 例如第一次启动时5：02完成2020-05-02日录音后将不会备份2020-05-03录音推出定时任务，再次启动定时任务将会从2020-05-03开始备份
+    stopTime: "05:00"
+
+notify:
+  record-check:
+    # 如果一个企业的录音索引丢失数大于该值，将会触发告警
+    indexLostCount: 9
+    # 如果一个企业的录音索引丢失百分率大于该值，将会触发告警
+    indexLostRate: 10
+    # 如果一个企业的录音文件丢失数大于该值，将会触发告警
+    fileLostCount: 8
+    # 如果一个企业的录音文件丢失百分率大于该值，将会触发告警
+    fileLostRate: 9
+    # 如果一个企业的备录音索引丢失数大于该值，将会触发告警
+    bakIndexLostCount: 7
+    # 如果一个企业的备录音索引丢失百分率大于该值，将会触发告警
+    bakIndexLostRate: 8
+    # 如果一个企业的备录音文件丢失数大于该值，将会触发告警
+    bakFileLostCount: 6
+    # 如果一个企业的备录音文件丢失百分率大于该值，将会触发告警
+    bakFileLostRate: 7
+    # 用来将报警消息推送到dingding，如果不用推送到dingding可以将该节点删除
+    dingding:
+      # 是否用脚本推送
+      by-script: false
+      # 如果需要用脚本推送，定义脚本的绝对路径
+      script-path: /home/script/test
+      # 如果不用脚本推送，用来定义一组dingding群推送规则
+      group[0]:
+        # dingding群机器人的webHookToken
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        # 指定机器人接受的消息标签
+        tag: "[录音报警]"
+        # 是否推送给群所有人
+        atAll: true
+        # at群里面的指定用户
+        atList:
+    # 用来定义是否将报警消息写入sysLog供网关系统监控
+    sysLog:
+      # 是否写入sysLog
+      write: true
+      # 如果需要写入sysLog,写入消息的标签
+      tag: "ccod"
+    # 用来定义如何通过网关脚本将报警消息推送到微信，如果无需推送到微信可将该节点完全删除
+    wechat:
+      # 微信脚本所在目录
+      script-path: /home/recordmanager/config
+      # 微信脚本文件名,注意脚本的执行权限
+      script-name: weixin.sh
+      # 微信脚本读的log文件名
+      log-file: check_record.log
+      # 微信消息标签
+      wechat-tag: 异常
+  # 用来定义如何将企业录音备份结果推送出来，如果没有启动录音备份任务，或是不想接收备份结果可以将该节点完全删除
+  record-backup:
+    dingding:
+      # 是否用脚本推送
+      by-script: false
+      # 如果需要用脚本推送，定义脚本的绝对路径
+      script-path: /home/script/test
+      # 如果不用脚本推送，用来定义一组dingding群推送规则
+      group[0]:
+        # dingding群机器人的webHookToken
+        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
+        # 指定机器人接受的消息标签
+        tag: "[录音备份]"
+        # 是否推送给群所有人
+        atAll: true
+        # at群里面的指定用户
+        atList:
+    # 用来定义是否将报警消息写入sysLog供网关系统监控
+    sysLog:
+      # 是否写入sysLog
+      write: true
+      # 如果需要写入sysLog,写入消息的标签
+      tag: "ccod"
+    # 用来定义如何通过网关脚本将报警消息推送到微信，如果无需推送到微信可将该节点完全删除
+    wechat:
+      # 微信脚本所在目录
+      script-path: /home/recordmanager/config
+      # 微信脚本文件名,注意脚本的执行权限
+      script-name: weixin.sh
+      # 微信脚本读的log文件名
+      log-file: check_record.log
+      # 微信消息标签
+      wechat-tag: 录音备份
+
+env:
+  windows: false
+
+debug: false

@@ -3,6 +3,7 @@ package com.channelsoft.ccod.recordmanager.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.channelsoft.ccod.recordmanager.monitor.po.*;
 import com.channelsoft.ccod.recordmanager.monitor.service.IPlatformRecordService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName: RecordController
@@ -74,8 +76,8 @@ public class RecordController {
     }
 
     @RequestMapping(value = "/checkResult/{yearAndMonth}", method = RequestMethod.GET)
-    public AjaxResultPo queryPlatformRecordMonthCheckResult(@PathVariable String yearAndMonth) {
-        String uri = String.format("GET %s/checkResult/%s", this.apiBasePath, yearAndMonth);
+    public AjaxResultPo queryPlatformRecordMonthCheckResult(@PathVariable String yearAndMonth, String entId) {
+        String uri = String.format("GET %s/checkResult/%s, entId=%s", this.apiBasePath, yearAndMonth, entId);
         logger.debug(String.format("enter %s controller", uri));
         Date beginTime;
         Date endTime;
@@ -97,10 +99,19 @@ public class RecordController {
         AjaxResultPo resultPo;
         try
         {
-            List<PlatformRecordCheckResultPo> list = platformRecordService.queryPlatformRecordCheckResult(beginTime, endTime);
-            logger.debug(String.format("query %d platform check record from %s to %s",
-                    list.size(), sf.format(beginTime), sf.format(endTime)));
-            resultPo = new AjaxResultPo(true, "query platform check result success", list.size(), list);
+            if(StringUtils.isBlank(entId)){
+                List<PlatformRecordCheckResultPo> list = platformRecordService.queryPlatformRecordCheckResult(beginTime, endTime);
+                logger.debug(String.format("query %d platform check record from %s to %s",
+                        list.size(), sf.format(beginTime), sf.format(endTime)));
+                resultPo = new AjaxResultPo(true, "query platform check result success", list.size(), list);
+            }
+            else{
+                List<EntRecordCheckResultPo> list = platformRecordService.queryEntRecordCheckResult(beginTime, endTime)
+                        .stream().filter(r->r.getEnterpriseId().equals(entId)).collect(Collectors.toList());
+                logger.debug(String.format("query %s %d check record from %s to %s",
+                        entId, list.size(), sf.format(beginTime), sf.format(endTime)));
+                resultPo = new AjaxResultPo(true, "query check fail record success", list.size(), list);
+            }
         }
         catch (Exception ex)
         {
@@ -112,8 +123,8 @@ public class RecordController {
     }
 
     @RequestMapping(value = "/checkResult/{yearAndMonth}/{day}", method = RequestMethod.GET)
-    public AjaxResultPo queryEntRecordDayCheckResult(@PathVariable String yearAndMonth, @PathVariable String day) {
-        String uri = String.format("GET %s/checkResult/%s/%s", this.apiBasePath, yearAndMonth, day);
+    public AjaxResultPo queryEntRecordDayCheckResult(@PathVariable String yearAndMonth, @PathVariable String day, String entId) {
+        String uri = String.format("GET %s/checkResult/%s/%s, entId=%s", this.apiBasePath, yearAndMonth, day, entId);
         logger.debug(String.format("enter %s controller", uri));
         Date beginTime;
         Date endTime;
@@ -135,10 +146,19 @@ public class RecordController {
         AjaxResultPo resultPo;
         try
         {
-            List<EntRecordCheckResultPo> list = platformRecordService.queryEntRecordCheckResult(beginTime, endTime);
-            logger.debug(String.format("query %d enterprise check record from %s to %s",
-                    list.size(), sf.format(beginTime), sf.format(endTime)));
-            resultPo = new AjaxResultPo(true, "query enterprise check result success", list.size(), list);
+            if(StringUtils.isBlank(entId)){
+                List<EntRecordCheckResultPo> list = platformRecordService.queryEntRecordCheckResult(beginTime, endTime);
+                logger.debug(String.format("query %d enterprise check record from %s to %s",
+                        list.size(), sf.format(beginTime), sf.format(endTime)));
+                resultPo = new AjaxResultPo(true, "query enterprise check result success", list.size(), list);
+            }
+            else{
+                List<EntRecordCheckResultPo> list = platformRecordService.queryEntRecordCheckResult(beginTime, endTime)
+                        .stream().filter(r->r.getEnterpriseId().equals(entId)).collect(Collectors.toList());
+                logger.debug(String.format("query %s %d check record from %s to %s",
+                        entId, list.size(), sf.format(beginTime), sf.format(endTime)));
+                resultPo = new AjaxResultPo(true, "query check fail record success", list.size(), list);
+            }
         }
         catch (Exception ex)
         {

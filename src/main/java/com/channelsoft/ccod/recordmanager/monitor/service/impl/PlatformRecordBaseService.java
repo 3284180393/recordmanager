@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  */
 public abstract  class PlatformRecordBaseService implements IPlatformRecordService {
 
-    private final static Logger logger = LoggerFactory.getLogger(PlatformRecordBaseService.class);
+    protected Logger logger = LoggerFactory.getLogger(PlatformRecordBaseService.class);
 
     @Autowired
     protected RecordStoreCfg recordStoreCfg;

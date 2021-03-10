@@ -3,26 +3,20 @@ spring:
     ucds:
       username: ucds
       password: ucds
-      jdbc-url: jdbc:mysql://10.130.41.218:32319/ucds
+      jdbc-url: jdbc:mysql://10.130.41.218:30581/ucds
       driver-class-name: com.mysql.jdbc.Driver
       maximumPoolSize: 2
       min-minimumIdle: 2
-
-    business:
-      conn-str: 10.130.77.153:27017
-      user: root
-      password: root
-      source: admin
 
     sqlite:
       jdbc-url: jdbc:sqlite:/temp/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
 
 ccod:
-  platformId: shltPA
-  platformName: 上海联通平安
-  platformType: CLOUD
-  recordType: MIX
+  platformId: newbcm
+  platformName: 交行新一代
+  platformType: CLOUD_NEW
+  recordType: COMBINATION
   hasBak: false
   enterprise:
     choseMethod: ALL
@@ -42,15 +36,14 @@ db:
   gls:
     type: UCDS
   business:
-    type: MONGO
-    count: 1
-    db1Name: db1
+    type: MYSQL
   table:
-    detail: R_DETAIL
+    detail: session_detail
     enterprise: UCD_ENTERPRISE_INFO
     agent: UCD_ENTERPRISE_AGENT_INFO
     mix: ENT_RECORD_TABLE
-    combination: ENT_RECORD_BX_TABLE
+    combination: ent_record_bx_table
+    fastdfs: ent_record_fastdfs_url
     bak: ENT_RECORD_BX_TABLE
     dbAgentRelate: GLS_DB_AGENT_RELATE
     dbEntRelate: GLS_DB_ENT_RELATE
