@@ -178,7 +178,7 @@ public class NotifyServiceImpl implements INotifyService {
                     notifyByDingding(msg, group);
             }
         }
-        if(!isCheckResultOk && this.recordCheckNotifyCfg.sysLog != null && this.recordCheckNotifyCfg.sysLog.isReportBySysLog())
+        if(this.recordCheckNotifyCfg.sysLog != null && this.recordCheckNotifyCfg.sysLog.isReportBySysLog())
         {
             writeToSysLog(msg, recordCheckNotifyCfg.sysLog.tag);
         }

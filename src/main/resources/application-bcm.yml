@@ -11,7 +11,7 @@ spring:
 
     # 配置自带sqlite库位置
     sqlite:
-      jdbc-url: jdbc:sqlite:/home/recordmanager/db/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
+      jdbc-url: jdbc:sqlite:/temp/recordmanager?date_string_format=yyyy-MM-dd HH:mm:ss
       driver-class-name: org.sqlite.JDBC
 
 ccod:
@@ -73,11 +73,11 @@ record:
   master:
     storeRules[0]:
       # 盘阵中录音文件绝对路径满足的grok表达式
-      grokPattern: ^/mnt/Data/record/(?<entId>\d+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/(?<type>[A-Z]+)-(?<AgentDn>\d+)_(?<agentId>\d+)_(?<remoteUrl>\d+).wav$
+      grokPattern: ^/record/recorded/Success/fps-uploaded/record/(?<entId>[a-zA-z0-9]+)/Agent/(?<date>20\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1]))/[^/]+.(wav|mp3)$
       # 一条真实的录音文件绝对路径
-      example: /mnt/Data/record/0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
+      example: /record/recorded/Success/fps-uploaded/record/1000001/Agent/20210130/TEL-000012_20210117114105.mp3
       # 上面定义的录音文件对应的录音索引
-      recordIndex: 0000057733/Agent/20200313/SIP-400503_5860042291_20200317113441.wav
+      recordIndex: record/1000001/Agent/20210130/TEL-000012_20210117114105.mp3
       # 录音文件绝对路径中的各种时间格式
       dateFormat:
         date: yyyyMMdd
@@ -107,12 +107,12 @@ jobs:
     # 每次检查的时间间隔
     interval: 10
     # 录音检查定时任务cron表达式，需要注意cron定义的间隔必须同interval相同
-    cron: 0 0/10 * * * *
+    cron: 0 0/1 * * * *
     # 录音延迟，每次定时任务将会将会检查 now-delay-interval到now-delay时间段的录音
     delay: 10
   backup:
     # 是否启动企业录音定时备份
-    execute: true
+    execute: false
     # 第一次备份的备份开始时间
     startDate: 2020-04-10
     # 备份任务定时器cron表达式
@@ -147,71 +147,20 @@ notify:
     bakFileLostCount: 6
     # 如果一个企业的备录音文件丢失百分率大于该值，将会触发告警
     bakFileLostRate: 7
-    # 用来将报警消息推送到dingding，如果不用推送到dingding可以将该节点删除
-    dingding:
-      # 是否用脚本推送
-      by-script: false
-      # 如果需要用脚本推送，定义脚本的绝对路径
-      script-path: /home/script/test
-      # 如果不用脚本推送，用来定义一组dingding群推送规则
-      group[0]:
-        # dingding群机器人的webHookToken
-        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
-        # 指定机器人接受的消息标签
-        tag: "[录音报警]"
-        # 是否推送给群所有人
-        atAll: true
-        # at群里面的指定用户
-        atList:
     # 用来定义是否将报警消息写入sysLog供网关系统监控
     sysLog:
       # 是否写入sysLog
       write: true
       # 如果需要写入sysLog,写入消息的标签
       tag: "ccod"
-    # 用来定义如何通过网关脚本将报警消息推送到微信，如果无需推送到微信可将该节点完全删除
-    wechat:
-      # 微信脚本所在目录
-      script-path: /home/recordmanager/config
-      # 微信脚本文件名,注意脚本的执行权限
-      script-name: weixin.sh
-      # 微信脚本读的log文件名
-      log-file: check_record.log
-      # 微信消息标签
-      wechat-tag: 异常
   # 用来定义如何将企业录音备份结果推送出来，如果没有启动录音备份任务，或是不想接收备份结果可以将该节点完全删除
   record-backup:
-    dingding:
-      # 是否用脚本推送
-      by-script: false
-      # 如果需要用脚本推送，定义脚本的绝对路径
-      script-path: /home/script/test
-      # 如果不用脚本推送，用来定义一组dingding群推送规则
-      group[0]:
-        # dingding群机器人的webHookToken
-        webHookToken: https://oapi.dingtalk.com/robot/send?access_token=89c1999c06156510a82bad9d378173086fc2f5faaf7f170f44a8d8f9b8071b54
-        # 指定机器人接受的消息标签
-        tag: "[录音备份]"
-        # 是否推送给群所有人
-        atAll: true
-        # at群里面的指定用户
-        atList:
     # 用来定义是否将报警消息写入sysLog供网关系统监控
     sysLog:
       # 是否写入sysLog
       write: true
       # 如果需要写入sysLog,写入消息的标签
       tag: "ccod"
-    # 用来定义如何通过网关脚本将报警消息推送到微信，如果无需推送到微信可将该节点完全删除
-    wechat:
-      # 微信脚本所在目录
-      script-path: /home/recordmanager/config
-      # 微信脚本文件名,注意脚本的执行权限
-      script-name: weixin.sh
-      # 微信脚本读的log文件名
-      log-file: check_record.log
-      # 微信消息标签
-      wechat-tag: 录音备份
 
 env:
   windows: false

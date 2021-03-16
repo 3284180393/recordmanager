@@ -1,14 +1,19 @@
 package com.channelsoft.ccod.recordmanager.monitor.dao.impl;
 
+import com.channelsoft.ccod.recordmanager.constant.RecordType;
 import com.channelsoft.ccod.recordmanager.monitor.dao.IRecordDetailDao;
 import com.channelsoft.ccod.recordmanager.monitor.po.BakRecordIndex;
 import com.channelsoft.ccod.recordmanager.monitor.vo.RecordDetailVo;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -119,5 +124,65 @@ public class MysqlRecordDetailDaoImpl extends RecordDetailJdbcBase implements IR
             sql.append(")");
         }
         return sql.toString();
+    }
+
+    protected List<RecordDetailVo> queryRecordDetailByJdbc(JdbcTemplate jdbc, String schemaName, Date beginTime, Date endTime)
+    {
+        String sql = generateSql(schemaName, beginTime, endTime);
+        logger.debug(String.format("begin to query %s record detail with type=%s from %s to %s, sql=%s",
+                schemaName, this.recordType, beginTime, endTime, sql));
+        List<RecordDetailVo> retList =jdbc.query(sql, new MapRow());
+        logger.debug(String.format("%s has %d record from %s to %s with type=%s",
+                schemaName, retList.size(), beginTime, endTime, this.recordType.name));
+        return retList;
+    }
+
+    protected class MapRow implements RowMapper<RecordDetailVo>
+    {
+
+        @Override
+        public RecordDetailVo mapRow(ResultSet rs, int i) throws SQLException
+        {
+            RecordDetailVo detailVo = new RecordDetailVo();
+            detailVo.setRecordType(recordType);
+            System.out.println(String.format("start=%s and end=%s", rs.getTimestamp("START_TIME"), rs.getTimestamp("END_TIME")));
+            detailVo.setSessionId(rs.getString("SESSION_ID"));
+            long start = rs.getLong("START_TIME") * 1000L;
+            detailVo.setStartTime(new Date(start));
+            long end = rs.getLong("END_TIME") * 1000L;
+            detailVo.setEndTime(new Date(end));
+            detailVo.setAgentId(rs.getString("AGENT_ID"));
+            detailVo.setTalkDuration(rs.getInt("TALK_DURATION"));
+            detailVo.setEndType(rs.getInt("END_TYPE"));
+            detailVo.setCallType(rs.getInt("CALLTYPE"));
+            switch (recordType)
+            {
+                case MIX:
+                case COMBINATION:
+                    detailVo.setRecordIndex(rs.getString("RECORD_INDEX"));
+                    break;
+                case MIX_AND_COMBINATION:
+                    String mixIndex = rs.getString("MIX_RECORD_INDEX");
+                    String combinationIndex = rs.getString("COMBINATION_RECORD_INDEX");
+                    if(StringUtils.isNotBlank(mixIndex)) {
+                        detailVo.setRecordType(RecordType.MIX);
+                        detailVo.setRecordIndex(mixIndex);
+                    }
+                    else if(StringUtils.isNotBlank(combinationIndex)) {
+                        detailVo.setRecordType(RecordType.COMBINATION);
+                        detailVo.setRecordIndex(combinationIndex);
+                    }
+                    else {
+                        logger.warn("MIX_RECORD_INDEX and COMBINATION_RECORD_INDEX of %s is blank");
+                    }
+                    break;
+            }
+            detailVo.setHasBak(hasBak);
+            if (hasBak)
+            {
+                detailVo.setBakRecordIndex(rs.getString("RECORD_INDEX_BAK"));
+            }
+            return detailVo;
+        }
     }
 }

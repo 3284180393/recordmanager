@@ -171,6 +171,7 @@ public abstract class RecordDetailJdbcBase {
         {
             RecordDetailVo detailVo = new RecordDetailVo();
             detailVo.setRecordType(recordType);
+            System.out.println(String.format("start=%s and end=%s", rs.getTimestamp("START_TIME"), rs.getTimestamp("END_TIME")));
             detailVo.setSessionId(rs.getString("SESSION_ID"));
             detailVo.setStartTime(rs.getTimestamp("START_TIME"));
             detailVo.setEndTime(rs.getTimestamp("END_TIME"));
